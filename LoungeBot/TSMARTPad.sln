@@ -1,0 +1,44 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.31101.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LoungeBot", "LoungeBot.vcxproj", "{DBEC8812-5A41-49EA-84ED-9A7699F93B7C}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RoomBot", "..\RoomBot\RoomBot.vcxproj", "{5A0DADF8-2EC5-4849-ABD1-AA71AB986BB5}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LOUNGE2v1MP", "..\..\FINAL COMPONENTS\LOUNGE2v1MP\LOUNGE2v1MP.vcxproj", "{7F525D30-E707-4B28-BECE-1113795D9330}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "metroLOUNGEv1", "..\..\metroLOUNGEv1\metroLOUNGEv1.vcxproj", "{142B5E7C-A13F-461F-9862-54A8386F968A}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sevensegRM", "..\..\sevensegRM\sevensegRM.vcxproj", "{86E480BE-6FA4-4D2A-8E12-04AB81B71231}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DBEC8812-5A41-49EA-84ED-9A7699F93B7C}.Debug|Win32.ActiveCfg = Debug|Win32
+		{DBEC8812-5A41-49EA-84ED-9A7699F93B7C}.Debug|Win32.Build.0 = Debug|Win32
+		{DBEC8812-5A41-49EA-84ED-9A7699F93B7C}.Release|Win32.ActiveCfg = Release|Win32
+		{5A0DADF8-2EC5-4849-ABD1-AA71AB986BB5}.Debug|Win32.ActiveCfg = Debug|Win32
+		{5A0DADF8-2EC5-4849-ABD1-AA71AB986BB5}.Debug|Win32.Build.0 = Debug|Win32
+		{5A0DADF8-2EC5-4849-ABD1-AA71AB986BB5}.Release|Win32.ActiveCfg = Release|Win32
+		{7F525D30-E707-4B28-BECE-1113795D9330}.Debug|Win32.ActiveCfg = Debug|Win32
+		{7F525D30-E707-4B28-BECE-1113795D9330}.Debug|Win32.Build.0 = Debug|Win32
+		{7F525D30-E707-4B28-BECE-1113795D9330}.Release|Win32.ActiveCfg = Release|Win32
+		{7F525D30-E707-4B28-BECE-1113795D9330}.Release|Win32.Build.0 = Release|Win32
+		{142B5E7C-A13F-461F-9862-54A8386F968A}.Debug|Win32.ActiveCfg = Debug|Win32
+		{142B5E7C-A13F-461F-9862-54A8386F968A}.Debug|Win32.Build.0 = Debug|Win32
+		{142B5E7C-A13F-461F-9862-54A8386F968A}.Release|Win32.ActiveCfg = Release|Win32
+		{142B5E7C-A13F-461F-9862-54A8386F968A}.Release|Win32.Build.0 = Release|Win32
+		{86E480BE-6FA4-4D2A-8E12-04AB81B71231}.Debug|Win32.ActiveCfg = Debug|Win32
+		{86E480BE-6FA4-4D2A-8E12-04AB81B71231}.Debug|Win32.Build.0 = Debug|Win32
+		{86E480BE-6FA4-4D2A-8E12-04AB81B71231}.Release|Win32.ActiveCfg = Release|Win32
+		{86E480BE-6FA4-4D2A-8E12-04AB81B71231}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
