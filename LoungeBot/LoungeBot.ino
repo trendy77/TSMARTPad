@@ -19,27 +19,30 @@
 #include <Adafruit_MotorShield.h>
 #include <BH1750.h>
 #include <Average.h>
-//#include <LiquidTWI.h>
+#include <LiquidTWI.h>
 #include <FTRGBLED.h>
 #include <Adafruit_NeoPixel.h>
 
 //LiquidTWI lcd(0);			// Connect via i2c, default address #0 (A0-A2 not jumpered)
 //#include "LedControl.h"
-
+//LiquidTWI lcd(0);
 // VARIABLES 	
 	//i. Sensors
 	OneWire ds(A1);  
 	BH1750 lightMeter;
-IRrecv My_Receiver(A3);
+	IRrecv My_Receiver(A3);
 
 	#define KWtrigPin 44
 	#define KWechoPin 46
-		// ii. Motors/UltraSound Sensors
+		int maximumRange = 200; // Maximum range needed
+		int minimumRange = 0; // Minimum range needed
+		long duration, distance; // Duration used to calculate distance
+	
+	// ii. Motors
 const int kitchWinF = 43;
 const int kitchWinR = 45;
 const int piezoPin = A8;
 
-//LiquidTWI lcd(0);
 #define NEOPIN A15
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(16, NEOPIN, NEO_GRB + NEO_KHZ800);
 
@@ -87,7 +90,7 @@ Adafruit_CC3000 cc3000 = Adafruit_CC3000(ADAFRUIT_CC3000_CS, ADAFRUIT_CC3000_IRQ
 	//IP of Vaio XAMPP
 //	uint32_t ip = cc3000.IP2U32(192,168,0,110);
 	// OR IP FOR TTAB
-uint32_t ip = cc3000.IP2U32(192,168,0,111);
+uint32_t ip = cc3000.IP2U32(192,168,0,110);
 int port = 80;
 String repository = "/energy_project/";
 
@@ -95,7 +98,8 @@ Adafruit_MotorShield AFMSi = Adafruit_MotorShield(0x61);
 Adafruit_DCMotor *KitchenTilt = AFMSi.getMotor(4);
 Adafruit_DCMotor *LoungeTilt = AFMSi.getMotor(1);
 Adafruit_DCMotor *WindowTilt = AFMSi.getMotor(3);
-Adafruit_DCMotor *DoorWindowTilt = AFMSi.getMotor(2);Adafruit_MotorShield AFMSi1 = Adafruit_MotorShield(0x60);
+Adafruit_DCMotor *DoorWindowTilt = AFMSi.getMotor(2);
+Adafruit_MotorShield AFMSi1 = Adafruit_MotorShield(0x60);
 Adafruit_DCMotor *KitchenTilt1 = AFMSi.getMotor(4);
 Adafruit_DCMotor *LoungeTilt1 = AFMSi.getMotor(1);
 Adafruit_DCMotor *WindowTilt1 = AFMSi.getMotor(3);
@@ -108,27 +112,45 @@ unsigned long interval = 300000;           // every minute interval at which to 
 unsigned long time;
 long nextup; long lastup;
 
-#define MY_PROTOCOL 		SONY
-#define UP_ARROW      		0x1E108 //	INCREASE TILT TIME +1SEC
+#define MY_PROTOCOL 	SONY
+#define MY_PRO2COL 	NEC
+//NEC CODES FOR DEBUG
+#define 2UP_ARROW      	0x61D6D827 //	INCREASE TILT TIME +1SEC
+#define 2DOWN_ARROW    	0x61D658A7 //DECREASE TILT TIME -1SEC
+#define 2RIGHT_ARROW   	0x61D6609F //Move All tilt FWD
+#define 2LEFT_ARROW    	0x61D620DF //Move All tilt BKD
+#define 2SELECT_BUTTON 	0x61D6A05F //	BUZZER!!
+#define UP_ARROW      	0x1E108 //	INCREASE TILT TIME +1SEC
+#define SUBTITLE		0x88108
 #define DOWN_ARROW    	0x9E108 //DECREASE TILT TIME -1SEC
-#define RIGHT_ARROW   0xDE108 //Move All tilt FWD
-#define LEFT_ARROW    0x5E108 //Move All tilt BKD
-#define BUTTON_0 0x90108  //    ACTIVATE SOLENOID @ DOOR		0xA010C?
-#define BUTTON_1 0x108  // KITCHENT F
-#define BUTTON_2 0x80108 // KITCHENT B
-#define BUTTON_3 0x40108 // WINT F
-#define BUTTON_4 0xC0108// WINT B
-#define BUTTON_5 0x20108 // DWT F
-#define BUTTON_6 0xa0108 // DWT B
-#define BUTTON_7 0x60108 // LT F 
-#define BUTTON_8 0xe0108 // LT B
-#define BUTTON_9 0x10108 // 
-#define PRESET_PREV 0xC108 		//  LOWER LOUNGE BLIND
-#define PRESET_NEXT 0x8C108		//  RAISE LOUNGE BLIND  
-#define RED	0xA010C	// close kitchen window
-#define GREEN 0x6010C	// open kitchen windwo
-#define YELLOW 0xE010C	// Close loungewin
-#define BLUE 0x2010c		// // Open loungewindow
+#define RIGHT_ARROW   	0xDE108 //Move All tilt FWD
+#define LEFT_ARROW    	0x5E108 //Move All tilt BKD
+#define SELECT_BUTTON 	0x3E108 //	BUZZER!!
+#define BUTTON_0 		0x90108  			//  ACTIVATE SOLENOID @ DOOR		0xA010C?
+#define BUTTON_1		0x108 			 // KITCHENT F
+#define BUTTON_2 		0x80108		 // KITCHENT B
+#define BUTTON_3 		0x40108		 // WINT F
+#define BUTTON_4 		0xC0108		// WINT B
+#define BUTTON_5 		0x20108		// DWT F
+#define BUTTON_6 		0xa0108 		// DWT B
+#define BUTTON_7		0x60108		 // LT F 
+#define BUTTON_8 		0xe0108 		// LT B
+#define BUTTON_9 		0x10108		 // 
+#define PRESET_PREV 	0xC108 		//  LOWER LOUNGE BLIND
+#define PRESET_NEXT 	0x8C108		//  RAISE LOUNGE BLIND  
+#define RED				0xA010C	// close kitchen window
+#define GREEN 			0x6010C	// open kitchen windwo
+#define YELLOW 			0xE010C	// Close loungewin
+#define BLUE 			0x2010c		// // Open loungewindow
+#define SOUND_PREV 		0x7B0B			// LOWER BOB
+#define SOUND_NEXT 		0x3B0B 	 // RAISE BOB
+#define TOP_MENU 		0x98108
+#define POPUP_MENU 		0x58108	
+#define PAUSE 			0x400B	
+#define STOP 			0xB
+#define PLAY 			0x200B		
+#define FAST FWD		0x20C108
+#define FAST RWD		0xCC108
 
 int sevSegtimeS = (time/10000);
 int tilttimer = 2000; 	//default length of "tilt fwd or bwd'
@@ -151,9 +173,7 @@ Average<float> aveLL(10);
 Average<float> aveLT(10);
 
 byte Tab[] = {0xc0, 0xf9, 0xa4, 0xb0, 0x99, 0x92, 0x82, 0xf8, 0x80, 0x90, 0xff}; //0,1,2,3,4,5,6,7,8,9, ALL OFF
-byte Taf[] = {0xA0, 0x83, 0xa7, 0xa1, 0x86, 0x8e, 0xc2, 0x8b, 0xe6, 0xe1, 0x89, 0xc7, 0xaa, 0xc8, 0xa3, 0x8c, 0x98, 0xce, 0x9b
-              , 0x87, 0xc1, 0xe3, 0xd5, 0xb6, 0x91, 0xb8
-             };//a,b,c,d,e,f,g,h,i,j,k,l,o,m,n,o,p,q,r,s,t,u,v,w,x,y,z
+byte Taf[] = {0xA0, 0x83, 0xa7, 0xa1, 0x86, 0x8e, 0xc2, 0x8b, 0xe6, 0xe1, 0x89, 0xc7, 0xaa, 0xc8, 0xa3, 0x8c, 0x98, 0xce, 0x9b, 0x87, 0xc1, 0xe3, 0xd5, 0xb6, 0x91, 0xb8};//a,b,c,d,e,f,g,h,i,j,k,l,o,m,n,o,p,q,r,s,t,u,v,w,x,y,z
 byte Tap[] = {0xff, 0x7f}; //"space", "."
 const int latchPin = 49;      //Pin connected to latch pin7SEG
 const int clockPin = 43;
@@ -171,14 +191,12 @@ IRdecode My_Decoder;
 int ledmin = 100;        // sets the max speed (0 = fast) the lower the number the faster it
 int ledmax = 200;      // sets the min speed (100 = slow) the higher the number the slower it can go
 
-int maximumRange = 200; // Maximum range needed
-int minimumRange = 0; // Minimum range needed
-long duration, distance; // Duration used to calculate distance
-
 /****** These pin numbers will probably not work with your hardware *****
  pin 12 is connected to the DataIn ; pin 11 is connected to the CLK ; pin 10 is connected to LOAD ;
  LedControl lc=LedControl(12,11,41,1);unsigned long delaytime=250;   */
 
+ 
+ 
 void setup(){
 	Serial.begin(115200);
 	Serial.println("TLOUNGE INITIALISING...");
@@ -286,24 +304,24 @@ rest.function("tiltFW",tiltFW);		// Function to be exposed
 rest.function("tiltBK",tiltBK);	
 rest.set_id("171");			  			// Give name and ID to device
 	rest.set_name("LoungeBot");
-
+	
   if (!cc3000.begin())  {    while(1);  }  if (!cc3000.connectToAP(WLAN_SSID, WLAN_PASS, WLAN_SECURITY)) {    while(1);  }  while (!cc3000.checkDHCP())  {    delay(100);  }  Serial.println();   wdt_reset();
 	if (!mdns.begin("arduino", cc3000)) {   while(1);   }  restServer.begin();
   Serial.println("Online and listening for connections..."); 
   Serial.println("Connected to WiFi network");
-
+wdt_enable(WDTO_8S);
+wdt_reset();
 	Serial.println(F("Listening for connections..."));
 	Serial.println("MEGA IR SETUP COMPLETE");
 	Serial.println("Press ZERO for Options");
 	//lcd.setCursor(2, 0);
 	//lcd.println("GO!");
-
+wdt_reset();
 	My_Receiver.enableIRIn(); 
 	}
 
 void loop(void){
 	theaterChaseRainbow(50);
-	wdt_enable(WDTO_8S);
 wdt_reset();
 	time = millis();
 	nextup = ((interval + lastup) - time);
@@ -861,11 +879,11 @@ void kitchWinBwd(){
 
 
 void send2server(){
-	wdt_reset(); 
+
 	Serial.println("Time to send server");
 	readAndPrint(); 
 	//	aveLL.push(lg_light); aveLT.push(lg_temp); 
-	wdt_reset();
+	
 			String request = "GET" + repository + "sensor.php?lg_temp=" + aveLT.mean() +","+ aveLT.stddev() + "," + logged + "HTTP/1.0";
 	String request2 = "GET" + repository + "sensor.php?lg_light=" + aveLL.mean() + "," + aveLL.stddev() + "," + logged + "HTTP/1.0";
 	send_request(request);	Serial.print("request: ");
@@ -873,11 +891,11 @@ void send2server(){
 		send_request(request2);Serial.print("request2: ");	Serial.println(request2);	Serial.println("Light Data SENT");
 }
 void send_request(String req) {
-	wdt_reset(); 
+
 	Serial.println("Attempting connection to server...");
 	Adafruit_CC3000_Client client = cc3000.connectTCP(ip, port);
 	// Send request
-	wdt_reset(); 
+
 	if (client.connected()) {
 		client.println(req);
 		client.println(F(""));
@@ -894,7 +912,7 @@ void send_request(String req) {
 	Serial.println("Connection Closed");
 	Serial.println("");
 	client.close();
-	wdt_reset();
+
 }
 
 void storeCode(void) {
