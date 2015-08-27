@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html>
+    <head>
+<meta name='apple-mobile-web-app-capable' content='yes' />
+<meta name='apple-mobile-web-app-status-bar-style' content='black-translucent' />
+<link rel='stylesheet' type='text/css' href='http://randomnerdtutorials.com/ethernetcss.css' />
+<TITLE>TProject</TITLE>
+</HEAD>
+<BODY>
+<H1>TSMARTPad Web Interface</H1>
+<script>
+		strLED1 = "";
+		strLED2 = "";
+		strLED3 = "";
+		strLED4 = "";		
+		strRELAY1 = "";
+		strRELAY2 = "";
+		strRELAY3 = "";
+		strRELAY4 = "";
+		strBOB = "";
+		strKWIN = "";
+		strLWIN = "";
+		strRWIN = "";
+		var LED1_state = 0;		// STATE OF TILTs (Lounge Blinds)
+		var LED2_state = 0;
+		var LED3_state = 0;
+		var LED4_state = 0;
+		var RELAY1_state = 0;		//// BUZZER DOESNT REALLY NEED A STATE...
+		var RELAY2_state = 0;		//		Thinking room lights? That will be handy to know the state...
+		var RELAY3_state = 0;		//	meh
+		var RELAY4_state = 0;		// something something.
+		var BOB_state = 0;
+		var KWIN_state = 0;		// KITCHEN WINDOW				 NB Window numbering at present from 1 to 3 
+		var LWIN_state = 0;		// LOUNGE WINDOW						will follow the same formula as the Tilts; 
+		var RWIN_state = 0;		// ROOM WINDOW							ie. start at the kitchen and move clockwise -	 Kitch@1 Lounge@2 & RoomWin@3...
+		function GetArduinoIO()
+		{
+			nocache = "&nocache=" + Math.random() * 1000000;
+			var request = new XMLHttpRequest();
+			request.onreadystatechange = function()
+			{
+				if (this.readyState == 12) {
+					if (this.status == 200) {
+						if (this.responseXML != null) {
+							// XML file received - contains analog values, switch values and LED states
+							var count;
+							// get analog inputs
+							var num_an = this.responseXML.getElementsByTagName('analog').length;
+							for (count = 0; count < num_an; count++) {
+								document.getElementsByClassName("analog")[count].innerHTML =
+									this.responseXML.getElementsByTagName('analog')[count].childNodes[0].nodeValue;
+							}
+							// get switch inputs
+							var num_an = this.responseXML.getElementsByTagName('switches').length;
+							for (count = 0; count < num_an; count++) {
+								document.getElementsByClassName("switches")[count].innerHTML =
+									this.responseXML.getElementsByTagName('switches')[count].childNodes[0].nodeValue;
+							}
+							// LED 1 - AKA TILT1 OR KITCHENTILT0	
+							if (this.responseXML.getElementsByTagName('LED')[0].childNodes[0].nodeValue === "on") {
+								document.getElementById("LED1").innerHTML = "KITCHEN IS TILTED";
+								LED1_state = 1;
+							}
+							else {
+								document.getElementById("LED1").innerHTML = "KITCHEN IS OPEN/UNTILTED";
+								LED1_state = 0;
+							}
+							// LED 2 aka WINDOW TILT
+							if (this.responseXML.getElementsByTagName('LED')[1].childNodes[0].nodeValue === "on") {
+								document.getElementById("LED2").innerHTML = "WINDOWTILT IS TILTED";
+								LED2_state = 1;
+							}
+							else {
+								document.getElementById("LED2").innerHTML = "WINDOWTILT IS OPEN/UNTILTED";
+								LED2_state = 0;
+							}
+							// LED 3		DOOR WINDOW TILT
+							if (this.responseXML.getElementsByTagName('LED')[2].childNodes[0].nodeValue === "on") {
+								document.getElementById("LED3").innerHTML = "DOORWINDOWTILT IS TILTED";
+								LED3_state = 1;
+							}
+							else {
+								document.getElementById("LED3").innerHTML = "DOORWINDOWTILT IS OPEN/UNTILTED";
+								LED3_state = 0;
+							}
+							// LED 4		LOUNGE TILT
+							if (this.responseXML.getElementsByTagName('LED')[3].childNodes[0].nodeValue === "on") {
+								document.getElementById("LED4").innerHTML = "LOUNGETILT IS TILTED";
+								LED4_state = 1;
+							}
+							else {
+								document.getElementById("LED4").innerHTML = "LOUNGETILT IS OPEN/UNTILTED";
+								LED4_state = 0;
+							}
+							// Room BOB
+							if (this.responseXML.getElementsByTagName('BOB')[0].childNodes[0].nodeValue === "on") {
+								document.getElementById("RMBOB").innerHTML = "ROOM BLIND (BoB) IS LOWERED";
+								BOB_state = 1;
+							}
+							else {
+								document.getElementById("RMBOB").innerHTML = "ROOM BLIND (BoB) IS OPEN / RAISED";
+								BOB_state = 0;
+							}
+							// KITCHENWINDOW
+							if (this.responseXML.getElementsByTagName('KWIN')[0].childNodes[0].nodeValue === "on") {
+								document.getElementById("KWIN").innerHTML = "KITCHENWINDOW IS OPEN";
+								KWIN_state = 1;
+							}
+							else {
+								document.getElementById("KWIN").innerHTML = "KITCHENWINDOW IS CLOSED";
+								KWIN_state = 0;
+							}
+							// LOUNGEWINDOW
+							if (this.responseXML.getElementsByTagName('LWIN')[0].childNodes[0].nodeValue === "on") {
+								document.getElementById("LWIN").innerHTML = "LOUNGEWINDOW IS OPEN";
+								LWIN_state = 1;
+							}
+							else {
+								document.getElementById("LWIN").innerHTML = "LOUNGEWINDOW IS CLOSED";
+								LWIN_state = 0;
+							}
+							// ROOMWINDOW
+							if (this.responseXML.getElementsByTagName('RWIN')[0].childNodes[0].nodeValue === "on") {
+								document.getElementById("RWIN").innerHTML = "ROOMWINDOW IS OPEN";
+								RWIN_state = 1;
+							}
+							else {
+								document.getElementById("RWIN").innerHTML = "ROOMWINDOW IS CLOSED";
+								RWIN_state = 0;
+							}
+							// BUZZER?
+							if (this.responseXML.getElementsByTagName('RELAY')[0].childNodes[0].nodeValue === "on") {
+								document.getElementById("RELAY1").innerHTML = "BUZZER IS BUZZING!";
+								RELAY1_state = 1;
+							}
+							else {
+								document.getElementById("RELAY1").innerHTML = "BUZZZER IS OFF";
+								RELAY1_state = 0;
+							}
+							// RELAY 2
+							if (this.responseXML.getElementsByTagName('RELAY')[1].childNodes[0].nodeValue === "on") {
+								document.getElementById("RELAY2").innerHTML = "LIGHTS IN ROOM ARE ON";
+								RELAY2_state = 1;
+							}
+							else {
+								document.getElementById("RELAY2").innerHTML = "LIGHTS IN ROOM ARE OFF";
+								RELAY2_state = 0;
+							}
+							// RELAY 3
+							if (this.responseXML.getElementsByTagName('RELAY')[2].childNodes[0].nodeValue === "on") {
+								document.getElementById("RELAY3").innerHTML = "RELAY3 IS ON";
+								RELAY3_state = 1;
+							}
+							else {
+								document.getElementById("RELAY3").innerHTML = "RELAY3 IS OFF";
+								RELAY3_state = 0;
+							}
+							// RELAY 4
+							if (this.responseXML.getElementsByTagName('RELAY')[3].childNodes[0].nodeValue === "on") {
+								document.getElementById("RELAY4").innerHTML = "RELAY4 IS ON";
+								RELAY4_state = 1;
+							}
+							else {
+								document.getElementById("RELAY4").innerHTML = "RELAY4 IS OFF";
+								RELAY4_state = 0;
+							}
+						}
+					}
+				}
+			}
+			// send HTTP GET request with LEDs to switch on/off if any
+				request.open("GET", "ajax_inputs" + strLED1 + strLED2 + strLED3 + strLED4+ strBOB + strRELAY1 + strRELAY2 + strRELAY3 + strRELAY4  + strKWIN + strLWIN+ strRWIN + nocache, true);
+			request.send(null);
+			setTimeout('GetArduinoIO()', 1000);
+			strLED1 = "";
+			strLED2 = "";
+			strLED3 = "";
+			strLED4 = "";
+			strRELAY1 = "";
+		strRELAY2 = "";
+		strRELAY3 = "";
+		strRELAY4 = "";
+		strBOB = "";
+		strKWIN = "";
+		strLWIN = "";
+		strRWIN = "";
+			}
+				
+		function GetButton1()
+		{
+			if (LED1_state === 1) {
+				LED1_state = 0;
+				strLED1 = "&LED1=0";
+			}
+			else {
+				LED1_state = 1;
+				strLED1 = "&LED1=1";
+			}
+		}
+		function GetButton2()
+		{
+			if (LED2_state === 1) {
+				LED2_state = 0;
+				strLED2 = "&LED2=0";
+			}
+			else {
+				LED2_state = 1;
+				strLED2 = "&LED2=1";
+			}
+		}
+				function GetButton3()
+		{
+			if (LED3_state === 1) {
+				LED3_state = 0;
+				strLED3 = "&LED3=0";
+			}
+			else {
+				LED3_state = 1;
+				strLED3 = "&LED3=1";
+			}
+		}
+		function GetButton4()
+		{
+			if (LED4_state === 1) {
+				LED4_state = 0;
+				strLED4 = "&LED4=0";
+			}
+			else {
+				LED4_state = 1;
+				strLED4 = "&LED4=1";
+			}
+			function GetButton5()	{
+			if (BUZZ_state === 1) {
+				BUZZ_state = 0;
+				strBUZZ = "&BUZZ=0";
+			}
+			else {
+				BUZZ_state = 1;
+				strBUZZ = "&BUZZ=1";
+			}
+	}
+	// RAISE AND LOWER BOB BUTTON?
+			function GetButton6()	{
+			if (BOB_state === 1) {		// BOB IN STATE 1 MEANS LOWERED, SO THIS WILL RAISE BOB....
+				BOB_state = 0;
+				strB0B = "&BOB=0";
+			}
+			else {								// UMM AND GUESSING THIS LOWERS?
+				BOB_state = 1;
+				strBOB = "&BOB=1";
+			}
+			// RELAY 2 - ROOM LIGHTS??
+			function GetButton7()	{
+			if (RELAY2_state === 1) {
+				RELAY2_state = 0;
+				strRELAY2 = "&RELAY2=0";
+			}
+			else {
+				RELAY2_state = 1;
+				strRELAY2 = "&RELAY2=1";
+			}
+			// RELAY 3 
+			function GetButton8()	{
+			if (RELAY3_state === 1) {
+				RELAY3_state = 0;
+				strRELAY3 = "&RELAY3=0";
+			}
+			else {
+				RELAY3_state = 1;
+				strRELAY3 = "&RELAY3=1";
+			}
+			// RELAY 4 
+			function GetButton9()	{
+			if (RELAY4_state === 1) {
+				RELAY4_state = 0;
+				strRELAY4 = "&RELAY4=0";
+			}
+			else {
+				RELAY4_state = 1;
+				strRELAY4 = "&RELAY4=1";
+			}
+			// JUST DOING ONE WINDOW - ROOM 
+			function GetButton10()	{
+			if (RWIN_state === 1) {
+				RWIN_state = 0;
+				strRWIN = "&RWIN=0";
+			}
+			else {
+				RWIN_state = 1;
+				strRWIN = "&RWIN=1";
+			}
+	</script>
+	<style>
+		.IO_box {
+			float: left;
+			margin: 20px 20px 20px 0;
+			border: 1px solid black;
+			padding: 0 10px 0 10px;
+			width: 140px;
+		}
+		h1 {
+			font-size: 140%;
+			color: blue;
+			margin: 0 0 10px 0;
+		}
+		h2 {
+			font-size: 100%;
+			color: #5734E6;
+			margin: 5px 0 5px 0;
+		}
+		p, form, button {
+			font-size: 80%;
+			color: #252525;
+		}
+		.small_text {
+			font-size: 70%;
+			color: #737373;
+		}
+	</style>
+    </head>
+    <body onload="GetArduinoIO()">
+        <h1>TSMARTPad WEB CONSOLE</h1>
+        
+		<div class="IO_box">
+			<h2>SENSORS</h2>
+			<h3>LOCAL SENSORS@WEBDUINO #192.168.1.88</h3>
+			<p> Light Reading <span class="analog">lumin (ie. /1023)</span></p>
+			<p>Temp (deg C)<span class="analog">"temperature"</span></p>
+			<p>Humidity (%)<span class="analog">"humidity"</span></p>
+			<h3>LOUNGE SENSORS@MEGADUINO # TBC</h3>
+			<p>Temp (deg C)<span class="analog">"temperature"</span></p>
+			<p> Light Reading <span class="analog">lumin (ie. /1023)</span></p>
+			<h3>ROOM SENSORS@ROOMDUINO # NEVER GONNA HAPPEN</h3>
+			<p> Temp (deg C)<span class="analog">"temperature"</span></p>
+			<p> Light Reading <span class="analog">lumin (ie. /1023)</span></p>
+	</div>		
+	<div class="IO_box">
+		<h2>ROOM WINDOW & BLIND CONTROLLER</h2>
+			
+</div>
+		<div class="IO_box">
+					<h2>BUZZER & RELAYS</h2>
+				<p>RELAY1 AKA THE BUZZER: <span class="switches">...</span>
+			</p>
+			<button type="button" id="RELAY1" onclick="GetButton5()"><img src="buzzer.jpg"/></button>
+			<br />
+			<p>RELAY2: <span class="switches">...</span></p>
+			<button type="button" id="RELAY2" onclick="GetButton6()">TURN ON RELAY 2</button><br /><br />
+			<p>RELAY3: <span class="switches">...</span></p>
+			<button type="button" id="RELAY3" onclick="GetButton7()">TURN ON RELAY 3!</button><br />`
+			<p>RELAY4: <span class="switches">...</span></p>
+<button type="button" id="RELAY4" onclick="GetButton8()">TURN ON RELAY 4</button>
+<br />	
+</div>
+		<div class="IO_box">
+			<h2>LOUNGE/KITCHEN BLIND-TILT POSITIONs</h2>
+			<button type="button" id="LED1" onclick="GetButton1()">KITCHENTILT</button><br /><br />
+			<button type="button" id="LED2" onclick="GetButton2()">WINDOWTILT</button><br /><br />
+			<button type="button" id="LED3" onclick="GetButton3()">DOORWINDOWTILT</button>
+<br />
+			<button type="button" id="LED4" onclick="GetButton4()">LT</button><br />
+</div>
+<br />
+     	<img src="pic.jpg" />
+	<p>Go to <a href="page2.htm">page 2</a>.</p>
+<p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;line-height:
+normal;mso-layout-grid-align:none;text-autospace:none'><b><span lang=EN
+style='font-size:9.0pt;mso-ascii-font-family:Calibri;mso-hansi-font-family:
+Calibri;mso-bidi-font-family:Calibri;color:#A6A6A6;mso-ansi-language:EN'>©
+Trendy Enterprises, LLC Inc, ALL RIGHTS RESERVED. <o:p></o:p></span></b></p>
+
+<p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;text-align:
+justify;line-height:normal;mso-layout-grid-align:none;text-autospace:none'><span
+lang=EN style='font-size:9.0pt;mso-ascii-font-family:Calibri;mso-hansi-font-family:
+Calibri;mso-bidi-font-family:Calibri;color:#BFBFBF;mso-ansi-language:EN'>From the office of the Rev Dr T.D.A.Mos-Def Fisher, Esq.
+
+Dictated and prepared at a furious pace the through the power of bionic Chinese Monkeys on Typewriters- Not Proofread.
+This website may contain nuggets of <span class=SpellE><i>TrendyWisdom</i></span><i>™</i>
+which are protected under International and Federal Copyright Laws and
+Treaties.<span style='mso-spacerun:yes'>  </span>Any <span class=SpellE>unauthorised</span>
+reprint, usage, laughter or enjoyment from this material is prohibited.<span
+style='mso-spacerun:yes'>  </span>No part of this email may be reproduced in
+any form or by any means, electronic or imaginary, including-but-not-limited-to
+time-travel, shot out of a cannon, printed on post-it notes distributed
+randomly across light poles throughout town, or by any information storage
+system including your brain without express written, engraved, <span
+class=SpellE>notarised</span> and tattooed permission by the author.&nbsp; <o:p></o:p></span></p>
+<p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;text-align:
+justify;line-height:normal;mso-layout-grid-align:none;text-autospace:none'><span
+lang=EN style='font-size:8.0pt;mso-ascii-font-family:Calibri;mso-hansi-font-family:
+Calibri;mso-bidi-font-family:Calibri;color:#BFBFBF;mso-ansi-language:EN'>The
+opinions expressed in this email are almost certainly extremely <span
+class=SpellE>libellous</span>, if not outright derogatory and do not
+necessarily represent the views of Trendy Enterprises LLC or anyone with the
+smallest notion of common sense; in fact they most likely fail to resemble the
+writings of any sane person, more attune to the wild ramblings of a deranged
+lunatic.<o:p></o:p></span></p>
+
+<p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;line-height:
+normal;mso-layout-grid-align:none;text-autospace:none'><span lang=EN
+style='mso-ascii-font-family:Calibri;mso-hansi-font-family:Calibri;mso-bidi-font-family:
+Calibri;color:#A6A6A6;mso-ansi-language:EN'><o:p>&nbsp;</o:p></span></p>
+<p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;line-height:
+normal;mso-layout-grid-align:none;text-autospace:none'><b><u><span lang=EN
+style='mso-ascii-font-family:Calibri;mso-hansi-font-family:Calibri;mso-bidi-font-family:
+Calibri;color:#A6A6A6;mso-ansi-language:EN'>Office of the Rev <span
+class=SpellE>Dr</span>:</span></u></b><span lang=EN style='mso-ascii-font-family:
+Calibri;mso-hansi-font-family:Calibri;mso-bidi-font-family:Calibri;color:#A6A6A6;
+mso-ansi-language:EN'><span style='mso-tab-count:1'>      </span>trendy877@gmail.com<b><u><o:p></o:p></u></b></span></p>
+<p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;line-height:
+normal;mso-layout-grid-align:none;text-autospace:none'><b><u><span lang=EN
+style='mso-ascii-font-family:Calibri;mso-hansi-font-family:Calibri;mso-bidi-font-family:
+Calibri;color:#A6A6A6;mso-ansi-language:EN'>Registered Office:</span></u></b><span
+lang=EN style='mso-ascii-font-family:Calibri;mso-hansi-font-family:Calibri;
+mso-bidi-font-family:Calibri;color:#A6A6A6;mso-ansi-language:EN'> <span
+style='mso-tab-count:1'>          </span>Bamboo Hut 8, <span class=SpellE>Anonymousfortaxpurposes</span>
+Road, <span class=GramE>CAYMAN</span> ISLANDS.<o:p></o:p></span></p>
+<p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;line-height:
+normal;mso-layout-grid-align:none;text-autospace:none'><b><u><span lang=EN
+style='mso-ascii-font-family:Calibri;mso-hansi-font-family:Calibri;mso-bidi-font-family:
+Calibri;color:#A6A6A6;mso-ansi-language:EN'>Media Requests:</span></u></b><span
+lang=EN style='mso-ascii-font-family:Calibri;mso-hansi-font-family:Calibri;
+mso-bidi-font-family:Calibri;color:#A6A6A6;mso-ansi-language:EN'><span
+style='mso-tab-count:1'>             </span>anypublicityisgoodpublicity@trendyinc.com<o:p></o:p></span></p>
+<p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;line-height:
+normal;mso-layout-grid-align:none;text-autospace:none'><b><u><span lang=EN
+style='mso-ascii-font-family:Calibri;mso-hansi-font-family:Calibri;mso-bidi-font-family:
+Calibri;color:#A6A6A6;mso-ansi-language:EN'>Career Enquires:</span></u></b><span
+lang=EN style='mso-ascii-font-family:Calibri;mso-hansi-font-family:Calibri;
+mso-bidi-font-family:Calibri;color:#A6A6A6;mso-ansi-language:EN'><span
+style='mso-tab-count:1'>              </span>careers@trendyinc.com<b><u><o:p></o:p></u></b></span></p>
+<p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;line-height:
+normal;tab-stops:61.5pt;mso-layout-grid-align:none;text-autospace:none'><span
+lang=EN style='mso-ascii-font-family:Calibri;mso-hansi-font-family:Calibri;
+mso-bidi-font-family:Calibri;mso-ansi-language:EN'><span style='mso-tab-count:
+1'>
+     </body>
+</html>

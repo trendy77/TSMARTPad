@@ -1,0 +1,42 @@
+*** aREST API Functions ***
+
+
+LoungeBot @171
+192.168.0.171:8071/id
+
+192.168.0.171:8071/lg_light
+
+192.168.0.171:8071/lg_temp
+192.168.0.171:8071/raiseKW?params=0
+192.168.0.171:8071/lowerKW?params=0
+192.168.0.171:8071/tiltfwd?params=0
+192.168.0.171:8071/tiltbwd?params=0
+
+RoomBot @172
+192.168.0.172:8072/id
+
+192.168.0.172:8072/rm_light
+192.168.0.172:8072/rm_temp
+192.168.0.172:8072/raiseBob?params=0
+192.168.0.172:8072/lowerBob?params=0
+192.168.0.172:8072/buzzUP?params=0
+192.168.0.172:8072/pussPull?params=0
+
+UNIVERSAL COMMANDS:
+* `/` or `/id`
+ prints the names & types of variables stored
+
+
+* `/digital/8/0` sets pin number 8 to a low state
+  
+* `/digital/8/1` sets pin number 8 to a high state
+  
+* `/digital/8` reads value from pin number 8 in JSON format (note`/digital/8/r` produces the same result)
+*`/analog/6/123` sets pin number 6 to 123 using PWM
+
+*`/analog/0` returns analog value from pin number A0 in JSON format 
+
+
+*`/mode/8/o` sets pin 8 to output
+ 
+*`/mode/8/i` sets pin 8 as an input
