@@ -169,7 +169,7 @@ Serial.println("Press ZERO for Options");
 
 
 void loop(){
-
+Serial.print(".");
 	time = millis(); 
 	//settiltTime();//kitttheBar();
 	nextup = ((interval + lastup) - time);
@@ -193,8 +193,6 @@ rest.handle(client);
 
 if (My_Receiver.GetResults(&My_Decoder)) {
 //        blinkalt();
-			lcd.clear();lcd.setCursor(0,3);lcd.print("IR DECTECTED!!"); 
-            scrollio();
 			IRDetected();
 			delay(100);
 			My_Receiver.resume();
@@ -227,9 +225,7 @@ void windowSense(){
 	digitalWrite(trigPin, LOW);
 	duration = pulseIn(echoPin, HIGH);
 	distance = (duration / 2) / 29.1;
-	Serial.print("BOB DISTANCE @ ");
-	Serial.print(distance);	Serial.println("cm");
-}
+	}
 void senseMoveBob(){
 		windowSense();
 			if (distance >= 200 || distance <= 0){
@@ -244,35 +240,35 @@ void senseMoveBob(){
 	delay(300);
 }
 void activateRelayNo(int relayNo){
- int command = relayNo;
- 	if( command == '0' ){
+ int command1 = relayNo;
+ 	if( command1 == '0' ){
       sendValueToLatch(0); Serial.println("Resetting all relays");
     }
-    if( command == '1' ){
+    if( command1 == '1' ){
       sendValueToLatch(1);      Serial.println("Activating brelay 1");
     }
-    if( command == '2' ){
+    if( command1 == '2' ){
       sendValueToLatch(2);      Serial.println("Activating relay 2");
     }
-    if( command == '3' ){
+    if( command1 == '3' ){
       sendValueToLatch(4);      Serial.println("Activating relay 3");
     }
-    if( command == '4' ){
+    if( command1 == '4' ){
       sendValueToLatch(8);      Serial.println("Activating relay 4");
     }
-    if( command == '5' ){
+    if( command1 == '5' ){
       sendValueToLatch(16);      Serial.println("Activating relay 5");
     }
-    if( command == '6' ){
+    if( command1 == '6' ){
       sendValueToLatch(32);      Serial.println("Activating relay 6");
     }
-    if( command == '7' ){
+    if( command1 == '7' ){
       sendValueToLatch(64);      Serial.println("Activating relay 7");
     }
-    if( command == '8' ){
+    if( command1 == '8' ){
       sendValueToLatch(128);      Serial.println("Activating relay 8");
     }
-    //if( command == '9' ){ sendValueToLatch(255); Serial.println("Activating ALL relays");}
+    //if( command1 == '9' ){ sendValueToLatch(255); Serial.println("Activating ALL relays");}
   }
 
 void sendValueToLatch(int latchValue){
@@ -405,16 +401,17 @@ int lowerBOB(String Command){
   autolowerBob();return 1;}
 
 void IRDetected(){
- 	 Serial.println("IR COMMAND DETECTED - DECODING...");
 	My_Decoder.decode(); GotOne=true;
-	GotNew=true;  codeType = My_Decoder.decode_type;  if (codeType == UNKNOWN) {    Serial.println("Received unknown code");
+	GotNew=true;  codeType = My_Decoder.decode_type;  if (codeType == UNKNOWN) {    Serial.println("RUC @ IR");
     rawCount = My_Decoder.rawlen-1;    }   
 	else{	Serial.print(F("Received "));    Serial.print(Pnames(codeType));
 	if (My_Decoder.value == REPEAT) {	Serial.println(F("repeat; ignoring."));     } 
 	 else{       codeValue = My_Decoder.value; codeBits = My_Decoder.bits;
 } 	Serial.print(F(" Value:0x"));Serial.println(My_Decoder.value, HEX);
 if(My_Decoder.decode_type==MY_PROTOCOL) {
-Serial.println("Code is for TSMARTPad"); 
+	
+ 	 lcd.clear();lcd.setCursor(0,3);lcd.print("IR DECTECTED!!"); scrollio();
+			Serial.println("IR COMMAND DETECTED - DECODING...");
 //lcd.clear(); lcd.setCursor(0,3); lcd.print("**TSMARTPad Code**");
 switch(My_Decoder.value) {
 	case SELECT_BUTTON: 	buzzUP();	break;
@@ -635,7 +632,7 @@ void readSensors() {
 	temperature.trim();
 	aveRL.push(rm_light);
 	aveRT.push(temp_c);
-
+logged++;
 }
 
 void printSensors(){
@@ -660,5 +657,7 @@ void printSensors(){
 	//   Serial.print("Min:    "); Serial.println(aveRT.minimum(&minat));
 	//  Serial.print(" at:    "); Serial.println(minat);
 	Serial.print("StdDev: "); Serial.println(aveRT.stddev());
+	Serial.print("Sample Size:"); Serial.println(logged);
+	Serial.print("BOB DISTANCE @ ");Serial.print(distance);	Serial.println("cm");
 	delay(500);
 }
