@@ -351,8 +351,8 @@ sendValueToLatch(2);
 void send2server(){
 	Serial.println("Connecting....");
 	
-	String request = "GET" + repository + "sensor.php?rm_temp=" + aveRT.mean() +","+ aveRT.stddev() + "," + logged + "HTTP/1.0";
-	String request2 = "GET" + repository + "sensor.php?rm_light=" + aveRL.mean() + "," + aveRL.stddev() + "," + logged + "HTTP/1.0";
+	String request = "GET " + repository + "sensor.php?rm_temp=" + aveRT.mean() +","+ aveRT.stddev() + "," + logged + " HTTP/1.0";
+	String request2 = "GET " + repository + "sensor.php?rm_light=" + aveRL.mean() + "," + aveRL.stddev() + "," + logged + " HTTP/1.0";
 	send_request(request);	Serial.print("request: ");
 	Serial.println(request);	Serial.println("Temp Data SENT");
 		send_request(request2);Serial.print("request2: ");	Serial.println(request2);	Serial.println("Light Data SENT");
