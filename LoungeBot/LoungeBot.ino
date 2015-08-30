@@ -32,8 +32,8 @@ OneWire ds(A1);
 BH1750 lightMeter;
 IRrecv My_Receiver(A3);
 
-#define KWtrigPin 44
-#define KWechoPin 46
+#define KWtrigPin 0
+#define KWechoPin 0
 int maximumRange = 200; // Maximum range needed
 int minimumRange = 0; // Minimum range needed
 long duration, distance; // Duration used to calculate distance
@@ -43,10 +43,6 @@ const int piezoPin = A8;
 #define NEOPIN A15
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(8, NEOPIN, NEO_GRB + NEO_KHZ800);
 
-// ii. Motors
-const int kitchWinF = 43;
-const int kitchWinR = 45;
-
 static char tempbuffer[10];
 /*
 const int potDialPin = A13;
@@ -55,11 +51,10 @@ const int potDialPin = A13;
  const int loungeWinR = 0;  // NOW DONE BY V1 SHIELD IN LOUNGE
  int potVal = 0;
  int potDialVal;
- 
- #define REDPIN 6
+  #define REDPIN 6
  #define GREENPIN 7
  #define BLUEPIN 2
- #define FADESPEED 5     // make this higher to slow down
+ #define FADESPEED 5   
  int r, g, b;
  */
 const int num_leds = 1;const int PIN_CKI = 12;const int PIN_SDI = 13;RGBLEDChain leds(num_leds, PIN_CKI, PIN_SDI);
@@ -83,6 +78,8 @@ MDNSResponder mdns;
 int barpins[] = { 22, 24, 26, 28, 30, 32, 34, 36, 38,40 };   // an array of pin numbers to which LEDs are attached
 const int ledCount = 10; 
 int barlevel;
+int ledmin = 100;        // sets the max speed (0 = fast) the lower the number the faster it
+int ledmax = 200;      // sets the min speed (100 = slow) the higher the number the slower it can go
 
 Adafruit_CC3000 cc3000 = Adafruit_CC3000(ADAFRUIT_CC3000_CS, ADAFRUIT_CC3000_IRQ, ADAFRUIT_CC3000_VBAT,SPI_CLOCK_DIV2);
 uint32_t ip = cc3000.IP2U32(192,168,0,110);
@@ -103,13 +100,10 @@ Adafruit_DCMotor *DoorWindowTilt1 = AFMSi.getMotor(2);
 //Servo Servo1;
 
 unsigned long interval = 300000;           // every minute interval at which to send sensor data to server
-unsigned long time;
-long nextup; 
-long lastup;
+unsigned long time;long nextup; long lastup;
 
 #define MY_PROTOCOL 	SONY
 #define MY_PRO2COL 	NEC
-//NEC CODES FOR DEBUG
 #define UP_ARROW2      	0x61D6D827 //	INCREASE TILT TIME +1SEC
 #define DOWN_ARROW2    	0x61D658A7 //DECREASE TILT TIME -1SEC
 #define RIGHT_ARROW2   	0x61D6609F //Move All tilt FWD
@@ -144,8 +138,8 @@ long lastup;
 #define PAUSE 			0x400B	
 #define STOP 			0xB
 #define PLAY 			0x200B		
-#define FAST FWD		0x20C108
-#define FAST RWD		0xCC108
+#define FAST_FWD		0x20C108
+#define FAST_RWD		0xCC108
 
 int sevSegtimeS = (time/10000);
 int tilttimer = 2000; 	//default length of "tilt fwd or bwd'
@@ -153,36 +147,29 @@ int tiltmax = 10000;
 int tiltmin = 1000;
 int testtimer = 1000; 
 int sevSegtime = time;
-int num;		// for BEEP function
 int tilttimerS = (tilttimer / 1000);
 int wintimer = (tilttimer * 5);
 int wintimerS = (wintimer / 1000);
 
-int logged;
-int lg_light; 
-int lg_temp;
-const int lightMin = 0;
-const int lightMax = 1023;
-int lightPercent;
-float celsius; 
-float temp_c; 
-String temperature; 
-uint16_t lux;
+int logged;int lg_light; int lg_temp;
+const int lightMin = 0;const int lightMax = 1023;
+int lightPercent;float celsius; float temp_c; 
+String temperature; uint16_t lux;
 Average<float> aveLL(10);
 Average<float> aveLT(10);
 
 byte Tab[] = {0xc0, 0xf9, 0xa4, 0xb0, 0x99, 0x92, 0x82, 0xf8, 0x80, 0x90, 0xff}; //0,1,2,3,4,5,6,7,8,9, ALL OFF
 byte Taf[] = {0xA0, 0x83, 0xa7, 0xa1, 0x86, 0x8e, 0xc2, 0x8b, 0xe6, 0xe1, 0x89, 0xc7, 0xaa, 0xc8, 0xa3, 0x8c, 0x98, 0xce, 0x9b, 0x87, 0xc1, 0xe3, 0xd5, 0xb6, 0x91, 0xb8};//a,b,c,d,e,f,g,h,i,j,k,l,o,m,n,o,p,q,r,s,t,u,v,w,x,y,z
 byte Tap[] = {0xff, 0x7f}; //"space", "."
-const int latchPin = A10;      //Pin connected to latch pin7SEG
-const int clockPin = A11;
-const int dataPin = A12;
+const int latchPin = A12;      //Pin connected to latch pin7SEG
+const int clockPin = A13;
+const int dataPin = A14;
 
 IRTYPES codeType;      unsigned long codeValue;int codeBits; unsigned int rawCodes[RAWBUF];int rawCount; bool GotOne, GotNew;
 IRdecode My_Decoder;
+//int num;		// for BEEP function
 
-int ledmin = 100;        // sets the max speed (0 = fast) the lower the number the faster it
-int ledmax = 200;      // sets the min speed (100 = slow) the higher the number the slower it can go
+#define I2C_ADDR  0x20
 
 void setup(){
   Serial.begin(115200);
@@ -260,11 +247,6 @@ void setup(){
   lux = lightMeter.readLightLevel();
   lg_light = lux;
   Serial.println("initiALISING WiFi");
-  digitalWrite(kitchWinF, LOW);
-  digitalWrite(kitchWinR, LOW);
-  pinMode(kitchWinF, OUTPUT);
-  pinMode(kitchWinR, OUTPUT);
-
 
   rest.variable("lg_light", &lg_light);
   rest.variable("lg_temp", &lg_temp);
@@ -292,18 +274,18 @@ void setup(){
   restServer.begin();
   Serial.println("Online and listening for connections..."); 
   Serial.println("Connected to WiFi network");
-  wdt_enable(WDTO_8S);
-  wdt_reset();
   Serial.println(F("Listening for connections..."));
   Serial.println("MEGA IR SETUP COMPLETE");
   Serial.println("Press ZERO for Options");
   //lcd.setCursor(2, 0);
   //lcd.println("GO!");
-  wdt_reset();
+   Wire.begin();
   My_Receiver.enableIRIn(); 
 }
 
 void loop(void){
+  wdt_enable(WDTO_8S);
+  wdt_reset();
   if (Serial.available()) Serial2.print(Serial.read());
 
   theaterChaseRainbow(50);
@@ -388,6 +370,13 @@ int tiltBK(String Command){
   return 1;
 }
 
+void sendValueToLatch(int latchValue)
+{
+Wire.beginTransmission(I2C_ADDR);
+Wire.write(0x12);        // Select GPIOA
+Wire.write(latchValue);  // Send value to bank A
+Wire.endTransmission();
+}
 void tiltfwd(){
   blink(rleds[0], tilttimerS);
   blink(gleds[0], tilttimerS);
@@ -1029,10 +1018,10 @@ void kitchWinFwd(){
   Serial.println(" secs");  	  
   leds.setLEDs(LED_YELLOW);
   leds.update();
-  digitalWrite(kitchWinF, LOW);
-  digitalWrite(kitchWinR, HIGH);
+sendValueToLatch(1);
   delay(wintimer);
-  digitalWrite(kitchWinR, LOW);
+sendValueToLatch(0);
+  delay(50);
 }
 void kitchWinBwd(){
   leds.setLEDs(LED_YELLOW);
@@ -1040,10 +1029,9 @@ void kitchWinBwd(){
   Serial.println(" kitchWindow Closing "); 
   Serial.print(wintimerS); 
   Serial.println(" secs");
-  digitalWrite(kitchWinR, LOW);	
-  digitalWrite(kitchWinF, HIGH);	
+	
   delay(wintimer);	
-  digitalWrite(kitchWinF, LOW);
+
 }
 
 
@@ -1184,18 +1172,19 @@ void senseMoveBob(){
 void autoraiseKW(){
   windowSense();
   while (distance > 3) {  
-    digitalWrite(kitchWinF, HIGH); 
+ 	sendValueToLatch(1);
+	delay(300);
   }
-  digitalWrite(kitchWinR, LOW);
+	sendValueToLatch(0);
   delay(50);
 }
 void autolowerKW(){
   windowSense();
   while (distance < 100) { 
-    digitalWrite(kitchWinR, LOW);
-    digitalWrite(kitchWinF, HIGH);
+	sendValueToLatch(2);
+delay(300);
   }
-  digitalWrite(kitchWinR, LOW);
+	sendValueToLatch(0);
   delay(50);
 }
 
