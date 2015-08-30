@@ -1,6 +1,17 @@
 /* ROOMeDUINO MEGA 
-  192.168.1.172 
- 0708 bob aware edition
+Sourcetree GIT Edition
+30/8
+
+Relay8 #s:
+1-Bob
+2-BobRev
+3-M2
+4-lIGHTS1
+5-LIGHTS2
+6-M2Rev
+7- *empty*
+8-Buzzer
+
  */
 
 #include <Adafruit_CC3000.h>
@@ -19,17 +30,9 @@
 BH1750 lightMeter;
 const int potDialPin = A15;
 OneWire  ds(A3);  // on pin 10 (a 4.7K resistor is necessary)
-
 #define trigPin 26      // next to VCC
 #define echoPin 28    // next to GND
 #define I2C_ADDR  0x20
-
-/*
-const int aa=A15;
-const int bb = A14;	// doa?
-const int cc = A13;
-const int dd=A12;
-*/
 
 IRrecv My_Receiver(2);
 const int piezoPin = 0;
@@ -54,7 +57,7 @@ MDNSResponder mdns;
 #define RIGHT_ARROW   	0xDE108 //Move All tilt FWD
 #define LEFT_ARROW    	0x5E108 //Move All tilt BKD
 #define SELECT_BUTTON 	0x3E108 //	BUZZER!!
-#define BUTTON_0 		0x90108  			//  ACTIVATE SOLENOID @ DOOR		0xA010C?
+#define BUTTON_0 		0x90108  			//
 #define BUTTON_1		0x108 			 // KITCHENT F
 #define BUTTON_2 		0x80108		 // KITCHENT B
 #define BUTTON_3 		0x40108		 // WINT F
@@ -80,8 +83,6 @@ MDNSResponder mdns;
 #define FAST_FWD		0x20C108
 #define FAST_RWD		0xCC108
 
-static char tempbuffer[10];
- 
 unsigned long interval = 300000;           // every 5 minutes
 unsigned long time; long nextup; long lastup;
 	int tilttimer = 2000; 	//default length of "tilt fwd or bwd'
@@ -101,20 +102,15 @@ bool GotOne, GotNew; IRdecode My_Decoder;
 
 int rm_light; uint16_t lux; int lightPercent;
 int rm_temp; String temperature; float celsius;float temp_c;
-int lightMin =0;
-int lightMax = 1023;
+int lightMin =0;int lightMax = 1023;
 int potVal = 0;int potDialVal = 0; 
-Average<float> aveRT(10);
-Average<float> aveRL(10);
+static char tempbuffer[10];int prevPot = 0;
+Average<float> aveRT(10);Average<float> aveRL(10);int logged = 0;
 
 uint32_t ip = cc3000.IP2U32(192,168,0,110);//your computer's ip address
-int port = 80;
-String repository = "/energy_project/";
-int prevPot = 0;
-int maximumRange = 200; // Maximum range needed
-int minimumRange = 0; // Minimum range needed
+int port = 80;String repository = "/energy_project/";
+int maximumRange = 200; int minimumRange = 0; // Minimum range needed
 long duration, distance; // Duration used to calculate distance
-int logged = 0;
 
 uint8_t bell[8]  = {0x4,0xe,0xe,0xe,0x1f,0x0,0x4};
 uint8_t note[8]  = {0x2,0x3,0x2,0xe,0x1e,0xc,0x0};
@@ -131,80 +127,69 @@ const int ledCount = 10;
 void setup(){
 	Serial.begin(115200);
 	Serial.println("ROOMBOT INITIALISING...");
-
 	lcd.begin(20, 4);	lcd.setBacklight(HIGH);lcd.setCursor(0, 2);
 	lcd.print("** INITIALISING.. **");
 
-	pinMode(trigPin, OUTPUT);
-pinMode(echoPin, INPUT);
+	pinMode(trigPin, OUTPUT);pinMode(echoPin, INPUT);
+  
   for (int thisLed = 0; thisLed < ledCount; thisLed++) {
     pinMode(barpins[thisLed], OUTPUT); 
   digitalWrite(barpins[thisLed], HIGH);
   }
  GotOne=false; GotNew=false;codeType=UNKNOWN;   codeValue=0; 
  	
- pinMode(piezoPin, OUTPUT);
-pinMode(potDialPin, INPUT);
+ pinMode(piezoPin, OUTPUT);pinMode(potDialPin, INPUT);
 
-  Wire.begin(); // Wake up I2C bus
-  Wire.beginTransmission(I2C_ADDR);// Set I/O bank A to outputs
-  Wire.write(0x00); // IODIRA register
+  Wire.begin();  Wire.beginTransmission(I2C_ADDR);  Wire.write(0x00); 
   Wire.write(0x00); // Set all of bank A to outputs
   Wire.endTransmission();
   
   lightMeter.begin(); 
-  rm_light = lux;
-	rest.variable("room_temp",&rm_temp);
-	rest.variable("room_light",&rm_light);       
+  rm_light = lux;	rest.variable("rm_temp",&rm_temp);	rest.variable("rm_light",&rm_light);       
         rest.function("raiseBob",raiseBOB);
 	rest.function("lowerBob",lowerBOB);
 	rest.function("pussPull",pussPull);
 	rest.function("buzz",buzz);
-	  rest.set_id("172");		
-	rest.set_name("RoomBot");
+	rest.set_id("172");	rest.set_name("RoomBot");
 
 	Serial.println("LOADING WIFI CONNECTION");
-  if (!cc3000.begin())  {    while(1);  }  if (!cc3000.connectToAP(WLAN_SSID, WLAN_PASS, WLAN_SECURITY)) {    while(1);  }  while (!cc3000.checkDHCP())  {    delay(100);  }  
-  if (!mdns.begin("arduino", cc3000)) {   while(1);   }  restServer.begin();
+  
+  if (!cc3000.begin())  {    while(1);  }  if (!cc3000.connectToAP(WLAN_SSID, WLAN_PASS, WLAN_SECURITY)) {    while(1);  }  while (!cc3000.checkDHCP())  {  delay(100);  }    if (!mdns.begin("arduino", cc3000)) {   while(1);   }  restServer.begin();
   Serial.println("Online and listening for connections...");  
+lcd.clear();
 
-	for (int thisLed = 0; thisLed < ledCount; thisLed++) {
-    digitalWrite(barpins[thisLed], LOW);
+for (int thisLed = 0; thisLed < ledCount; thisLed++) {
+digitalWrite(barpins[thisLed], LOW);
 }
 My_Receiver.enableIRIn(); // Start the receiver
-lcd.clear();
+
 Serial.println("ROOMBOT SETUP COMPLETE");
 Serial.println("Press ZERO for Options");
-
 }
 
 
 void loop(){
 
 	time = millis(); 
-
 	//settiltTime();//kitttheBar();
 	nextup = ((interval + lastup) - time);
 	windowSense();
-
 	readSensors();
 	updateLcd();
-
 	setluxBar();
 
-
-	if (time>(lastup + interval)){
-	Serial.println("Time to send server");
-	readAndPrint();
-	beep(1);
-	send2server();
-	delay(100);
-	lastup = time;
-	}
-
-mdns.update();
+	mdns.update();
 Adafruit_CC3000_ClientRef client = restServer.available();
 rest.handle(client);
+
+	if (time>(lastup + interval)){
+		Serial.println("Time to send server");
+		readAndPrint();
+		beep(1);
+		send2server();
+		delay(100);
+		lastup = time;
+		}
 
 if (My_Receiver.GetResults(&My_Decoder)) {
 //        blinkalt();
@@ -258,8 +243,81 @@ void senseMoveBob(){
 			}
 	delay(300);
 }
-void buzzUP(){
+void activateRelayNo(int relayNo){
+ int command = relayNo;
+ 	if( command == '0' ){
+      sendValueToLatch(0); Serial.println("Resetting all relays");
+    }
+    if( command == '1' ){
+      sendValueToLatch(1);      Serial.println("Activating brelay 1");
+    }
+    if( command == '2' ){
+      sendValueToLatch(2);      Serial.println("Activating relay 2");
+    }
+    if( command == '3' ){
+      sendValueToLatch(4);      Serial.println("Activating relay 3");
+    }
+    if( command == '4' ){
+      sendValueToLatch(8);      Serial.println("Activating relay 4");
+    }
+    if( command == '5' ){
+      sendValueToLatch(16);      Serial.println("Activating relay 5");
+    }
+    if( command == '6' ){
+      sendValueToLatch(32);      Serial.println("Activating relay 6");
+    }
+    if( command == '7' ){
+      sendValueToLatch(64);      Serial.println("Activating relay 7");
+    }
+    if( command == '8' ){
+      sendValueToLatch(128);      Serial.println("Activating relay 8");
+    }
+    //if( command == '9' ){ sendValueToLatch(255); Serial.println("Activating ALL relays");}
+  }
 
+void sendValueToLatch(int latchValue){
+Wire.beginTransmission(I2C_ADDR);
+Wire.write(0x12);       Wire.write(latchValue);  Wire.endTransmission();
+}
+
+void buzzUP(){
+       Serial.println(" COMMENCING BUZZING @ INTERCOM...  ");
+activateRelayNo(8);
+delay(800);
+activateRelayNo(0);
+Serial.println(" *** ");
+delay(500);
+	activateRelayNo(8);
+	delay(500);
+	activateRelayNo(0);       
+	delay(500);
+		activateRelayNo(8);
+		delay(1000);
+		Serial.println(" *** *** ");
+       	activateRelayNo(0);
+		delay(200);
+}
+
+void testM2(){
+activateRelayNo(3);
+delay(2000);
+activateRelayNo(0);	
+delay(2000);
+activateRelayNo(3);
+delay(2000);
+activateRelayNo(0);
+delay(200);
+}
+
+void testM2rev(){
+activateRelayNo(6);
+delay(2000);
+activateRelayNo(0);		
+delay(2000);
+activateRelayNo(6);
+delay(2000);
+activateRelayNo(0);
+delay(200);	
 }
 
 void autoraiseBob(){
@@ -422,10 +480,13 @@ switch (command)
 {
 case '0':
 Serial.println("SMARTPad- ROOM OPTIONS");Serial.println(" Current Sensor Readings: ");readSensors();
-			Serial.println(" 1/q-  raise/lower BOB ");
+			Serial.println(" 1/q-  autoraise/lower BOB ");
 			Serial.println(" 2/w-  shortBobD/U  ");
-			Serial.println(" 3/e- bob2 ");
-			Serial.println(" 9- SEND2SERVER");
+			Serial.println(" 3/e- M2	");
+				Serial.println(" 4/5- Relays 4 / 5 lights");
+			Serial.println(" s- readAndPrint Sensors"); 
+			Serial.println(" 8- buzzUp on relay #8");
+	Serial.println(" 9- SEND2SERVER");
 			Serial.println(" r- reset all relays ");
 	delay(100);			break;
 
@@ -433,25 +494,17 @@ case '1':    autoraiseBob();	break;
 case 'q': autolowerBob(); break;
 case '2':	shortBobU();	break;
 case 'w':shortBobD(); break;
-case '3': raiseBob(); break;
-case 'e':lowerBob(); break;
-case 'f': readAndPrint(); break;
-case '4':      sendValueToLatch(8);Serial.println("Activating relay 4");break;
-   case '6':      sendValueToLatch(32);      Serial.println("Activating relay 6"); break;
-	case '5':  sendValueToLatch(16);  Serial.println("Activating relay 5");   break;
-    case '7':     sendValueToLatch(64);  Serial.println("Activating relay 7"); break;
-	case '8':    sendValueToLatch(128);      Serial.println("Activating relay 8");   break;
-	case 'r':sendValueToLatch(0);      Serial.println("Resetting all relays");  break;
-case '9':       send2Server();   break;
+case '3': testM2(); break;
+case 'e':testM2rev(); break;
+case 's': readAndPrint(); break;
+case '4':      activateRelayNo(4);break;
+   case '5': activateRelayNo(5); break;
+	   case '7': break;
+	case '8': buzzUP(); break;
+	case 'r':sendValueToLatch(0); break;
+case '9': send2server();   break;
 	}
     }
-}
-
-void sendValueToLatch(int latchValue){
-  Wire.beginTransmission(I2C_ADDR);
-  Wire.write(0x12);        // Select GPIOA
-  Wire.write(latchValue);  // Send value to bank A
-  Wire.endTransmission();
 }
 
 void storeCode(void) {
@@ -481,8 +534,6 @@ void storeCode(void) {
      Serial.println(My_Decoder.value, HEX);
   }
 }
-
-
 
 void setluxBar(){
 	barlevel = map(rm_light, 0, 1023, 0, ledCount);
