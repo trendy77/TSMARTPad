@@ -43,7 +43,7 @@ const int piezoPin = A8;
 #define NEOPIN A15
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(8, NEOPIN, NEO_GRB + NEO_KHZ800);
 
-static char tempbuffer[10];
+
 /*
 const int potDialPin = A13;
  const int potPin = A14;
@@ -155,7 +155,7 @@ int logged;int lg_light; int lg_temp;
 const int lightMin = 0;const int lightMax = 1023;
 int lightPercent;float celsius; float temp_c; 
 String temperature; uint16_t lux;
-Average<float> aveLL(10);
+Average<float> aveLL(10);static char tempbuffer[10];
 Average<float> aveLT(10);
 
 byte Tab[] = {0xc0, 0xf9, 0xa4, 0xb0, 0x99, 0x92, 0x82, 0xf8, 0x80, 0x90, 0xff}; //0,1,2,3,4,5,6,7,8,9, ALL OFF
@@ -184,14 +184,17 @@ Serial2.write(0xFE);  Serial2.write(0x50);  Serial2.write(200);
   //backlight to Red
   Serial2.write(0xFE);Serial2.write(0xD0);Serial2.write(0x255);Serial2.write(0x0); Serial2.write(0x0);	
   delay(10);
+  
+  strip.begin();  strip.setBrightness(255);	 strip.show(); 	
+  colorWipe(strip.Color(255, 0, 0), 50);    // red?
   		
   Serial2.print("TrendySMARTPad -- Connecting?");
   // pinMode(dataPin, OUTPUT);  
   // pinMode(clockPin, OUTPUT);
   //pinMode(latchPin, OUTPUT);
   
-  pinMode(KWtrigPin, OUTPUT);
-  pinMode(KWechoPin, INPUT);
+ // pinMode(KWtrigPin, OUTPUT);
+ // pinMode(KWechoPin, INPUT);
   for (int thisLed = 0; thisLed < ledCount; thisLed++) {
     pinMode(barpins[thisLed], OUTPUT); digitalWrite(barpins[thisLed], LOW);
   }
@@ -215,24 +218,7 @@ Serial2.write(0xFE);  Serial2.write(0x50);  Serial2.write(200);
   pinMode(piezoPin, OUTPUT);
   leds.begin();   leds.setLEDs(LED_RED);   leds.update();
   AFMSi.begin();			 
-  /*
-	Serial3.begin(38400);
-   	Serial3.println("0");
-   	if (Serial3.available()){
-   		char c = Serial3.read();
-   		while (c > 0)   {
-   			//	while (client.connected()) {
-   			//	while (client.available()) {
-   			Serial.print(c);
-   		}
-   		Serial.println("MPv1 Online");
-   	}
-   	else {
-   		Serial.println("MPv1 Not Found");
-   	}
-   
-   	Serial.println("PREPPING MOTORS AND IR ...");
-   */
+
   //Start your Engines...
   LoungeTilt->setSpeed(255);
   LoungeTilt->run(RELEASE);
@@ -242,11 +228,10 @@ Serial2.write(0xFE);  Serial2.write(0x50);  Serial2.write(200);
   DoorWindowTilt->run(RELEASE);
   WindowTilt->setSpeed(255);
   WindowTilt->run(RELEASE);
-  strip.begin();  strip.setBrightness(255);	 strip.show(); 	
-  colorWipe(strip.Color(255, 0, 0), 50);    // red?
+  
   lightMeter.begin();
-  lux = lightMeter.readLightLevel();
-  lg_light = lux;
+  //lux = lightMeter.readLightLevel();
+ // lg_light = lux;
   Serial.println("initiALISING WiFi");
 
   rest.variable("lg_light", &lg_light);
@@ -267,32 +252,32 @@ Serial2.write(0xFE);  Serial2.write(0x50);  Serial2.write(200);
   while (!cc3000.checkDHCP())  {    
     delay(100);  
   }  
-  Serial.println();   
+ 
   //wdt_reset();
   if (!mdns.begin("arduino", cc3000)) {   
     while(1);   
   }  
   restServer.begin();
-  Serial.println("Online and listening for connections..."); 
+  
   Serial.println("Connected to WiFi network");
-  Serial.println(F("Listening for connections..."));
   Serial.println("MEGA IR SETUP COMPLETE");
   Serial.println("Press ZERO for Options");
 Serial2.write(0xFE);Serial2.write(0xD0);Serial2.write(0x0);Serial2.write(0x0); Serial2.write(0x255);	// blue
 delay(10);
+clearTTL();
 Serial2.write("CONNECTED!");
    Wire.begin();
   My_Receiver.enableIRIn(); 
 }
 
 void loop(void){
-    if (Serial.available()) Serial1.print(Serial.read());
+  rainbowCycle(20);
+  if (Serial.available()) Serial1.print(Serial.read());
     if (Serial1.available()) Serial.print(Serial1.read());
-   
-  //rainbowCycle(20);
+    readAndPrint();
    time = millis();
   nextup = ((interval + lastup) - time);
-  readSensors();
+  
   settiltTime();
   setluxBar();
  // leds.setLEDs(LED_BLUE);   leds.update();
@@ -305,8 +290,7 @@ void loop(void){
     Serial.println("TIME TO SEND 2 SERVER");	
     readAndPrint();
     printAverage();
-    leds.setLEDs(LED_GREEN); 
-    leds.update();
+    leds.setLEDs(LED_GREEN);     leds.update();
         send2server();
     sevSegPrint(String(temperature));	
         lastup = time;
@@ -314,11 +298,7 @@ void loop(void){
 
   if (My_Receiver.GetResults(&My_Decoder)) {
     theaterChaseRainbow(50);
-    //	lcd.clear();
-    //lcd.setCursor(0, 3);
-    //	lcd.print("***** IR DETECTED ******");
-    //	knightrider();
-    clearsevSeg();	
+      clearsevSeg();	
     IRDetected();
     delay(100);
     My_Receiver.resume();
@@ -804,6 +784,10 @@ void sevSeg(int bitToSet) {
     shiftOut(dataPin, clockPin, MSBFIRST, Taf[bitToSet]);
     digitalWrite(latchPin, HIGH);
   }
+}
+
+void clearTTL(){
+Serial2.write(0xFE); Serial2.write(0x58);delay(10);
 }
 
 void clearsevSeg(){		// attempt to clear the shift register 
