@@ -147,7 +147,7 @@ void setup(){
   Wire.write(0x00); // Set all of bank A to outputs
   Wire.endTransmission();
 
-  myStepper.setSpeed(20);
+  myStepper.setSpeed(15);
   /*
   lightMeter.begin(); 
   rm_light = lux;	rest.variable("rm_temp",&rm_temp);	rest.variable("rm_light",&rm_light);       
