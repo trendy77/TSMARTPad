@@ -167,22 +167,22 @@ Serial.println("ROOMBOT SETUP COMPLETE");
 Serial.println("Press ZERO for Options");
 }
 
-
 void loop(){
-Serial.print(".");
-	time = millis(); 
+	wdt_enable(WDTO_8S);wdt_reset();
+	Serial.print(".");
+	time = millis();
 	//settiltTime();//kitttheBar();
 	nextup = ((interval + lastup) - time);
 	windowSense();
 	readSensors();
 	updateLcd();
 	setluxBar();
-
+	wdt_reset();
 	mdns.update();
-Adafruit_CC3000_ClientRef client = restServer.available();
-rest.handle(client);
+	Adafruit_CC3000_ClientRef client = restServer.available();
+	rest.handle(client);
 
-	if (time>(lastup + interval)){
+	if (time>(lastup+interval)){
 		Serial.println("Time to send server");
 		readAndPrint();
 		beep(1);
@@ -190,6 +190,8 @@ rest.handle(client);
 		delay(100);
 		lastup = time;
 		}
+wdt_reset();
+wdt_disable();
 
 if (My_Receiver.GetResults(&My_Decoder)) {
 //        blinkalt();
@@ -240,35 +242,34 @@ void senseMoveBob(){
 	delay(300);
 }
 void activateRelayNo(int relayNo){
- int command1 = relayNo;
- 	if( command1 == '0' ){
+  	if( relayNo == '0' ){
       sendValueToLatch(0); Serial.println("Resetting all relays");
     }
-    if( command1 == '1' ){
+    if( relayNo == '1' ){
       sendValueToLatch(1);      Serial.println("Activating brelay 1");
     }
-    if( command1 == '2' ){
+    if( relayNo == '2' ){
       sendValueToLatch(2);      Serial.println("Activating relay 2");
     }
-    if( command1 == '3' ){
+    if( relayNo == '3' ){
       sendValueToLatch(4);      Serial.println("Activating relay 3");
     }
-    if( command1 == '4' ){
+    if( relayNo == '4' ){
       sendValueToLatch(8);      Serial.println("Activating relay 4");
     }
-    if( command1 == '5' ){
+    if( relayNo == '5' ){
       sendValueToLatch(16);      Serial.println("Activating relay 5");
     }
-    if( command1 == '6' ){
+    if( relayNo == '6' ){
       sendValueToLatch(32);      Serial.println("Activating relay 6");
     }
-    if( command1 == '7' ){
+    if( relayNo == '7' ){
       sendValueToLatch(64);      Serial.println("Activating relay 7");
     }
-    if( command1 == '8' ){
+    if( relayNo == '8' ){
       sendValueToLatch(128);      Serial.println("Activating relay 8");
     }
-    //if( command1 == '9' ){ sendValueToLatch(255); Serial.println("Activating ALL relays");}
+    //if( relayNo == '9' ){ sendValueToLatch(255); Serial.println("Activating ALL relays");}
   }
 
 void sendValueToLatch(int latchValue){
@@ -476,7 +477,7 @@ int command = Serial.read();
 switch (command)
 {
 case '0':
-Serial.println("SMARTPad- ROOM OPTIONS");Serial.println(" Current Sensor Readings: ");readSensors();
+Serial.println("SMARTPad- ROOM OPTIONS");Serial.println(" Current Sensor Readings: ");printSensors();
 			Serial.println(" 1/q-  autoraise/lower BOB ");
 			Serial.println(" 2/w-  shortBobD/U  ");
 			Serial.println(" 3/e- M2	");
