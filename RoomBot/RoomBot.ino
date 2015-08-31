@@ -27,6 +27,7 @@ Relay8 #s:
 #include <Average.h>
 #include <LiquidTWI.h>
 
+
 BH1750 lightMeter;
 const int potDialPin = A15;
 OneWire  ds(A3);  // on pin 10 (a 4.7K resistor is necessary)
@@ -241,37 +242,8 @@ void senseMoveBob(){
 			}
 	delay(300);
 }
-int activateRelayNo(int relayNo){
-  	if( relayNo == '0' ){
-      sendValueToLatch(0); Serial.println("Resetting all relays");
-    }
-    if( relayNo == '1' ){
-      sendValueToLatch(1);      Serial.println("Activating brelay 1");
-    }
-    if( relayNo == '2' ){
-      sendValueToLatch(2);      Serial.println("Activating relay 2");
-    }
-    if( relayNo == '3' ){
-      sendValueToLatch(4);      Serial.println("Activating relay 3");
-    }
-    if( relayNo == '4' ){
-      sendValueToLatch(8);      Serial.println("Activating relay 4");
-    }
-    if( relayNo == '5' ){
-      sendValueToLatch(16);      Serial.println("Activating relay 5");
-    }
-    if( relayNo == '6' ){
-      sendValueToLatch(32);      Serial.println("Activating relay 6");
-    }
-    if( relayNo == '7' ){
-      sendValueToLatch(64);      Serial.println("Activating relay 7");
-    }
-    if( relayNo == '8' ){
-      sendValueToLatch(128);      Serial.println("Activating relay 8");
-    }
-    //if( relayNo == '9' ){ sendValueToLatch(255); Serial.println("Activating ALL relays");}
-  }
-
+ 
+ 
 void sendValueToLatch(int latchValue){
 Wire.beginTransmission(I2C_ADDR);
 Wire.write(0x12);       Wire.write(latchValue);  Wire.endTransmission();
@@ -279,54 +251,53 @@ Wire.write(0x12);       Wire.write(latchValue);  Wire.endTransmission();
 
 void buzzUP(){
        Serial.println(" COMMENCING BUZZING @ INTERCOM...  ");
-activateRelayNo(8);
+sendValueToLatch(128);
 delay(800);
-activateRelayNo(0);
+sendValueToLatch(0);
 Serial.println(" *** ");
 delay(500);
-	activateRelayNo(8);
+	sendValueToLatch(128);
 	delay(500);
-	activateRelayNo(0);       
+	sendValueToLatch(0);       
 	delay(500);
-		activateRelayNo(8);
+		sendValueToLatch(128);
 		delay(1000);
 		Serial.println(" *** *** ");
-       	activateRelayNo(0);
+       	sendValueToLatch(0);
 		delay(200);
 }
 
 void testM2(){
-activateRelayNo(3);
+sendValueToLatch(4);
 delay(2000);
-activateRelayNo(0);	
+sendValueToLatch(0);	
 delay(2000);
-activateRelayNo(3);
+sendValueToLatch(4);
 delay(2000);
-activateRelayNo(0);
+sendValueToLatch(0);
 delay(200);
 }
 
 void testM2rev(){
-activateRelayNo(6);
+sendValueToLatch(32);
 delay(2000);
-activateRelayNo(0);		
+sendValueToLatch(0);		
 delay(2000);
-activateRelayNo(6);
+sendValueToLatch(32);
 delay(2000);
-activateRelayNo(0);
+sendValueToLatch(0);
 delay(200);	
 }
 
 void autoraiseBob(){
 	windowSense();
-	while (distance <90) {
+	while (distance <80) {
 		sendValueToLatch(1); 
 		windowSense();
 		}
 	sendValueToLatch(0); 	
 	delay(50);
 	}
-	
 void autolowerBob(){
 	windowSense();
 	while (distance >2 ) { 
@@ -387,7 +358,6 @@ wintimer = (tilttimer*5);
 wintimerS = (wintimer/1000);
 	}
 
-
 int pussPull(String command) {
     digitalWrite(piezoPin, HIGH);  delay(1000);	digitalWrite(piezoPin, LOW);	delay(1000);	digitalWrite(piezoPin, HIGH);	delay(500);
 	digitalWrite(piezoPin, LOW);	delay(500);	digitalWrite(piezoPin, HIGH);	delay(500);	digitalWrite(piezoPin, LOW);  return 1;
@@ -395,11 +365,11 @@ int pussPull(String command) {
 int buzz(String command) {     
   buzzUP();return 1;
 }
-
 int raiseBOB(String Command){
-autoraiseBob();return 1;}
+windowSense();
+raiseBob();return distance;}
 int lowerBOB(String Command){
-  autolowerBob();return 1;}
+  lowerBob();return distance;}
 
 void IRDetected(){
 	My_Decoder.decode(); GotOne=true;
@@ -428,24 +398,13 @@ case BUTTON_9: lowerBob(); break;
 		}
 		}	
 }
-
-void updateLcd(){
-		lcd.setCursor(0, 0); lcd.print("BOB@ ");
-	lcd.setCursor(15, 0);	lcd.print(distance);	lcd.print("cm");
-		lcd.setCursor(0,1);	lcd.print("Next@");
-		lcd.setCursor(15, 1); lcd.print(nextup);
-		lcd.setCursor(0, 2);  lcd.print("Time-");  lcd.print(time); lcd.print("*Last-");  lcd.print(lastup);
-	lcd.setCursor(0, 3); lcd.print("*Lux=");  lcd.print(rm_light);  lcd.print("**Temp=");  lcd.print(temperature);lcd.print("C");
-	}
 	
 void raiseBob2(){
 	Serial.println("DONE");
   }
-	
 void lowerBob2(){
   Serial.println("DONE");
   }
-   
 void beep(int num){
 for (int i = 0; i < num; i++){
 digitalWrite(piezoPin, HIGH);
@@ -454,7 +413,6 @@ digitalWrite(piezoPin, LOW);
 delay(700);
 }
 }
-
 void raiseBob(){
   sendValueToLatch(1); 
   Serial.println("RAISING BLIND");
@@ -469,7 +427,6 @@ delay(5000);
   sendValueToLatch(0); 
   Serial.println("DONE");
   }
-
 
 void serialcomms(){
  if (Serial.available()){
@@ -495,8 +452,8 @@ case 'w':shortBobD(); break;
 case '3': testM2(); break;
 case 'e':testM2rev(); break;
 case 's': readAndPrint(); break;
-case '4':      activateRelayNo(4);break;
-   case '5': activateRelayNo(5); break;
+case '4':     sendValueToLatch(8);      Serial.println("Activating relay 4");break;
+   case '5':   sendValueToLatch(16);      Serial.println("Activating relay 5");break;
 	   case '7': break;
 	case '8': buzzUP(); break;
 	case 'r':sendValueToLatch(0); break;
@@ -544,12 +501,19 @@ void setluxBar(){
 		}
 	}
 }
+void updateLcd(){
+		lcd.setCursor(0, 0); lcd.print("BOB@ ");
+	lcd.setCursor(15, 0);	lcd.print(distance);	lcd.print("cm");
+		lcd.setCursor(0,1);	lcd.print("Next@");
+		lcd.setCursor(15, 1); lcd.print(nextup);
+		lcd.setCursor(0, 2);  lcd.print("Time-");  lcd.print(time); lcd.print("*Last-");  lcd.print(lastup);
+	lcd.setCursor(0, 3); lcd.print("*Lux=");  lcd.print(rm_light);  lcd.print("**Temp=");  lcd.print(temperature);lcd.print("C");
+	}
 
 void readAndPrint(){
 	readSensors();
 	printSensors();
 }
-
 void readSensors() {
 	lux = lightMeter.readLightLevel();
 	rm_light = lux;
@@ -635,7 +599,6 @@ void readSensors() {
 	aveRT.push(temp_c);
 logged++;
 }
-
 void printSensors(){
 	Serial.print("Temperature: ");
 	Serial.print(temperature);

@@ -28,7 +28,9 @@ Relay8 #s:
 
 const int stepsPerRevolution = 200;
 Stepper myStepper(stepsPerRevolution, 43,45,47,49);            
-
+// RED (COIL A)
+// GRN (COIL C)		(COIL B)	(COIL D)
+// 					YELLOW		BLUE
 
 BH1750 lightMeter;
 const int potDialPin = A15;
@@ -175,7 +177,7 @@ Serial.println("Press ZERO for Options");
 void loop(){
 
   
-   Serial.println("clockwise");
+int stepCount = 0;  // number of steps the motor has taken
   myStepper.step(stepsPerRevolution);
   delay(500);
   
@@ -492,6 +494,18 @@ delay(5000);
 
 
 void serialcomms(){
+
+Serial.println("POTSTEP");
+	   int sensorReading = analogRead(A15);
+  // map it to a range from 0 to 100:
+  int motorSpeed = map(sensorReading, 0, 1023, 0, 100);
+  // set the motor speed:
+  if (motorSpeed > 0) {
+		myStepper.setSpeed(motorSpeed);
+    // step 1/100 of a revolution:
+    myStepper.step(stepsPerRevolution/100);
+	} 
+
  if (Serial.available()){
 int command = Serial.read();
 switch (command)
@@ -517,7 +531,7 @@ case 'e':testM2rev(); break;
 case 's': readAndPrint(); break;
 case '4':      activateRelayNo(4);break;
    case '5': activateRelayNo(5); break;
-	   case '7': break;
+	   case '7':   break;
 	case '8': buzzUP(); break;
 	case 'r':sendValueToLatch(0); break;
 case '9': send2server();   break;
