@@ -33,7 +33,7 @@ OneWire  ds(A3);  // on pin 10 (a 4.7K resistor is necessary)
 #define trigPin 26      // next to VCC
 #define echoPin 28    // next to GND
 #define I2C_ADDR  0x20
-
+int relayNo;
 IRrecv My_Receiver(2);
 const int piezoPin = 0;
 LiquidTWI lcd(0);
@@ -241,7 +241,7 @@ void senseMoveBob(){
 			}
 	delay(300);
 }
-void activateRelayNo(int relayNo){
+int activateRelayNo(int relayNo){
   	if( relayNo == '0' ){
       sendValueToLatch(0); Serial.println("Resetting all relays");
     }
@@ -353,16 +353,16 @@ void send2server(){
 	Serial.println("Connecting....");
 	
 	String request = "GET " + repository + "sensor.php?rm_temp=" + aveRT.mean() +","+ aveRT.stddev() + "," + logged + " HTTP/1.0";
-	String request2 = "GET " + repository + "sensor.php?rm_light=" + aveRL.mean() + "," + aveRL.stddev() + "," + logged + " HTTP/1.0";
 	send_request(request);	Serial.print("request: ");
-	Serial.println(request);	Serial.println("Temp Data SENT");
-		send_request(request2);Serial.print("request2: ");	Serial.println(request2);	Serial.println("Light Data SENT");
+		Serial.println(request);	Serial.println("Temp Data SENT");
+		
+		delay(20);
+	String request2 = "GET " + repository + "sensor.php?rm_light=" + aveRL.mean() + "," + aveRL.stddev() + "," + logged + " HTTP/1.0";
+	send_request(request2);Serial.print("request2: ");	Serial.println(request2);	Serial.println("Light Data SENT");
     }
 void send_request(String req) {
 	Serial.println("Attempting connection to server...");
 	Adafruit_CC3000_Client client = cc3000.connectTCP(ip, port);
-	// Send request
-
 	if (client.connected()) {
 		client.println(req);
 			client.println(F(""));
