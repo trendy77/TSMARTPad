@@ -291,22 +291,35 @@ delay(200);
 
 void autoraiseBob(){
 	windowSense();
-	while (distance <80) {
+	if (distance < 80){
 		sendValueToLatch(1); 
-		windowSense();
+		windowSense(); 
+		Serial.print("dist @");Serial.println(distance);
+			lcd.clear();lcd.setCursor(2,0);lcd.print(distance);
+		while (distance <80) {
+			windowSense();
+			Serial.print("dist @");Serial.println(distance);
+			lcd.clear();lcd.setCursor(2,0);lcd.print(distance);
 		}
 	sendValueToLatch(0); 	
 	delay(50);
 	}
+}
+
 void autolowerBob(){
 	windowSense();
-	while (distance >2 ) { 
-		sendValueToLatch(2); 
+	if (distance >2 ) { 
+	sendValueToLatch(2); 
+	windowSense(); 
+	Serial.print("dist @");Serial.println(distance);
+		while (distance >2){
 		windowSense(); 
+		Serial.print("dist @");Serial.println(distance);
 		}
 	sendValueToLatch(0); 
 	delay(50);
 	}
+}	
 	
 void shortBobU(){
 sendValueToLatch(1); 
@@ -324,16 +337,18 @@ void send2server(){
 	Serial.println("Connecting....");
 	
 	String request = "GET " + repository + "sensor.php?rm_temp=" + aveRT.mean() +","+ aveRT.stddev() + "," + logged + " HTTP/1.0";
-	send_request(request);	Serial.print("request: ");
+	delay(10);send_request(request);	Serial.print("request: ");
 		Serial.println(request);	Serial.println("Temp Data SENT");
 		
-		delay(20);
+	//	delay(20);
 	String request2 = "GET " + repository + "sensor.php?rm_light=" + aveRL.mean() + "," + aveRL.stddev() + "," + logged + " HTTP/1.0";
 	send_request(request2);Serial.print("request2: ");	Serial.println(request2);	Serial.println("Light Data SENT");
     }
 void send_request(String req) {
 	Serial.println("Attempting connection to server...");
+	//delay(10);
 	Adafruit_CC3000_Client client = cc3000.connectTCP(ip, port);
+	delay(10);
 	if (client.connected()) {
 		client.println(req);
 			client.println(F(""));
@@ -344,11 +359,12 @@ void send_request(String req) {
 	while (client.connected()) {
 		while (client.available()) {
 			char c = client.read();
-                        Serial.print(c);
+            Serial.print(c);
+	logged = 0;
+			}
 		}
-	}
 	Serial.println("Closing connection");
-	Serial.println("");
+
 	client.close();
 	}
 
