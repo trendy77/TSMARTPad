@@ -274,14 +274,19 @@ void autoraiseBob(){
 	
 void autolowerBob(){
 	windowSense();
-	while (distance >2 ) { 
-		sendValueToLatch(2); 
+	if (distance >2 ) { 
+	sendValueToLatch(2); 
+	windowSense(); 
+	Serial.print("dist @");Serial.print(distance);
+		while (distance >2){
 		windowSense(); 
+		Serial.print("dist @");Serial.print(distance);
 		}
 	sendValueToLatch(0); 
 	delay(50);
 	}
-	
+}	
+
 void shortBobU(){
 sendValueToLatch(1); 
 	Serial.println("miniRaising ");
