@@ -32,8 +32,8 @@ OneWire ds(A1);
 BH1750 lightMeter;
 IRrecv My_Receiver(A3);
 
-#define KWtrigPin 44
-#define KWechoPin 46
+#define KWtrigPin 0
+#define KWechoPin 0
 int maximumRange = 200; // Maximum range needed
 int minimumRange = 0; // Minimum range needed
 long duration, distance; // Duration used to calculate distance
@@ -43,11 +43,7 @@ const int piezoPin = A8;
 #define NEOPIN A15
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(8, NEOPIN, NEO_GRB + NEO_KHZ800);
 
-// ii. Motors
-const int kitchWinF = 43;
-const int kitchWinR = 45;
 
-static char tempbuffer[10];
 /*
 const int potDialPin = A13;
  const int potPin = A14;
@@ -55,11 +51,10 @@ const int potDialPin = A13;
  const int loungeWinR = 0;  // NOW DONE BY V1 SHIELD IN LOUNGE
  int potVal = 0;
  int potDialVal;
- 
- #define REDPIN 6
+  #define REDPIN 6
  #define GREENPIN 7
  #define BLUEPIN 2
- #define FADESPEED 5     // make this higher to slow down
+ #define FADESPEED 5   
  int r, g, b;
  */
 const int num_leds = 1;const int PIN_CKI = 12;const int PIN_SDI = 13;RGBLEDChain leds(num_leds, PIN_CKI, PIN_SDI);
@@ -83,6 +78,8 @@ MDNSResponder mdns;
 int barpins[] = { 22, 24, 26, 28, 30, 32, 34, 36, 38,40 };   // an array of pin numbers to which LEDs are attached
 const int ledCount = 10; 
 int barlevel;
+int ledmin = 100;        // sets the max speed (0 = fast) the lower the number the faster it
+int ledmax = 200;      // sets the min speed (100 = slow) the higher the number the slower it can go
 
 Adafruit_CC3000 cc3000 = Adafruit_CC3000(ADAFRUIT_CC3000_CS, ADAFRUIT_CC3000_IRQ, ADAFRUIT_CC3000_VBAT,SPI_CLOCK_DIV2);
 uint32_t ip = cc3000.IP2U32(192,168,0,110);
@@ -103,13 +100,10 @@ Adafruit_DCMotor *DoorWindowTilt1 = AFMSi.getMotor(2);
 //Servo Servo1;
 
 unsigned long interval = 300000;           // every minute interval at which to send sensor data to server
-unsigned long time;
-long nextup; 
-long lastup;
+unsigned long time;long nextup; long lastup;
 
 #define MY_PROTOCOL 	SONY
 #define MY_PRO2COL 	NEC
-//NEC CODES FOR DEBUG
 #define UP_ARROW2      	0x61D6D827 //	INCREASE TILT TIME +1SEC
 #define DOWN_ARROW2    	0x61D658A7 //DECREASE TILT TIME -1SEC
 #define RIGHT_ARROW2   	0x61D6609F //Move All tilt FWD
@@ -144,8 +138,8 @@ long lastup;
 #define PAUSE 			0x400B	
 #define STOP 			0xB
 #define PLAY 			0x200B		
-#define FAST FWD		0x20C108
-#define FAST RWD		0xCC108
+#define FAST_FWD		0x20C108
+#define FAST_RWD		0xCC108
 
 int sevSegtimeS = (time/10000);
 int tilttimer = 2000; 	//default length of "tilt fwd or bwd'
@@ -153,70 +147,67 @@ int tiltmax = 10000;
 int tiltmin = 1000;
 int testtimer = 1000; 
 int sevSegtime = time;
-int num;		// for BEEP function
 int tilttimerS = (tilttimer / 1000);
 int wintimer = (tilttimer * 5);
 int wintimerS = (wintimer / 1000);
 
-int logged;
-int lg_light; 
-int lg_temp;
-const int lightMin = 0;
-const int lightMax = 1023;
-int lightPercent;
-float celsius; 
-float temp_c; 
-String temperature; 
-uint16_t lux;
-Average<float> aveLL(10);
+int logged;int lg_light; int lg_temp;
+const int lightMin = 0;const int lightMax = 1023;
+int lightPercent;float celsius; float temp_c; 
+String temperature; uint16_t lux;
+Average<float> aveLL(10);static char tempbuffer[10];
 Average<float> aveLT(10);
 
 byte Tab[] = {0xc0, 0xf9, 0xa4, 0xb0, 0x99, 0x92, 0x82, 0xf8, 0x80, 0x90, 0xff}; //0,1,2,3,4,5,6,7,8,9, ALL OFF
 byte Taf[] = {0xA0, 0x83, 0xa7, 0xa1, 0x86, 0x8e, 0xc2, 0x8b, 0xe6, 0xe1, 0x89, 0xc7, 0xaa, 0xc8, 0xa3, 0x8c, 0x98, 0xce, 0x9b, 0x87, 0xc1, 0xe3, 0xd5, 0xb6, 0x91, 0xb8};//a,b,c,d,e,f,g,h,i,j,k,l,o,m,n,o,p,q,r,s,t,u,v,w,x,y,z
 byte Tap[] = {0xff, 0x7f}; //"space", "."
-const int latchPin = A10;      //Pin connected to latch pin7SEG
-const int clockPin = A11;
-const int dataPin = A12;
+const int latchPin = A12;      //Pin connected to latch pin7SEG
+const int clockPin = A13;
+const int dataPin = A14;
 
 IRTYPES codeType;      unsigned long codeValue;int codeBits; unsigned int rawCodes[RAWBUF];int rawCount; bool GotOne, GotNew;
 IRdecode My_Decoder;
+//int num;		// for BEEP function
 
-int ledmin = 100;        // sets the max speed (0 = fast) the lower the number the faster it
-int ledmax = 200;      // sets the min speed (100 = slow) the higher the number the slower it can go
+#define I2C_ADDR  0x20
 
 void setup(){
   Serial.begin(115200);
   Serial.println("TLOUNGE INITIALISING...");
   Serial2.begin(9600);
-  Serial2.print("hello nigger?");
+  // set the contrast-- 200 is a good middle place to try out
+Serial2.write(0xFE);  Serial2.write(0x50);  Serial2.write(200);
+  delay(10);       
+    // set the brightness - we'll max it (255 is max brightness)
+  Serial2.write(0xFE);  Serial2.write(0x99);  Serial2.write(255);
+  delay(10);
+  //backlight to Red
+  Serial2.write(0xFE);Serial2.write(0xD0);Serial2.write(0x255);Serial2.write(0x0); Serial2.write(0x0);	
+  delay(10);
+  
+  strip.begin();  strip.setBrightness(255);	 strip.show(); 	
+  colorWipe(strip.Color(255, 0, 0), 50);    // red?
+  		
+  Serial2.print("TrendySMARTPad -- Connecting?");
   // pinMode(dataPin, OUTPUT);  
   // pinMode(clockPin, OUTPUT);
   //pinMode(latchPin, OUTPUT);
-      /*	lcd.begin(20, 4);
-   		lcd.setBacklight(HIGH);
-   		lcd.setCursor(0, 0);
-   		lcd.print("TrendyLiving, Smarter..");
-   */
-  pinMode(KWtrigPin, OUTPUT);
-  pinMode(KWechoPin, INPUT);
+  
+ // pinMode(KWtrigPin, OUTPUT);
+ // pinMode(KWechoPin, INPUT);
   for (int thisLed = 0; thisLed < ledCount; thisLed++) {
     pinMode(barpins[thisLed], OUTPUT); digitalWrite(barpins[thisLed], LOW);
   }
   GotOne = false; GotNew = false;   codeType = UNKNOWN;  codeValue = 0;
   //	clearsevSeg();
-  /*Serial1.begin(57600);	
+  Serial1.begin(9600);	
    Serial1.println("hello on BT?");
    if (Serial1.available()){
-   	char c = Serial1.read();
-   	while (c > 0)   {
-   		//	while (client.connected()) {
-   		//	while (client.available()) {
-   		Serial.print(c);
-   	}
    	Serial.println("Bluetooth Client Online");
    }   else {
    	Serial.println("BT Not Found");
    }
+   /*
    for (byte count = 0; count < 4; count++) {
    	pinMode(rleds[count], OUTPUT);   		pinMode(gleds[count], OUTPUT);   		digitalWrite(gleds[count], HIGH);   		digitalWrite(rleds[count], HIGH);
    	}
@@ -227,24 +218,7 @@ void setup(){
   pinMode(piezoPin, OUTPUT);
   leds.begin();   leds.setLEDs(LED_RED);   leds.update();
   AFMSi.begin();			 
-  /*
-	Serial3.begin(38400);
-   	Serial3.println("0");
-   	if (Serial3.available()){
-   		char c = Serial3.read();
-   		while (c > 0)   {
-   			//	while (client.connected()) {
-   			//	while (client.available()) {
-   			Serial.print(c);
-   		}
-   		Serial.println("MPv1 Online");
-   	}
-   	else {
-   		Serial.println("MPv1 Not Found");
-   	}
-   
-   	Serial.println("PREPPING MOTORS AND IR ...");
-   */
+
   //Start your Engines...
   LoungeTilt->setSpeed(255);
   LoungeTilt->run(RELEASE);
@@ -254,17 +228,11 @@ void setup(){
   DoorWindowTilt->run(RELEASE);
   WindowTilt->setSpeed(255);
   WindowTilt->run(RELEASE);
-  strip.begin();  strip.setBrightness(255);	 strip.show(); 	
-  colorWipe(strip.Color(255, 0, 0), 50);    // red?
+  
   lightMeter.begin();
-  lux = lightMeter.readLightLevel();
-  lg_light = lux;
+  //lux = lightMeter.readLightLevel();
+ // lg_light = lux;
   Serial.println("initiALISING WiFi");
-  digitalWrite(kitchWinF, LOW);
-  digitalWrite(kitchWinR, LOW);
-  pinMode(kitchWinF, OUTPUT);
-  pinMode(kitchWinR, OUTPUT);
-
 
   rest.variable("lg_light", &lg_light);
   rest.variable("lg_temp", &lg_temp);
@@ -284,90 +252,59 @@ void setup(){
   while (!cc3000.checkDHCP())  {    
     delay(100);  
   }  
-  Serial.println();   
+ 
   //wdt_reset();
   if (!mdns.begin("arduino", cc3000)) {   
     while(1);   
   }  
   restServer.begin();
-  Serial.println("Online and listening for connections..."); 
+  
   Serial.println("Connected to WiFi network");
-  wdt_enable(WDTO_8S);
-  wdt_reset();
-  Serial.println(F("Listening for connections..."));
   Serial.println("MEGA IR SETUP COMPLETE");
   Serial.println("Press ZERO for Options");
-  //lcd.setCursor(2, 0);
-  //lcd.println("GO!");
-  wdt_reset();
+Serial2.write(0xFE);Serial2.write(0xD0);Serial2.write(0x0);Serial2.write(0x0); Serial2.write(0x255);	// blue
+delay(10);
+clearTTL();
+Serial2.write("CONNECTED!");
+   Wire.begin();
   My_Receiver.enableIRIn(); 
 }
 
 void loop(void){
-  if (Serial.available()) Serial2.print(Serial.read());
-
-  theaterChaseRainbow(50);
-  wdt_reset();
-  time = millis();
+  printTTL();
+ 
+  if (Serial.available()) Serial1.print(Serial.read());
+    if (Serial1.available()) Serial.print(Serial1.read());
+    readAndPrint();
+   time = millis();
   nextup = ((interval + lastup) - time);
-  readSensors();
+  
   settiltTime();
   setluxBar();
-  theaterChase(strip.Color(0, 0, 127), 50); // Blue
-  leds.setLEDs(LED_BLUE); 
-  leds.update();
+ // leds.setLEDs(LED_BLUE);   leds.update();
 
   mdns.update();
   Adafruit_CC3000_ClientRef client = restServer.available();
   rest.handle(client);
-  /*
-	lcd.setCursor(0, 0); 
-   	lcd.print("Time = ** ** **");
-   	lcd.print(time / 1000);
-   	lcd.setCursor(0, 1);
-   	lcd.print("Lastup = ** ** **");   lcd.print(lastup);
-   	lcd.setCursor(0, 2);
-   	//lcd.print("Nextup"); lcd.print(nextup);
-   	lcd.print("Lux="); lcd.print(lux);
-   	lcd.print(" &/or "); lcd.print(lightPercent);
-   	lcd.setCursor(0, 3);
-   	//lcd.print("Nextup"); lcd.print(nextup);
-   	lcd.print("Temp="); lcd.print(celsius);
-   	lcd.print("C");	lcd.print(" &/or ="); lcd.print(lightPercent);
-   	lcd.print("** TTimer@");	lcd.print(tilttimerS); 
-   
-   	potVal = analogRead(potPin);
-   	potDialVal = analogRead(potDialPin);
-   */
-  wdt_reset();
+
   if (time > (lastup + interval)){
-    wdt_reset();
     Serial.println("TIME TO SEND 2 SERVER");	
     readAndPrint();
     printAverage();
-    leds.setLEDs(LED_GREEN); 
-    leds.update();
-    wdt_reset();
-    send2server();
+    leds.setLEDs(LED_GREEN);     leds.update();
+        send2server();
     sevSegPrint(String(temperature));	
-    wdt_reset();
-    lastup = time;
+        lastup = time;
+         rainbowCycle(20);0987yty654re3
   }
-
-  wdt_disable();
 
   if (My_Receiver.GetResults(&My_Decoder)) {
     theaterChaseRainbow(50);
-    //	lcd.clear();
-    //lcd.setCursor(0, 3);
-    //	lcd.print("***** IR DETECTED ******");
-    //	knightrider();
-    clearsevSeg();	
+      clearsevSeg();	
     IRDetected();
     delay(100);
     My_Receiver.resume();
   }
-  rest.handle(client); 
   serialcomms();
 }
 
@@ -388,6 +325,12 @@ int tiltBK(String Command){
   return 1;
 }
 
+void sendValueToLatch(int latchValue){
+Wire.beginTransmission(I2C_ADDR);
+Wire.write(0x12);        // Select GPIOA
+Wire.write(latchValue);  // Send value to bank A
+Wire.endTransmission();
+}
 void tiltfwd(){
   blink(rleds[0], tilttimerS);
   blink(gleds[0], tilttimerS);
@@ -611,7 +554,6 @@ void serialcomms() {
       //	Serial.print("potDialVal    ");
       //	Serial.println(potDialVal);
       //Serial.print("potVal2     ");
-      Serial.println("");
       Serial.println("LOUGEDUINO TSMARTPad MOTOR CONTROLLER");
       Serial.print("       Time is   "); 
       Serial.println(time);
@@ -846,6 +788,16 @@ void sevSeg(int bitToSet) {
   }
 }
 
+void printTTL(){
+  clearTTL();
+ Serial2.write(0xFE); Serial2.write(0x48);delay(10);   // moves cursor to home (1,1)
+ Serial2.write("T="); Serial2.write(time); Serial2.write(" *****");
+ Serial2.write("TempC:"); Serial2.write(lg_temp); Serial2.write("Lux=");Serial2.write(lg_light);
+}
+void clearTTL(){
+Serial2.write(0xFE); Serial2.write(0x58);delay(10);
+}
+
 void clearsevSeg(){		// attempt to clear the shift register 
   digitalWrite(latchPin, LOW);
   shiftOut(dataPin, clockPin, MSBFIRST, Tab[0]);
@@ -908,58 +860,34 @@ void readSensors() {
   switch (addr[0]) {
   case 0x10:
     //     Serial.println("  Chip = DS18S20");  // or old DS1820
-    type_s = 1;
-    break;
-  case 0x28:
-    //      Serial.println("  Chip = DS18B20");
-    type_s = 0;
-    break;
-  case 0x22:
-    //     Serial.println("  Chip = DS1822");
-    type_s = 0;
-    break;
-  default:
-    //     Serial.println("Device is not a DS18x20 family device.");
-    return;
+    type_s = 1;    break;
+  case 0x28:    //      Serial.println("  Chip = DS18B20");
+    type_s = 0;    break;
+  case 0x22:    //     Serial.println("  Chip = DS1822");
+    type_s = 0;    break;
+  default:    return;
   } 
-
-  ds.reset();
-  ds.select(addr);
-  ds.write(0x44, 1);        // start conversion, with parasite power on at the end
+  ds.reset();  ds.select(addr);  ds.write(0x44, 1);        // start conversion, with parasite power on at the end
   delay(1000);     // maybe 750ms is enough, maybe not
-  // we might do a ds.depower() here, but the reset will take care of it.
-  present = ds.reset();
-  ds.select(addr);    
-  ds.write(0xBE);         // Read Scratchpad
+    present = ds.reset();  ds.select(addr);     ds.write(0xBE);         // Read Scratchpad
   //  Serial.print("  Data = ");
   //  Serial.print(present, HEX);
   //  Serial.print(" ");
   for ( i = 0; i < 9; i++) {           // we need 9 bytes
     data[i] = ds.read();
-    //   Serial.print(data[i], HEX);
-  }
-  int16_t raw = (data[1] << 8) | data[0];
-  if (type_s) {
+     }
+  int16_t raw = (data[1] << 8) | data[0];  if (type_s) {
     raw = raw << 3; // 9 bit resolution default
     if (data[7] == 0x10) {
       raw = (raw & 0xFFF0) + 12 - data[6];
     }
-  } 
-  else {
-    byte cfg = (data[4] & 0x60);
-    if (cfg == 0x00) raw = raw & ~7;  // 9 bit resolution, 93.75 ms
-    else if (cfg == 0x20) raw = raw & ~3; // 10 bit res, 187.5 ms
-    else if (cfg == 0x40) raw = raw & ~1; // 11 bit res, 375 ms
+  }  else {
+    byte cfg = (data[4] & 0x60);    if (cfg == 0x00) raw = raw & ~7;  // 9 bit resolution, 93.75 ms
+    else if (cfg == 0x20) raw = raw & ~3;     else if (cfg == 0x40) raw = raw & ~1; // 11 bit res, 375 ms
   }
-  celsius = (float)raw / 16.0;
-  // Serial.print("  Temperature = ");
-  // Serial.print(celsius);
-  /// Serial.print(" Celsius, ");
-  temp_c = celsius;
-  dtostrf(temp_c,6, 2, tempbuffer);
-  temperature = tempbuffer;
-  temperature.trim();
-  // add to ave floats
+  celsius = (float)raw / 16.0;  // Serial.print("  Temperature = ");   Serial.print(celsius); Serial.print(" Celsius, ");
+  temp_c = celsius;  dtostrf(temp_c,6, 2, tempbuffer);
+  temperature = tempbuffer;  temperature.trim();
   aveLL.push(lg_light); 
   aveLT.push(temp_c); 
   logged++;
@@ -1029,10 +957,10 @@ void kitchWinFwd(){
   Serial.println(" secs");  	  
   leds.setLEDs(LED_YELLOW);
   leds.update();
-  digitalWrite(kitchWinF, LOW);
-  digitalWrite(kitchWinR, HIGH);
+sendValueToLatch(1);
   delay(wintimer);
-  digitalWrite(kitchWinR, LOW);
+sendValueToLatch(0);
+  delay(50);
 }
 void kitchWinBwd(){
   leds.setLEDs(LED_YELLOW);
@@ -1040,10 +968,8 @@ void kitchWinBwd(){
   Serial.println(" kitchWindow Closing "); 
   Serial.print(wintimerS); 
   Serial.println(" secs");
-  digitalWrite(kitchWinR, LOW);	
-  digitalWrite(kitchWinF, HIGH);	
   delay(wintimer);	
-  digitalWrite(kitchWinF, LOW);
+
 }
 
 
@@ -1053,8 +979,8 @@ void send2server(){
   readAndPrint(); 
   //	aveLL.push(lg_light); aveLT.push(lg_temp); 
 
-  String request = "GET" + repository + "sensor.php?lg_temp=" + aveLT.mean() +","+ aveLT.stddev() + "," + logged + "HTTP/1.0";
-  String request2 = "GET" + repository + "sensor.php?lg_light=" + aveLL.mean() + "," + aveLL.stddev() + "," + logged + "HTTP/1.0";
+  String request = "GET " + repository + "sensor.php?lg_temp=" + aveLT.mean() +","+ aveLT.stddev() + "," + logged + " HTTP/1.0";
+  String request2 = "GET " + repository + "sensor.php?lg_light=" + aveLL.mean() + "," + aveLL.stddev() + "," + logged + " HTTP/1.0";
   send_request(request);	
   Serial.print("request: ");
   Serial.println(request);	
@@ -1184,18 +1110,19 @@ void senseMoveBob(){
 void autoraiseKW(){
   windowSense();
   while (distance > 3) {  
-    digitalWrite(kitchWinF, HIGH); 
+ 	sendValueToLatch(1);
+	delay(300);
   }
-  digitalWrite(kitchWinR, LOW);
+	sendValueToLatch(0);
   delay(50);
 }
 void autolowerKW(){
   windowSense();
   while (distance < 100) { 
-    digitalWrite(kitchWinR, LOW);
-    digitalWrite(kitchWinF, HIGH);
+	sendValueToLatch(2);
+delay(300);
   }
-  digitalWrite(kitchWinR, LOW);
+	sendValueToLatch(0);
   delay(50);
 }
 
@@ -1228,16 +1155,13 @@ void rainbow(uint8_t wait) {
   }
 }
 
-// Slightly different, this makes the rainbow equally distributed throughout
 void rainbowCycle(uint8_t wait) {
   uint16_t i, j;
-
   for(j=0; j<256*5; j++) { // 5 cycles of all colors on wheel
     for(i=0; i< strip.numPixels(); i++) {
       strip.setPixelColor(i, Wheel(((i * 256 / strip.numPixels()) + j) & 255));
     }
-    strip.show();
-    delay(wait);
+    strip.show();delay(wait);
   }
 }
 
