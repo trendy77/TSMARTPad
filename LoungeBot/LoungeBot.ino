@@ -23,9 +23,9 @@
 #include <FTRGBLED.h>
 #include <Adafruit_NeoPixel.h>
 
-//LiquidTWI lcd(0);			// Connect via i2c, default address #0 (A0-A2 not jumpered)
+
 //#include "LedControl.h"
-//LiquidTWI lcd(0);
+
 // VARIABLES 	
 //i. Sensors
 OneWire ds(A1);  
@@ -189,49 +189,50 @@ Serial2.write(0xFE);  Serial2.write(0x50);  Serial2.write(200);
   colorWipe(strip.Color(255, 0, 0), 50);    // red?
   		
   Serial2.print("TrendySMARTPad -- Connecting?");
-  // pinMode(dataPin, OUTPUT);  
-  // pinMode(clockPin, OUTPUT);
-  //pinMode(latchPin, OUTPUT);
-  
- // pinMode(KWtrigPin, OUTPUT);
- // pinMode(KWechoPin, INPUT);
+ /* pinMode(dataPin, OUTPUT);  
+ pinMode(clockPin, OUTPUT);
+ pinMode(latchPin, OUTPUT);
+  pinMode(KWtrigPin, OUTPUT);
+  pinMode(KWechoPin, INPUT);
   for (int thisLed = 0; thisLed < ledCount; thisLed++) {
     pinMode(barpins[thisLed], OUTPUT); digitalWrite(barpins[thisLed], LOW);
   }
-  GotOne = false; GotNew = false;   codeType = UNKNOWN;  codeValue = 0;
-  //	clearsevSeg();
-  Serial1.begin(9600);	
-   Serial1.println("hello on BT?");
-   if (Serial1.available()){
-   	Serial.println("Bluetooth Client Online");
-   }   else {
-   	Serial.println("BT Not Found");
-   }
-   /*
+  clearsevSeg();
+  
    for (byte count = 0; count < 4; count++) {
    	pinMode(rleds[count], OUTPUT);   		pinMode(gleds[count], OUTPUT);   		digitalWrite(gleds[count], HIGH);   		digitalWrite(rleds[count], HIGH);
    	}
    	for (byte count1 = 0; count1 < 4; count1++) {
    	pinMode(bleds[count1], OUTPUT);	digitalWrite(bleds[count1], HIGH);   delay(300);
          }
-   	pinMode(potPin, INPUT); pinMode(potDialPin, INPUT); 	   */
-  pinMode(piezoPin, OUTPUT);
-  leds.begin();   leds.setLEDs(LED_RED);   leds.update();
+   	pinMode(potPin, INPUT); pinMode(potDialPin, INPUT); 	   
+	*/
+  
+  GotOne = false; GotNew = false;   codeType = UNKNOWN;  codeValue = 0;
+    Serial1.begin(9600);	
+	Serial1.println("hello on BT?");
+	if (Serial1.available()){
+   	Serial.println("Bluetooth Client Online");
+   }   else {
+   	Serial.println("BT Not Found");
+   }
+   pinMode(piezoPin, OUTPUT);
+ // leds.begin();   leds.setLEDs(LED_RED);   leds.update();
   AFMSi.begin();			 
 
   //Start your Engines...
-  LoungeTilt->setSpeed(255);
-  LoungeTilt->run(RELEASE);
+ // LoungeTilt->setSpeed(255);
+ // LoungeTilt->run(RELEASE);
   KitchenTilt->setSpeed(255);
   KitchenTilt->run(RELEASE);
-  DoorWindowTilt->setSpeed(255);
-  DoorWindowTilt->run(RELEASE);
+//  DoorWindowTilt->setSpeed(255);
+ // DoorWindowTilt->run(RELEASE);
   WindowTilt->setSpeed(255);
   WindowTilt->run(RELEASE);
   
   lightMeter.begin();
-  //lux = lightMeter.readLightLevel();
- // lg_light = lux;
+  lux = lightMeter.readLightLevel();
+  lg_light = lux;
   Serial.println("initiALISING WiFi");
 
   rest.variable("lg_light", &lg_light);
@@ -271,8 +272,7 @@ Serial2.write("CONNECTED!");
 }
 
 void loop(void){
-  printTTL();
- 
+  rainbowCycle(20);
   if (Serial.available()) Serial1.print(Serial.read());
     if (Serial1.available()) Serial.print(Serial1.read());
     readAndPrint();
@@ -291,15 +291,14 @@ void loop(void){
     Serial.println("TIME TO SEND 2 SERVER");	
     readAndPrint();
     printAverage();
-    leds.setLEDs(LED_GREEN);     leds.update();
+  //  leds.setLEDs(LED_GREEN);     leds.update();
         send2server();
-    sevSegPrint(String(temperature));	
+  //  sevSegPrint(String(temperature));	
         lastup = time;
-         rainbowCycle(20);0987yty654re3
   }
 
   if (My_Receiver.GetResults(&My_Decoder)) {
-    theaterChaseRainbow(50);
+  //  theaterChaseRainbow(50);
       clearsevSeg();	
     IRDetected();
     delay(100);
@@ -557,12 +556,12 @@ void serialcomms() {
       Serial.println("LOUGEDUINO TSMARTPad MOTOR CONTROLLER");
       Serial.print("       Time is   "); 
       Serial.println(time);
-      Serial.print("Last server update @   "); 
+      Serial.print("Last  @   "); 
       Serial.println(lastup);
-      Serial.print("Next server update in   "); 
+      Serial.print("Next in   "); 
       Serial.println(nextup);
       Serial.print("***Tilt timer @   "); 
-      Serial.print(tilttimer); 
+      Serial.printlm(tilttimer); 
       Serial.print(" ****Win timer @   "); 
       Serial.println(wintimer);
       Serial.print("Current Average LUX is "); 
@@ -579,7 +578,7 @@ void serialcomms() {
       Serial.println(" **5/t- ALL TILT 6 SEC");
       Serial.println(" 6/y- KITCHEN WINDOW OPEN/CLOSE");
       Serial.println("   P = POTMODE ALL TILTSPEED ** ");
-      Serial.println(" z/x/c/v- red on off greend leds on off ");
+      Serial.println(" z/x/c/v- relays 1-4; m to reset ");
       Serial.println(" 8- Lux Lumen Info");
       Serial.println(" 9-  SEND2SERVER ");
       delay(100);
@@ -593,18 +592,11 @@ void serialcomms() {
       delay(30); // 'coast' for 1/10 second
       readAndPrint();
       break;
-    case 'z':
-      redon();
-      break;      
-    case 'x':
-      redoff();
-      break;
-    case 'c':
-      gedon(); 
-      break;    
-    case 'v':
-      gedoff();
-      break;
+    case 'z':      sendValueToLatch(1);break;      
+    case 'x':      sendValueToLatch(2);      break;
+    case 'c':      sendValueToLatch(4);break;    
+    case 'v':     sendValueToLatch(8);      break;
+	case 'm':      sendValueToLatch(0);      break;
     case 'q':
       Serial.println(" Direction: BACKWARD - KitchenTilt ... ");
       KitchenTilt->run(BACKWARD);
@@ -788,12 +780,6 @@ void sevSeg(int bitToSet) {
   }
 }
 
-void printTTL(){
-  clearTTL();
- Serial2.write(0xFE); Serial2.write(0x48);delay(10);   // moves cursor to home (1,1)
- Serial2.write("T="); Serial2.write(time); Serial2.write(" *****");
- Serial2.write("TempC:"); Serial2.write(lg_temp); Serial2.write("Lux=");Serial2.write(lg_light);
-}
 void clearTTL(){
 Serial2.write(0xFE); Serial2.write(0x58);delay(10);
 }
