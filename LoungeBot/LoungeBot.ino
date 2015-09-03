@@ -268,14 +268,16 @@ delay(10);
 clearTTL();
 Serial2.write("CONNECTED!");
    Wire.begin();
+   rainbowCycle(20);
   My_Receiver.enableIRIn(); 
 }
 
 void loop(void){
-  rainbowCycle(20);
+      colorWipe(strip.Color(0, 0, 255), 50);   
+	  Serial.print(".");  
   if (Serial.available()) Serial1.print(Serial.read());
     if (Serial1.available()) Serial.print(Serial1.read());
-    readAndPrint();
+    readSensors();
    time = millis();
   nextup = ((interval + lastup) - time);
   
@@ -561,7 +563,7 @@ void serialcomms() {
       Serial.print("Next in   "); 
       Serial.println(nextup);
       Serial.print("***Tilt timer @   "); 
-      Serial.printlm(tilttimer); 
+      Serial.println(tilttimer); 
       Serial.print(" ****Win timer @   "); 
       Serial.println(wintimer);
       Serial.print("Current Average LUX is "); 
@@ -569,7 +571,6 @@ void serialcomms() {
       delay(500);
       Serial.print("Current Average TempC is "); 
       Serial.println(aveLT.mean());
-
       readAndPrint();
       Serial.println(" 1/q-  KitchenTILT 5 SEC ");
       Serial.println(" 2/w-  WindowTILT 5 SEC ");
@@ -967,28 +968,30 @@ void send2server(){
 
   String request = "GET " + repository + "sensor.php?lg_temp=" + aveLT.mean() +","+ aveLT.stddev() + "," + logged + " HTTP/1.0";
   String request2 = "GET " + repository + "sensor.php?lg_light=" + aveLL.mean() + "," + aveLL.stddev() + "," + logged + " HTTP/1.0";
-  send_request(request);	
-  Serial.print("request: ");
+  send_request(request);
+  delay(20);	Serial.print("request: ");
   Serial.println(request);	
   Serial.println("Temp Data SENT");
+  delay(20); 
   send_request(request2);
   Serial.print("request2: ");	
   Serial.println(request2);	
   Serial.println("Light Data SENT");
 }
 void send_request(String req) {
-
+wdt_enable(WDTO_8S); wdt_reset();
   Serial.println("Attempting connection to server...");
-  Adafruit_CC3000_Client client = cc3000.connectTCP(ip, port);
-  // Send request
-
+ Adafruit_CC3000_Client client = cc3000.connectTCP(ip, port);
+ delay(20);
+ wdt_reset();
     if (client.connected()) {
     client.println(req);
     client.println(F(""));
-  }
+	  }
   else {
     Serial.println(F("Connection failed"));
   }
+  wdt_reset();
   while (client.connected()) {
     while (client.available()) {
       char c = client.read();
@@ -998,7 +1001,8 @@ void send_request(String req) {
   Serial.println("Connection Closed");
   Serial.println("");
   client.close();
-
+wdt_reset();
+wdt_disable();
 }
 
 void storeCode(void) {
