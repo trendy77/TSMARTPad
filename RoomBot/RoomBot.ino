@@ -230,7 +230,7 @@ void windowSense(){
 	int tempdistance = (duration / 2) / 29.1;
 		if (distance == 0){
 		distance = tempdistance;
-		} else if (nonSense > 2){
+		} else if (nonSense > 3){
 		Serial.print("nonsense alert - recalibrating BOB");
 		delay(2500);
 		nonSense=0;distance=0;
@@ -356,7 +356,7 @@ void send2server(){
 	delay(10);send_request(request);	Serial.print("request: ");
 		Serial.println(request);	Serial.println("Temp Data SENT");
 		
-	//	delay(20);
+	delay(20);
 	String request2 = "GET " + repository + "sensor.php?rm_light=" + aveRL.mean() + "," + aveRL.stddev() + "," + logged + " HTTP/1.0";
 	send_request(request2);Serial.print("request2: ");	Serial.println(request2);	Serial.println("Light Data SENT");
     }
@@ -364,7 +364,7 @@ void send_request(String req) {
 	Serial.println("Attempting connection to server...");
 	//delay(10);
 	Adafruit_CC3000_Client client = cc3000.connectTCP(ip, port);
-	delay(10);
+	delay(20);
 	if (client.connected()) {
 		client.println(req);
 			client.println(F(""));
