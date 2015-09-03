@@ -189,6 +189,8 @@ Serial2.write(0xFE);  Serial2.write(0x50);  Serial2.write(200);
   colorWipe(strip.Color(255, 0, 0), 50);    // red?
   		
   Serial2.print("TrendySMARTPad -- Connecting?");
+<<<<<<< HEAD
+<<<<<<< HEAD
  /* pinMode(dataPin, OUTPUT);  
  pinMode(clockPin, OUTPUT);
  pinMode(latchPin, OUTPUT);
@@ -199,6 +201,32 @@ Serial2.write(0xFE);  Serial2.write(0x50);  Serial2.write(200);
   }
   clearsevSeg();
   
+=======
+=======
+>>>>>>> LoungeBot-Mega@171
+  // pinMode(dataPin, OUTPUT);  
+  // pinMode(clockPin, OUTPUT);
+  //pinMode(latchPin, OUTPUT);
+  
+ // pinMode(KWtrigPin, OUTPUT);
+ // pinMode(KWechoPin, INPUT);
+  for (int thisLed = 0; thisLed < ledCount; thisLed++) {
+    pinMode(barpins[thisLed], OUTPUT); digitalWrite(barpins[thisLed], LOW);
+  }
+  GotOne = false; GotNew = false;   codeType = UNKNOWN;  codeValue = 0;
+  //	clearsevSeg();
+  Serial1.begin(9600);	
+   Serial1.println("hello on BT?");
+   if (Serial1.available()){
+   	Serial.println("Bluetooth Client Online");
+   }   else {
+   	Serial.println("BT Not Found");
+   }
+   /*
+<<<<<<< HEAD
+>>>>>>> masterSMARTPad
+=======
+>>>>>>> LoungeBot-Mega@171
    for (byte count = 0; count < 4; count++) {
    	pinMode(rleds[count], OUTPUT);   		pinMode(gleds[count], OUTPUT);   		digitalWrite(gleds[count], HIGH);   		digitalWrite(rleds[count], HIGH);
    	}
@@ -231,8 +259,8 @@ Serial2.write(0xFE);  Serial2.write(0x50);  Serial2.write(200);
   WindowTilt->run(RELEASE);
   
   lightMeter.begin();
-  lux = lightMeter.readLightLevel();
-  lg_light = lux;
+  //lux = lightMeter.readLightLevel();
+ // lg_light = lux;
   Serial.println("initiALISING WiFi");
 
   rest.variable("lg_light", &lg_light);
@@ -268,16 +296,23 @@ delay(10);
 clearTTL();
 Serial2.write("CONNECTED!");
    Wire.begin();
-   rainbowCycle(20);
   My_Receiver.enableIRIn(); 
 }
 
 void loop(void){
-      colorWipe(strip.Color(0, 0, 255), 50);   
-	  Serial.print(".");  
+<<<<<<< HEAD
+<<<<<<< HEAD
+  rainbowCycle(20);
+=======
+  printTTL();
+ 
+>>>>>>> masterSMARTPad
+=======
+  rainbowCycle(20);
+>>>>>>> LoungeBot-Mega@171
   if (Serial.available()) Serial1.print(Serial.read());
     if (Serial1.available()) Serial.print(Serial1.read());
-    readSensors();
+    readAndPrint();
    time = millis();
   nextup = ((interval + lastup) - time);
   
@@ -293,6 +328,8 @@ void loop(void){
     Serial.println("TIME TO SEND 2 SERVER");	
     readAndPrint();
     printAverage();
+<<<<<<< HEAD
+<<<<<<< HEAD
   //  leds.setLEDs(LED_GREEN);     leds.update();
         send2server();
   //  sevSegPrint(String(temperature));	
@@ -301,6 +338,27 @@ void loop(void){
 
   if (My_Receiver.GetResults(&My_Decoder)) {
   //  theaterChaseRainbow(50);
+=======
+    leds.setLEDs(LED_GREEN);     leds.update();
+        send2server();
+    sevSegPrint(String(temperature));	
+        lastup = time;
+         rainbowCycle(20);0987yty654re3
+  }
+
+  if (My_Receiver.GetResults(&My_Decoder)) {
+    theaterChaseRainbow(50);
+>>>>>>> masterSMARTPad
+=======
+    leds.setLEDs(LED_GREEN);     leds.update();
+        send2server();
+    sevSegPrint(String(temperature));	
+        lastup = time;
+  }
+
+  if (My_Receiver.GetResults(&My_Decoder)) {
+    theaterChaseRainbow(50);
+>>>>>>> LoungeBot-Mega@171
       clearsevSeg();	
     IRDetected();
     delay(100);
@@ -563,7 +621,7 @@ void serialcomms() {
       Serial.print("Next in   "); 
       Serial.println(nextup);
       Serial.print("***Tilt timer @   "); 
-      Serial.println(tilttimer); 
+      Serial.printlm(tilttimer); 
       Serial.print(" ****Win timer @   "); 
       Serial.println(wintimer);
       Serial.print("Current Average LUX is "); 
@@ -571,6 +629,7 @@ void serialcomms() {
       delay(500);
       Serial.print("Current Average TempC is "); 
       Serial.println(aveLT.mean());
+
       readAndPrint();
       Serial.println(" 1/q-  KitchenTILT 5 SEC ");
       Serial.println(" 2/w-  WindowTILT 5 SEC ");
@@ -781,6 +840,18 @@ void sevSeg(int bitToSet) {
   }
 }
 
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+void printTTL(){
+  clearTTL();
+ Serial2.write(0xFE); Serial2.write(0x48);delay(10);   // moves cursor to home (1,1)
+ Serial2.write("T="); Serial2.write(time); Serial2.write(" *****");
+ Serial2.write("TempC:"); Serial2.write(lg_temp); Serial2.write("Lux=");Serial2.write(lg_light);
+}
+>>>>>>> masterSMARTPad
+=======
+>>>>>>> LoungeBot-Mega@171
 void clearTTL(){
 Serial2.write(0xFE); Serial2.write(0x58);delay(10);
 }
@@ -968,30 +1039,28 @@ void send2server(){
 
   String request = "GET " + repository + "sensor.php?lg_temp=" + aveLT.mean() +","+ aveLT.stddev() + "," + logged + " HTTP/1.0";
   String request2 = "GET " + repository + "sensor.php?lg_light=" + aveLL.mean() + "," + aveLL.stddev() + "," + logged + " HTTP/1.0";
-  send_request(request);
-  delay(20);	Serial.print("request: ");
+  send_request(request);	
+  Serial.print("request: ");
   Serial.println(request);	
   Serial.println("Temp Data SENT");
-  delay(20); 
   send_request(request2);
   Serial.print("request2: ");	
   Serial.println(request2);	
   Serial.println("Light Data SENT");
 }
 void send_request(String req) {
-wdt_enable(WDTO_8S); wdt_reset();
+
   Serial.println("Attempting connection to server...");
- Adafruit_CC3000_Client client = cc3000.connectTCP(ip, port);
- delay(20);
- wdt_reset();
+  Adafruit_CC3000_Client client = cc3000.connectTCP(ip, port);
+  // Send request
+
     if (client.connected()) {
     client.println(req);
     client.println(F(""));
-	  }
+  }
   else {
     Serial.println(F("Connection failed"));
   }
-  wdt_reset();
   while (client.connected()) {
     while (client.available()) {
       char c = client.read();
@@ -1001,8 +1070,7 @@ wdt_enable(WDTO_8S); wdt_reset();
   Serial.println("Connection Closed");
   Serial.println("");
   client.close();
-wdt_reset();
-wdt_disable();
+
 }
 
 void storeCode(void) {
