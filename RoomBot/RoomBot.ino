@@ -1,6 +1,6 @@
 /* ROOMeDUINO MEGA 
 Sourcetree GIT Edition
-30/8
+2/9
 
 Relay8 #s:
 1-Bob
@@ -35,7 +35,7 @@ OneWire  ds(A3);  // on pin 10 (a 4.7K resistor is necessary)
 #define echoPin 28    // next to GND
 #define I2C_ADDR  0x20
 int relayNo;
-IRrecv My_Receiver(2);
+IRrecv My_Receiver(A15);
 const int piezoPin = 0;
 LiquidTWI lcd(0);
 
@@ -106,7 +106,7 @@ int rm_temp; String temperature; float celsius;float temp_c;
 int lightMin =0;int lightMax = 1023;
 int potVal = 0;int potDialVal = 0; 
 static char tempbuffer[10];int prevPot = 0;
-Average<float> aveRT(10);Average<float> aveRL(10);int logged = 0;
+Average<float> aveRT(10);Average<float> aveRL(10);int logged = 0; int nonSense = 0;
 
 uint32_t ip = cc3000.IP2U32(192,168,0,110);//your computer's ip address
 int port = 80;String repository = "/energy_project/";
@@ -227,8 +227,24 @@ void windowSense(){
 	delayMicroseconds(10); // Added this line
 	digitalWrite(trigPin, LOW);
 	duration = pulseIn(echoPin, HIGH);
-	distance = (duration / 2) / 29.1;
+	int tempdistance = (duration / 2) / 29.1;
+		if (distance == 0){
+		distance = tempdistance;
+		} else if (nonSense > 2){
+		Serial.print("nonsense alert - recalibrating BOB");
+		delay(2500);
+		nonSense=0;distance=0;
+		windowSense();
+		} else if ((tempdistance > (distance+5)) || (tempdistance < (distance-5))){
+		nonSense++;
+		windowSense();
+		} else {
+		distance = tempdistance;
+		}
+	//prevdistance = distance;
 	}
+	
+	
 void senseMoveBob(){
 		windowSense();
 			if (distance >= 200 || distance <= 0){
