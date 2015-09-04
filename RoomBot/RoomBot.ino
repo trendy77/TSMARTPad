@@ -33,8 +33,10 @@ const int potDialPin = A15;
 OneWire  ds(A3);  // on pin 10 (a 4.7K resistor is necessary)
 #define trigPin 26      // next to VCC
 #define echoPin 28    // next to GND
+#define trigPin2 22      // next to VCC
+#define echoPin2 24    // next to GND
+
 #define I2C_ADDR  0x20
-int relayNo;
 IRrecv My_Receiver(A15);
 const int piezoPin = 0;
 LiquidTWI lcd(0);
@@ -83,6 +85,7 @@ MDNSResponder mdns;
 #define PLAY 			0x200B		
 #define FAST_FWD		0x20C108
 #define FAST_RWD		0xCC108
+#define SUBTITLE		0x88108
 
 unsigned long interval = 300000;           // every 5 minutes
 unsigned long time; long nextup; long lastup;
@@ -106,12 +109,13 @@ int rm_temp; String temperature; float celsius;float temp_c;
 int lightMin =0;int lightMax = 1023;
 int potVal = 0;int potDialVal = 0; 
 static char tempbuffer[10];int prevPot = 0;
-Average<float> aveRT(10);Average<float> aveRL(10);int logged = 0; int nonSense = 0;
+Average<float> aveRT(10);Average<float> aveRL(10);int logged = 0; int nonSense = 0; int senseLog = 0;
 
 uint32_t ip = cc3000.IP2U32(192,168,0,110);//your computer's ip address
 int port = 80;String repository = "/energy_project/";
 int maximumRange = 200; int minimumRange = 0; // Minimum range needed
 long duration, distance; // Duration used to calculate distance
+long duration2, distance2; // Duration used to calculate distance
 
 uint8_t bell[8]  = {0x4,0xe,0xe,0xe,0x1f,0x0,0x4};
 uint8_t note[8]  = {0x2,0x3,0x2,0xe,0x1e,0xc,0x0};
@@ -132,6 +136,7 @@ void setup(){
 	lcd.print("** INITIALISING.. **");
 
 	pinMode(trigPin, OUTPUT);pinMode(echoPin, INPUT);
+  	pinMode(trigPin2, OUTPUT);pinMode(echoPin2, INPUT);
   
   for (int thisLed = 0; thisLed < ledCount; thisLed++) {
     pinMode(barpins[thisLed], OUTPUT); 
@@ -154,11 +159,11 @@ void setup(){
 	rest.set_id("172");	rest.set_name("RoomBot");
 
 	Serial.println("LOADING WIFI CONNECTION");
-  
+  wdt_enable(WDTO_4S);wdt_reset();
   if (!cc3000.begin())  {    while(1);  }  if (!cc3000.connectToAP(WLAN_SSID, WLAN_PASS, WLAN_SECURITY)) {    while(1);  }  while (!cc3000.checkDHCP())  {  delay(100);  }    if (!mdns.begin("arduino", cc3000)) {   while(1);   }  restServer.begin();
   Serial.println("Online and listening for connections...");  
 lcd.clear();
-
+wdt_reset();wdt_disable();
 for (int thisLed = 0; thisLed < ledCount; thisLed++) {
 digitalWrite(barpins[thisLed], LOW);
 }
@@ -169,25 +174,27 @@ Serial.println("Press ZERO for Options");
 }
 
 void loop(){
-	wdt_enable(WDTO_8S);wdt_reset();
+windowSense();
 	Serial.print(".");
 	time = millis();
 	//settiltTime();//kitttheBar();
 	nextup = ((interval + lastup) - time);
-	windowSense();
+
 	readSensors();
 	updateLcd();
 	setluxBar();
-	wdt_reset();
+			wdt_enable(WDTO_8S);wdt_reset();
 	mdns.update();
 	Adafruit_CC3000_ClientRef client = restServer.available();
 	rest.handle(client);
+wdt_reset();
 
 	if (time>(lastup+interval)){
 		Serial.println("Time to send server");
 		readAndPrint();
 		beep(1);
 		send2server();
+
 		delay(100);
 		lastup = time;
 		}
@@ -195,7 +202,7 @@ wdt_reset();
 wdt_disable();
 
 if (My_Receiver.GetResults(&My_Decoder)) {
-//        blinkalt();
+//        blinkalt(); 
 			IRDetected();
 			delay(100);
 			My_Receiver.resume();
@@ -227,13 +234,22 @@ void windowSense(){
 	delayMicroseconds(10); // Added this line
 	digitalWrite(trigPin, LOW);
 	duration = pulseIn(echoPin, HIGH);
+		digitalWrite(trigPin2, LOW);  // Added this line
+		delayMicroseconds(2); // Added this line
+		digitalWrite(trigPin2, HIGH);
+		delayMicroseconds(10); // Added this line
+		digitalWrite(trigPin2, LOW);
+		duration2 = pulseIn(echoPin2, HIGH);
+			int tempdistance2 = (duration2 / 2) / 29.1;
+			distance2 = tempdistance2;
+			
 	int tempdistance = (duration / 2) / 29.1;
 		if (distance == 0){
 		distance = tempdistance;
 		} else if (nonSense > 3){
 		Serial.print("nonsense alert - recalibrating BOB");
 		delay(2500);
-		nonSense=0;distance=0;
+		nonSense=0;
 		windowSense();
 		} else if ((tempdistance > (distance+5)) || (tempdistance < (distance-5))){
 		nonSense++;
@@ -351,12 +367,10 @@ sendValueToLatch(2);
 
 void send2server(){
 	Serial.println("Connecting....");
-	
 	String request = "GET " + repository + "sensor.php?rm_temp=" + aveRT.mean() +","+ aveRT.stddev() + "," + logged + " HTTP/1.0";
 	delay(10);send_request(request);	Serial.print("request: ");
 		Serial.println(request);	Serial.println("Temp Data SENT");
-		
-	delay(20);
+	delay(100);
 	String request2 = "GET " + repository + "sensor.php?rm_light=" + aveRL.mean() + "," + aveRL.stddev() + "," + logged + " HTTP/1.0";
 	send_request(request2);Serial.print("request2: ");	Serial.println(request2);	Serial.println("Light Data SENT");
     }
@@ -420,7 +434,7 @@ switch(My_Decoder.value) {
 	case SELECT_BUTTON: 	buzzUP();	break;
 case SOUND_PREV:	autolowerBob(); break;	// raise room bob
 case SOUND_NEXT: autoraiseBob(); break; 	 // lower room bob
-//case SUBTITLE: 
+case SUBTITLE: raiseBob(); break; 
 case BUTTON_0: senseMoveBob(); break;
 case BUTTON_9: sendValueToLatch(0); Serial.println("resetting all relays"); break;
 }
