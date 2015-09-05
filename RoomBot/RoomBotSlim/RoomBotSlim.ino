@@ -18,10 +18,10 @@ reassembled - optional internet (to speed-up startup) and LCD (general ease of t
 
 
 IRrecv My_Receiver(2);
-#define trigPin 26    
-#define echoPin 28		
-#define trigPin2 27     
-#define echoPin2 29
+#define trigPin 28    
+#define echoPin 30		
+#define trigPin2 31     
+#define echoPin2 27
 BH1750 lightMeter;
 const int potDialPin = A15;
 OneWire  ds(A3);
@@ -228,6 +228,9 @@ void serialcomms(){
 		case '0':
 			Serial.print("BOB@ ");
 			Serial.print(distance);
+			Serial.println("cm");
+Serial.print("BOB2@ ");
+			Serial.print(distance2);
 			Serial.println("cm");
 
 			Serial.println("TSMARTPad- ROOM OPTIONS");
