@@ -137,19 +137,19 @@ void setup(){
 
 	pinMode(trigPin, OUTPUT);pinMode(echoPin, INPUT);
   	pinMode(trigPin2, OUTPUT);pinMode(echoPin2, INPUT);
-  
+  /*
   for (int thisLed = 0; thisLed < ledCount; thisLed++) {
     pinMode(barpins[thisLed], OUTPUT); 
   digitalWrite(barpins[thisLed], HIGH);
-  }
+  }*/
  GotOne=false; GotNew=false;codeType=UNKNOWN;   codeValue=0; 
  	
  pinMode(piezoPin, OUTPUT);pinMode(potDialPin, INPUT);
 
   Wire.begin();  Wire.beginTransmission(I2C_ADDR);  Wire.write(0x00); 
-  Wire.write(0x00); // Set all of bank A to outputs
+
   Wire.endTransmission();
-  
+    wdt_enable(WDTO_4S);wdt_reset();
   lightMeter.begin(); 
   rm_light = lux;	rest.variable("rm_temp",&rm_temp);	rest.variable("rm_light",&rm_light);       
         rest.function("raiseBob",raiseBOB);
@@ -157,16 +157,15 @@ void setup(){
 	rest.function("pussPull",pussPull);
 	rest.function("buzz",buzz);
 	rest.set_id("172");	rest.set_name("RoomBot");
-
+lcd.clear(); lcd.print("loading WIFI");
 	Serial.println("LOADING WIFI CONNECTION");
-  wdt_enable(WDTO_4S);wdt_reset();
+
   if (!cc3000.begin())  {    while(1);  }  if (!cc3000.connectToAP(WLAN_SSID, WLAN_PASS, WLAN_SECURITY)) {    while(1);  }  while (!cc3000.checkDHCP())  {  delay(100);  }    if (!mdns.begin("arduino", cc3000)) {   while(1);   }  restServer.begin();
   Serial.println("Online and listening for connections...");  
-lcd.clear();
 wdt_reset();wdt_disable();
-for (int thisLed = 0; thisLed < ledCount; thisLed++) {
+/*for (int thisLed = 0; thisLed < ledCount; thisLed++) {
 digitalWrite(barpins[thisLed], LOW);
-}
+}*/
 My_Receiver.enableIRIn(); // Start the receiver
 
 Serial.println("ROOMBOT SETUP COMPLETE");
