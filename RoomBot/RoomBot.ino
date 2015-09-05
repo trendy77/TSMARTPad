@@ -239,9 +239,7 @@ void windowSense(){
 		delayMicroseconds(10); // Added this line
 		digitalWrite(trigPin2, LOW);
 		duration2 = pulseIn(echoPin2, HIGH);
-			int tempdistance2 = (duration2 / 2) / 29.1;
-			distance2 = tempdistance2;
-			
+									
 	int tempdistance = (duration / 2) / 29.1;
 		if (distance == 0){
 		distance = tempdistance;
@@ -255,6 +253,20 @@ void windowSense(){
 		windowSense();
 		} else {
 		distance = tempdistance;
+		}						
+	int tempdistance2 = (duration2 / 2) / 29.1;
+		if (distance2 == 0){
+		distance2 = tempdistance2;
+		} else if (nonSense2 > 3){
+		Serial.print("nonsense2 alert - recalibrating BOB2");
+		delay(2500);
+		nonSense2=0;
+		windowSense2();
+		} else if ((tempdistance2 > (distance2+5)) || (tempdistance2 < (distance2-5))){
+		nonSense2++;
+		windowSense2();
+		} else {
+		distance2 = tempdistance2;
 		}
 	//prevdistance = distance;
 	}
