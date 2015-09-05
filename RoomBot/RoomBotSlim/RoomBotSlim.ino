@@ -342,23 +342,24 @@ void buzzUP(){
 }
 
 void autoraiseBob(){
-	windowSense();
-	while (distance <90) {
-		sendValueToLatch(1); 
+	if (distance <70){
+  sendValueToLatch(1); 
+        windowSense();
+	Serial.print("dist @");Serial.print(distance);
+	while (distance <70) {
 		windowSense();
+	Serial.print("dist @");Serial.print(distance);
 		}
 	sendValueToLatch(0); 	
 	delay(50);
-	}
-	
+}
+}	
 void autolowerBob(){
-	windowSense();
 	if (distance >2 ) { 
 	sendValueToLatch(2); 
 	windowSense(); 
-	Serial.print("dist @");Serial.print(distance);
-		while (distance >2){
-		windowSense(); 
+while 	(distance >2){
+  windowSense();
 		Serial.print("dist @");Serial.print(distance);
 		}
 	sendValueToLatch(0); 
