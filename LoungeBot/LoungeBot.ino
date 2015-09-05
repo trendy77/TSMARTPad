@@ -268,15 +268,15 @@ delay(10);
 clearTTL();
 Serial2.write("CONNECTED!");
    Wire.begin();
-   rainbowCycle(20);
+   //rainbowCycle(20);
   My_Receiver.enableIRIn(); 
 }
 
 void loop(void){
       colorWipe(strip.Color(0, 0, 255), 50);   
 	  Serial.print(".");  
-  if (Serial.available()) Serial1.print(Serial.read());
-    if (Serial1.available()) Serial.print(Serial1.read());
+  //if (Serial.available()) Serial1.print(Serial.read());
+   // if (Serial1.available()) Serial.print(Serial1.read());
     readSensors();
    time = millis();
   nextup = ((interval + lastup) - time);
