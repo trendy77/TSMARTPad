@@ -433,10 +433,10 @@ int lowerBOB(String Command){
 void updateLcd(){
 		lcd.setCursor(0, 0); lcd.print("BOB@ ");
 	lcd.setCursor(15, 0);	lcd.print(distance);	lcd.print("cm");
-		lcd.setCursor(0,1);	lcd.print("Next@");
-		lcd.setCursor(15, 1); lcd.print(nextup);
-		lcd.setCursor(0, 2);  lcd.print("Time-");  lcd.print(time); lcd.print("*Last-");  lcd.print(lastup);
-	lcd.setCursor(0, 3); lcd.print("*Lux=");  lcd.print(rm_light);  lcd.print("**Temp=");  lcd.print(temperature);lcd.print("C");
+		lcd.setCursor(0,1);	lcd.print("BOB2@");
+		lcd.setCursor(15, 1); lcd.print(distance2);	lcd.print("cm");
+		lcd.setCursor(0, 2);  lcd.print("T-");  lcd.print(time); lcd.print("*NXT-");  lcd.print(nextup);
+	lcd.setCursor(0, 3); lcd.print("Lux=");  lcd.print(rm_light);  lcd.print("*Temp=");  lcd.print(temperature);lcd.print("C");
 	}
 	
 void raiseBob2(){

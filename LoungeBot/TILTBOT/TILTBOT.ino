@@ -194,7 +194,7 @@ void tiltAllF(){
 	  doorwTilt.run(FORWARD);
 	  kitchTilt.run(FORWARD);
 	  loungeTilt.run(FORWARD);
-	  delay(tilttimer);
+	  delay(1000);
 	  winTilt.run(RELEASE);
       doorwTilt.run(RELEASE);
 	  kitchTilt.run(RELEASE);
@@ -208,7 +208,7 @@ void tiltAllB(){
 	  doorwTilt.run(BACKWARD);
 	  kitchTilt.run(BACKWARD);
 	  loungeTilt.run(BACKWARD);
-	  delay(tilttimer);
+	  delay(1000);
 	  winTilt.run(RELEASE);
       doorwTilt.run(RELEASE);
 	  kitchTilt.run(RELEASE);
@@ -272,41 +272,42 @@ void loop() {
         }
     
 serialcomms();
+Serial.print(".");
 }
 
 
 void lTilt(){
 	  Serial.println(" Direction: FORWARD - Tilting l... ");
-  winTilt.run(FORWARD);  loungeTilt.run(FORWARD);	  delay(tilttimer);	  loungeTilt.run(RELEASE);	  delay(50);
+  loungeTilt.run(FORWARD);	  delay(1000);	  loungeTilt.run(RELEASE);	  delay(50);
 }
 void lTiltR(){
-	  Serial.println(" Direction: FORWARD - Tilting l... ");
-  winTilt.run(FORWARD);  loungeTilt.run(BACKWARD);	  delay(tilttimer);	  loungeTilt.run(RELEASE);	  delay(50);
+	  Serial.println(" Direction: BACKWARD - Tilting l... ");
+  loungeTilt.run(BACKWARD);	  delay(1000);	  loungeTilt.run(RELEASE);	  delay(50);
 }
 void kTilt(){
 	   Serial.println(" Direction: FORWARD - Tilting k... ");
-  winTilt.run(FORWARD); kitchTilt.run(FORWARD);	  delay(tilttimer);	  kitchTilt.run(RELEASE);	  delay(50);
+  kitchTilt.run(FORWARD);	  delay(1000);	  kitchTilt.run(RELEASE);	  delay(50);
 	  }
 void kTiltR(){
-	  Serial.println(" Direction: FORWARD - Tilting k... ");
-  winTilt.run(FORWARD);  kitchTilt.run(BACKWARD);	  delay(tilttimer);	  kitchTilt.run(RELEASE);	  delay(50);
+	  Serial.println(" Direction: BACKWARD - Tilting k... ");
+ kitchTilt.run(BACKWARD);	  delay(1000);	  kitchTilt.run(RELEASE);	  delay(50);
 }
 void dwTilt(){
 	  Serial.println(" Direction: FORWARD - Tilting dw... ");
-  winTilt.run(FORWARD); doorwTilt.run(FORWARD);	  delay(tilttimer);	  doorwTilt.run(RELEASE);      delay(50);
+  doorwTilt.run(FORWARD);	  delay(1000);	  doorwTilt.run(RELEASE);      delay(50);
 }
 void dwTiltR(){
-	  Serial.println(" Direction: FORWARD - Tilting dw... ");
-  winTilt.run(FORWARD); doorwTilt.run(BACKWARD);	  delay(tilttimer);	  doorwTilt.run(RELEASE);      delay(50);
+	  Serial.println(" Direction: BACKWARD - Tilting dw... ");
+  doorwTilt.run(BACKWARD);	  delay(1000);	  doorwTilt.run(RELEASE);      delay(50);
 }
 
 void wTilt(){
 	   Serial.println(" Direction: FORWARD - Tilting win... ");
-  winTilt.run(FORWARD);winTilt.run(FORWARD);	  delay(tilttimer);	  winTilt.run(RELEASE);      delay(50);
+  winTilt.run(FORWARD);winTilt.run(FORWARD);	  delay(1000);	  winTilt.run(RELEASE);      delay(50);
 }
 void wTiltR(){
-	  Serial.println(" Direction: FORWARD - Tilting win... ");
-  winTilt.run(FORWARD); winTilt.run(BACKWARD);	  delay(tilttimer);	  winTilt.run(RELEASE);      delay(50);
+	  Serial.println(" Direction: BACKWARD - Tilting win... ");
+  winTilt.run(FORWARD); winTilt.run(BACKWARD);	  delay(1000);	  winTilt.run(RELEASE);      delay(50);
 }
 
  void IRrec(){
@@ -319,6 +320,7 @@ void wTiltR(){
       tilttimer = min(tilttimer + 1000, tiltmax);       Serial.println("");       Serial.print("Tilt duration has been changed to "); 
       Serial.print(tilttimer / 1000);       Serial.println("Seconds");       Serial.print("...whilst WindowAction Duration now @");       Serial.print(wintimerS);       Serial.println("Seconds");       beep(tilttimerS);break;
             move=max(1, move-1); break;
+<<<<<<< HEAD
 			case BUTTON_1:		kTilt();break;
 			case BUTTON_2:		kTiltR();break;
 			case BUTTON_3:		wTilt();break;
@@ -327,6 +329,16 @@ void wTiltR(){
 			case BUTTON_6:		dwTiltR();break;
 			case BUTTON_7:		lTilt();break;
 			case BUTTON_8:		lTiltR();break;
+=======
+			case BUTTON_1:		kTilt();
+			case BUTTON_2:		wTilt();
+			case BUTTON_3:		dwTilt();
+			case BUTTON_4:		kTiltR();
+			case BUTTON_5:		wTiltR();
+			case BUTTON_6:		dwTiltR();
+			case BUTTON_7:		lTilt();
+			case BUTTON_8:		lTiltR();
+>>>>>>> dc73b2c884f57cdd574aca09607adcc8fe27805f
         case PRESET_PREV: senseMoveWin();break;
         case PRESET_NEXT: senseMoveWin(); break;
 		case BLUE:   pos=min(180,pos+move);  break;
@@ -404,7 +416,7 @@ void senseMoveWin(){
 /*    case '1':
       Serial.println(" Direction: FORWARD - KitchenTilt ... ");
       KitchenTilt->run(FORWARD);
-      delay(tilttimer);
+      delay(1000);
       KitchenTilt->run(RELEASE);
       delay(30); // 'coast' for 1/10 second
       readAndPrint();
@@ -417,7 +429,7 @@ void senseMoveWin(){
     case 'q':
       Serial.println(" Direction: BACKWARD - KitchenTilt ... ");
       KitchenTilt->run(BACKWARD);
-      delay(tilttimer);
+      delay(1000);
       KitchenTilt->run(RELEASE); 
       readAndPrint();
       break;

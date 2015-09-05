@@ -1,6 +1,6 @@
 /* ROOMeDUINO MEGA 
 Sourcetree GIT Edition
-2/9
+6/9
 
 Relay8 #s:
 1-Bob
@@ -31,10 +31,10 @@ Relay8 #s:
 BH1750 lightMeter;
 const int potDialPin = A15;
 OneWire  ds(A3);  // on pin 10 (a 4.7K resistor is necessary)
-#define trigPin 26      // next to VCC
-#define echoPin 28    // next to GND
-#define trigPin2 22      // next to VCC
-#define echoPin2 24    // next to GND
+#define trigPin 28    
+#define echoPin 30		
+#define trigPin2 31     
+#define echoPin2 27
 
 #define I2C_ADDR  0x20
 IRrecv My_Receiver(A15);
@@ -70,14 +70,14 @@ MDNSResponder mdns;
 #define BUTTON_7		0x60108		 // LT F 
 #define BUTTON_8 		0xe0108 		// LT B
 #define BUTTON_9 		0x10108		 // 
-#define PRESET_PREV 	0xC108 		//  LOWER LOUNGE BLIND
-#define PRESET_NEXT 	0x8C108		//  RAISE LOUNGE BLIND  
-#define RED				0xA010C	// close kitchen window
-#define GREEN 			0x6010C	// open kitchen windwo
-#define YELLOW 			0xE010C	// Close loungewin
-#define BLUE 			0x2010c		// // Open loungewindow
-#define SOUND_PREV 		0x7B0B			// LOWER BOB
-#define SOUND_NEXT 		0x3B0B 	 // RAISE BOB
+#define PRESET_PREV 	0xC108 	
+#define PRESET_NEXT 	0x8C108	
+#define RED				0xA010C	
+#define GREEN 			0x6010C	
+#define YELLOW 			0xE010C	
+#define BLUE 			0x2010c	
+#define SOUND_PREV 		0x7B0B			
+#define SOUND_NEXT 		0x3B0B 	
 #define TOP_MENU 		0x98108
 #define POPUP_MENU 		0x58108	
 #define PAUSE 			0x400B	
@@ -126,7 +126,7 @@ uint8_t check[8] = {0x0,0x1,0x3,0x16,0x1c,0x8,0x0};
 uint8_t cross[8] = {0x0,0x1b,0xe,0x4,0xe,0x1b,0x0};
 uint8_t retarrow[8] = {	0x1,0x1,0x5,0x9,0x1f,0x8,0x4};
 
-int barlevel; const byte barpins[10] = {23,25,27,29,31,33,35,37,39,41};
+int barlevel; const byte barpins[10] = {0};
 const int ledCount = 10;
 
 void setup(){
@@ -143,12 +143,11 @@ void setup(){
   digitalWrite(barpins[thisLed], HIGH);
   }*/
  GotOne=false; GotNew=false;codeType=UNKNOWN;   codeValue=0; 
- 	
- pinMode(piezoPin, OUTPUT);pinMode(potDialPin, INPUT);
+lightMeter.begin(); pinMode(piezoPin, OUTPUT);pinMode(potDialPin, INPUT);
 
   Wire.begin();  Wire.beginTransmission(I2C_ADDR);  Wire.write(0x00); 
+Wire.write(0x00);   Wire.endTransmission(); delay(15);
 
-  Wire.endTransmission();
     wdt_enable(WDTO_4S);wdt_reset();
   lightMeter.begin(); 
   rm_light = lux;	rest.variable("rm_temp",&rm_temp);	rest.variable("rm_light",&rm_light);       
@@ -174,6 +173,7 @@ Serial.println("Press ZERO for Options");
 
 void loop(){
 windowSense();
+
 	Serial.print(".");
 	time = millis();
 	//settiltTime();//kitttheBar();
@@ -182,20 +182,21 @@ windowSense();
 	readSensors();
 	updateLcd();
 	setluxBar();
-			wdt_enable(WDTO_8S);wdt_reset();
+	wdt_enable(WDTO_8S);wdt_reset();
 	mdns.update();
 	Adafruit_CC3000_ClientRef client = restServer.available();
 	rest.handle(client);
 wdt_reset();
 
 	if (time>(lastup+interval)){
+		
 		Serial.println("Time to send server");
 		readAndPrint();
 		beep(1);
 		send2server();
-
 		delay(100);
 		lastup = time;
+		logged = 0;
 		}
 wdt_reset();
 wdt_disable();
@@ -239,21 +240,26 @@ void windowSense(){
 		delayMicroseconds(10); // Added this line
 		digitalWrite(trigPin2, LOW);
 		duration2 = pulseIn(echoPin2, HIGH);
-									
+		digitalWrite(trigPin2, LOW);  // Added this line
+	
 	int tempdistance = (duration / 2) / 29.1;
-		if (distance == 0){
+		if (prevdistance == 0){
 		distance = tempdistance;
-		} else if (nonSense > 3){
+		} 
+		else if (nonSense > 3){
 		Serial.print("nonsense alert - recalibrating BOB");
 		delay(2500);
-		nonSense=0;
+		nonSense=0;prevdistance=0;
 		windowSense();
-		} else if ((tempdistance > (distance+5)) || (tempdistance < (distance-5))){
+		} 
+		else if ((tempdistance > (distance+5)) || (tempdistance < (distance-5))){
 		nonSense++;
 		windowSense();
-		} else {
+		} 
+		else if (((tempdistance < (distance+5)) && (tempdistance > (prevdistance-5)) && ((tempdistance < (prevdistance+8)) && ((tempdistance > (prevdistance-8))){
 		distance = tempdistance;
-		}						
+		}
+			
 	int tempdistance2 = (duration2 / 2) / 29.1;
 		if (distance2 == 0){
 		distance2 = tempdistance2;
@@ -268,9 +274,12 @@ void windowSense(){
 		} else {
 		distance2 = tempdistance2;
 		}
-	//prevdistance = distance;
+delay(300);
+	prevdistance = distance;
+	prevdistance2 = distance2;
 	}
-	
+	int prevdistance = 0;
+	int prevdistance2 =0;
 	
 void senseMoveBob(){
 		windowSense();
@@ -338,20 +347,18 @@ void autoraiseBob(){
 		sendValueToLatch(1); 
 		windowSense(); 
 		Serial.print("dist @");Serial.println(distance);
-			lcd.clear();lcd.setCursor(2,0);lcd.print(distance);
-		while (distance <80) {
+		while (distance <75) {
 			windowSense();
 			Serial.print("dist @");Serial.println(distance);
-			lcd.clear();lcd.setCursor(2,0);lcd.print(distance);
-		}
+			}
 	sendValueToLatch(0); 	
 	delay(50);
 	}
 }
 
-void autolowerBob(){
+void autolowerBob(){ 
 	windowSense();
-	if (distance >2 ) { 
+	if (distance >=2 ) { 
 	sendValueToLatch(2); 
 	windowSense(); 
 	Serial.print("dist @");Serial.println(distance);
@@ -360,6 +367,8 @@ void autolowerBob(){
 		Serial.print("dist @");Serial.println(distance);
 		}
 	sendValueToLatch(0); 
+	windowSense();
+	Serial.print("dist @");Serial.println(distance);
 	delay(50);
 	}
 }	
@@ -401,11 +410,9 @@ void send_request(String req) {
 		while (client.available()) {
 			char c = client.read();
             Serial.print(c);
-	logged = 0;
-			}
+				}
 		}
 	Serial.println("Closing connection");
-
 	client.close();
 	}
 
@@ -558,15 +565,16 @@ void setluxBar(){
 		}
 	}
 }
+
 void updateLcd(){
 		lcd.setCursor(0, 0); lcd.print("BOB@ ");
 	lcd.setCursor(15, 0);	lcd.print(distance);	lcd.print("cm");
-		lcd.setCursor(0,1);	lcd.print("Next@");
-		lcd.setCursor(15, 1); lcd.print(nextup);
-		lcd.setCursor(0, 2);  lcd.print("Time-");  lcd.print(time); lcd.print("*Last-");  lcd.print(lastup);
-	lcd.setCursor(0, 3); lcd.print("*Lux=");  lcd.print(rm_light);  lcd.print("**Temp=");  lcd.print(temperature);lcd.print("C");
+		lcd.setCursor(0,1);	lcd.print("BOB2@");
+		lcd.setCursor(15, 1); lcd.print(distance2);	lcd.print("cm");
+		lcd.setCursor(0, 2);  lcd.print("T-");  lcd.print(time); lcd.print("*NXT-");  lcd.print(nextup);
+	lcd.setCursor(0, 3); lcd.print("Lux=");  lcd.print(rm_light);  lcd.print("*Temp=");  lcd.print(temperature);lcd.print("C");
 	}
-
+	
 void readAndPrint(){
 	readSensors();
 	printSensors();
@@ -656,7 +664,7 @@ void readSensors() {
 	aveRT.push(temp_c);
 logged++;
 }
-void printSensors(){
+void printSensors(){ 
 	Serial.print("Temperature: ");
 	Serial.print(temperature);
 	Serial.println("C ");
