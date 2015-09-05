@@ -458,7 +458,7 @@ case BUTTON_9: sendValueToLatch(0); Serial.println("resetting all relays"); brea
 }
 }lcd.clear(); lcd.setCursor(0,3); lcd.print("**TSMARTPad Code**");
 switch(My_Decoder.value) {
-case BUTTON_9: lowerBob(); break;
+case BUTTON_0: raiseBob(); break;case BUTTON_9: lowerBob(); break;
 		}
 		}	
 }
