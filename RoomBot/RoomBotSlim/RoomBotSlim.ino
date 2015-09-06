@@ -17,7 +17,7 @@ reassembled - optional internet (to speed-up startup) and LCD (general ease of t
 #include <LiquidTWI.h>
 
 
-IRrecv My_Receiver(2);
+IRrecv My_Receiver(A15);
 #define trigPin 28    
 #define echoPin 30		
 #define trigPin2 31     
@@ -154,8 +154,8 @@ for lcd:
 
 	lcd.begin(20, 4);	lcd.setBacklight(HIGH);lcd.setCursor(0, 2);
 	lcd.print("** INITIALISING.. **");
-
-al.println("ROOMBOT SETUP COMPLETE");
+*/
+Serial.println("ROOMBOT SETUP COMPLETE");
 	My_Receiver.enableIRIn(); // Start the receiver
 	Serial.println("Press ZERO for Options"); 
 	
@@ -350,7 +350,7 @@ Serial.print("e+100");
 		nonSense=0;distance=0;
 		windowSense();
 		} 
-		else if (tempdistance > (distance+5)) || (tempdistance < (distance-5)){
+		else if (tempdistance > (distance+5) || tempdistance < (distance-5)){
 		nonSense++;Serial.println("5outError");
 		delay(300);windowSense();
 		} else {
@@ -374,7 +374,7 @@ int tempdistance2 = (duration2 / 2) / 29.1;
 		}
 delay(300);
 	}
-	
+	}
 void senseMoveBob(){
 		windowSense();
 			if (distance >= 200 || distance <= 0){
