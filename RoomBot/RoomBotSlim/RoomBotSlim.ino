@@ -119,6 +119,9 @@ const int ledCount = 10;
 void setup(){
 	Serial.begin(115200);
 	Serial.println("ROOMBOT INITIALISING...");
+
+Serial1.begin(9600);
+Serial1.print("hiBT?");
 	Serial.println("LOADING SENSORS");
 	pinMode(trigPin, OUTPUT);
 	pinMode(trigPin2, OUTPUT);
@@ -187,6 +190,7 @@ case BUTTON_9: lowerBob(); break;
 }
     
 void loop() {
+windowSense();
 		time = millis();
 	nextup = ((interval + lastup) - time);
 	readSensors();
@@ -207,18 +211,6 @@ serialcomms();
 Serial.print("*");
 }
 
-void windowSense2(){
-	digitalWrite(trigPin2, LOW);  // Added this line
-	delayMicroseconds(2); // Added this line
-	digitalWrite(trigPin2, HIGH);
-	delayMicroseconds(10); // Added this line
-	digitalWrite(trigPin2, LOW);
-	duration2 = pulseIn(echoPin2, HIGH);
-	distance2 = (duration2 / 2) / 29.1;
-	Serial.print("BOB2 DISTANCE @ ");
-	Serial.print(distance2);	Serial.println("cm");
-}
-
 void serialcomms(){
 	int tempPot1 = analogRead(potDialPin);
 	if (Serial.available()){
@@ -228,7 +220,7 @@ void serialcomms(){
 		case '0':
 			Serial.print("BOB@ ");
 			Serial.print(distance);
-			Serial.println("cm");
+			Serial.print("cm **");
 Serial.print("BOB2@ ");
 			Serial.print(distance2);
 			Serial.println("cm");
@@ -278,6 +270,10 @@ Serial.print("BOB2@ ");
 
 
 void printSensors(){
+	Serial.print("BOB2 DISTANCE @ ");
+	Serial.print(distance2);	Serial.println("cm");
+	Serial.print("BOB DISTANCE @ ");
+	Serial.print(distance);	Serial.println("cm");
 	Serial.print("Temperature: ");	Serial.print(temp_c);	Serial.println("C ");
 	Serial.print("Light=");  Serial.print(rm_light);  Serial.print("(lux)/");  
 	Serial.print(" Averages ~ ");Serial.print(logged);	Serial.println("Readings");
@@ -314,16 +310,29 @@ void scrollio(){
 }
 
 void windowSense(){
+long tempdistance; long tempdistance2;	digitalWrite(trigPin2, LOW);  // Added this line
+	delayMicroseconds(2); // Added this line
+	digitalWrite(trigPin2, HIGH);
+	delayMicroseconds(10); // Added this line
+	digitalWrite(trigPin2, LOW);
+	duration2 = pulseIn(echoPin2, HIGH);
+	tempdistance2 = (duration2 / 2) / 29.1;
+	delay(20);
 	digitalWrite(trigPin, LOW);  // Added this line
 	delayMicroseconds(2); // Added this line
 	digitalWrite(trigPin, HIGH);
 	delayMicroseconds(10); // Added this line
 	digitalWrite(trigPin, LOW);
 	duration = pulseIn(echoPin, HIGH);
-	distance = (duration / 2) / 29.1;
-	Serial.print("BOB DISTANCE @ ");
-	Serial.print(distance);	Serial.println("cm");
-}
+	tempdistance = (duration / 2) / 29.1;
+	if (tempdistance > 100){
+		windowSense();
+	}
+	else{
+		distance = tempdistance;
+	}
+distance2 = tempdistance2;
+	}
 void senseMoveBob(){
 		windowSense();
 			if (distance >= 200 || distance <= 0){
@@ -351,8 +360,11 @@ void autoraiseBob(){
 	Serial.print("dist @");Serial.print(distance);
 		}
 	sendValueToLatch(0); 	
-	delay(50);
+	delay(1000);
 }
+windowSense();
+Serial.print("dist @");Serial.print(distance);
+autoraiseBob();
 }	
 void autolowerBob(){
 	if (distance >2 ) { 
