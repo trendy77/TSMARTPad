@@ -96,7 +96,8 @@ int rm_temp; String temperature; float celsius;float temp_c;
 int lightMin =0;int lightMax = 1023;
 int potVal = 0;int potDialVal = 0; 
 static char tempbuffer[10];int prevPot = 0;
-Average<float> aveRT(10);Average<float> aveRL(10);int logged = 0; int nonSense = 0; int senseLog = 0;
+Average<float> aveRT(10);Average<float> aveRL(10);int logged = 0; long nonSense = 0; long nonSense2 = 0;
+Average<float> aveSense1(10); Average<float> aveSense2(10);
 
 uint32_t ip = cc3000.IP2U32(192,168,0,110);//your computer's ip address
 int port = 80;String repository = "/energy_project/";
@@ -154,9 +155,7 @@ for lcd:
 	lcd.begin(20, 4);	lcd.setBacklight(HIGH);lcd.setCursor(0, 2);
 	lcd.print("** INITIALISING.. **");
 
-
-	*/
-	Serial.println("ROOMBOT SETUP COMPLETE");
+al.println("ROOMBOT SETUP COMPLETE");
 	My_Receiver.enableIRIn(); // Start the receiver
 	Serial.println("Press ZERO for Options"); 
 	
@@ -193,8 +192,12 @@ case BUTTON_9: lowerBob(); break;
 }
     
 void loop() {
-windowSense();
-		time = millis();
+time = millis();
+if (Serial.available()) Serial1.print(Serial.read());
+   if (Serial1.available()) Serial.print(Serial1.read());
+
+   windowSense();
+		
 	nextup = ((interval + lastup) - time);
 	readSensors();
 
@@ -206,12 +209,13 @@ My_Receiver.resume();
 
 if (time > (lastup + interval)){
 	Serial.println("Time to send server");
+//send2server();
     logged =0;
 	lastup = time;
     }
 
 serialcomms();
-Serial.print("*");
+Serial.println("*");
 }
 
 void serialcomms(){
@@ -323,7 +327,7 @@ digitalWrite(trigPin2, LOW);  // Added this line
 	tempdistance2 = (duration2 / 2) / 29.1;
 	delay(20);
 distance2 = tempdistance2;
-
+aveSense2.push(distance2);
 
 	digitalWrite(trigPin, LOW);  // Added this line
 	delayMicroseconds(2); // Added this line
@@ -332,13 +336,45 @@ distance2 = tempdistance2;
 	digitalWrite(trigPin, LOW);
 	duration = pulseIn(echoPin, HIGH);
 	tempdistance = (duration / 2) / 29.1;
+
 	if (tempdistance > 100){
+Serial.print("e+100");
+	windowSense();
+	}else{
+	if (distance == 0){
+		distance = tempdistance;nonSense++;
+		} 
+	else if (nonSense > 3){
+	Serial.print("nonsense alert - recalibrating BOB");
+		delay(2500);
+		nonSense=0;distance=0;
 		windowSense();
+		} 
+		else if (tempdistance > (distance+5)) || (tempdistance < (distance-5)){
+		nonSense++;Serial.println("5outError");
+		delay(300);windowSense();
+		} else {
+		distance = tempdistance;aveSense1.push(distance);
+		}
+			
+int tempdistance2 = (duration2 / 2) / 29.1;
+		if (distance2 == 0){
+		distance2 = tempdistance2;
+		} else if (nonSense2 > 3){
+		Serial.print("nonsense2 alert - recalibrating BOB2");
+		delay(2500);
+		nonSense2=0;
+		windowSense();
+		} else if ((tempdistance2 > (distance2+5)) || (tempdistance2 < (distance2-5))){
+		nonSense2++;
+		windowSense();
+		} else {
+		distance2 = tempdistance2;
+		aveSense2.push(distance2);
+		}
+delay(300);
 	}
-	else{
-		distance = tempdistance;
-	}
-	}
+	
 void senseMoveBob(){
 		windowSense();
 			if (distance >= 200 || distance <= 0){

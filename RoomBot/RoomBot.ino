@@ -247,21 +247,20 @@ void windowSense(){
 		digitalWrite(trigPin2, LOW);  // Added this line
 	
 	int tempdistance = (duration / 2) / 29.1;
-		if (prevdistance == 0){
-		distance = tempdistance;
+		if (distance == 0){
+		distance = tempdistance;nonSense++;
 		} 
 		else if (nonSense > 3){
 		Serial.print("nonsense alert - recalibrating BOB");
 		delay(2500);
-		nonSense=0;prevdistance=0;
+		nonSense=0;distance=0;
 		windowSense();
 		} 
-		else if ((tempdistance > (distance+5)) || (tempdistance < (distance-5))){
-		nonSense++;
+		else if (tempdistance > (distance+5)) || (tempdistance < (distance-5)){
+		nonSense++;Serial.println("5outError");
 		windowSense();
-		} 
-		else if (tempdistance < (distance+5) && (tempdistance > (prevdistance-5)) && (tempdistance < (prevdistance+8)) && (tempdistance > (prevdistance-8))){
-		distance = tempdistance;
+		} else {
+		distance = tempdistance;aveSense1.push(distance);
 		}
 			
 	int tempdistance2 = (duration2 / 2) / 29.1;
@@ -277,10 +276,9 @@ void windowSense(){
 		windowSense();
 		} else {
 		distance2 = tempdistance2;
+		aveSense2.push(distance2);
 		}
 delay(300);
-	prevdistance = distance;
-	prevdistance2 = distance2;
 	}
 	
 void senseMoveBob(){

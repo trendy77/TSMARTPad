@@ -24,8 +24,6 @@
 #include <Adafruit_NeoPixel.h>
 
 
-//#include "LedControl.h"
-
 // VARIABLES 	
 //i. Sensors
 OneWire ds(A1);  
