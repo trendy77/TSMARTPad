@@ -17,13 +17,13 @@ reassembled - optional internet (to speed-up startup) and LCD (general ease of t
 #include <LiquidTWI.h>
 
 
-IRrecv My_Receiver(2);
+IRrecv My_Receiver(A15);
 #define trigPin 26    
 #define echoPin 28		
 #define trigPin2 27     
 #define echoPin2 29
 BH1750 lightMeter;
-const int potDialPin = A15;
+const int potDialPin = A8;
 OneWire  ds(A3);
 #define I2C_ADDR  0x20
 const int piezoPin = 0;

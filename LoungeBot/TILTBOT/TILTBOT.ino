@@ -144,6 +144,17 @@ void setup(){
  leftGear.write(pos); // Set initial position
  rightGear.write(invertpos); // Set initial position
  
+  Serial2.begin(9600);
+  // set the contrast-- 200 is a good middle place to try out
+Serial2.write(0xFE);  Serial2.write(0x50);  Serial2.write(200);
+  delay(10);       
+    // set the brightness - we'll max it (255 is max brightness)
+  Serial2.write(0xFE);  Serial2.write(0x99);  Serial2.write(255);
+  delay(10);
+  //backlight to Red
+  Serial2.write(0xFE);Serial2.write(0xD0);Serial2.write(0x255);Serial2.write(0x0); Serial2.write(0x0);	
+  delay(10);
+  
 	Serial1.begin(9600);	
 	Serial1.println("hello on BT?");
 	if (Serial1.available()){
@@ -189,6 +200,11 @@ void setup(){
 }
 
 void tiltAllF(){
+
+Serial2.write(0xFE);Serial2.write(0xD0);Serial2.write(0x0);Serial2.write(0x0); Serial2.write(0x255);	// blue
+delay(10);
+clearTTL();
+Serial2.write("TILTING!");
   Serial.println(" Direction: FORWARD - Tilting ALL... ");
   winTilt.run(FORWARD);
 	  doorwTilt.run(FORWARD);
@@ -203,6 +219,11 @@ void tiltAllF(){
   }
 
 void tiltAllB(){
+	
+Serial2.write(0xFE);Serial2.write(0xD0);Serial2.write(0x0);Serial2.write(0x0); Serial2.write(0x255);	// blue
+delay(10);
+clearTTL();
+Serial2.write("TILTING!");
   Serial.println(" Direction: BACKWARD - Tilting ALL... ");
   winTilt.run(BACKWARD);
 	  doorwTilt.run(BACKWARD);
@@ -251,6 +272,17 @@ void settiltTime(){
   wintimerS = (wintimer/1000);
 }
 
+void clearTTL(){
+Serial2.write(0xFE); Serial2.write(0x58);delay(10);
+}
+
+void clearsevSeg(){		// attempt to clear the shift register 
+  digitalWrite(latchPin, LOW);
+  shiftOut(dataPin, clockPin, MSBFIRST, Tab[0]);
+  delay(100);	
+  digitalWrite(latchPin, HIGH);
+}
+
 
 void loop() {
  time = millis();
@@ -258,7 +290,7 @@ void loop() {
   
   settiltTime();
   
-	leftGear.write(invertpos); rightGear.write(pos);
+//	leftGear.write(invertpos); rightGear.write(pos);
 
 	if (My_Receiver.GetResults(&My_Decoder)) {
 		GotOne=true;
@@ -303,11 +335,11 @@ void dwTiltR(){
 
 void wTilt(){
 	   Serial.println(" Direction: FORWARD - Tilting win... ");
-  winTilt.run(FORWARD);winTilt.run(FORWARD);	  delay(1000);	  winTilt.run(RELEASE);      delay(50);
+  winTilt.run(FORWARD);	  delay(1000);	  winTilt.run(RELEASE);      delay(50);
 }
 void wTiltR(){
 	  Serial.println(" Direction: BACKWARD - Tilting win... ");
-  winTilt.run(FORWARD); winTilt.run(BACKWARD);	  delay(1000);	  winTilt.run(RELEASE);      delay(50);
+   winTilt.run(BACKWARD);	  delay(1000);	  winTilt.run(RELEASE);      delay(50);
 }
 
  void IRrec(){
@@ -320,14 +352,14 @@ void wTiltR(){
       tilttimer = min(tilttimer + 1000, tiltmax);       Serial.println("");       Serial.print("Tilt duration has been changed to "); 
       Serial.print(tilttimer / 1000);       Serial.println("Seconds");       Serial.print("...whilst WindowAction Duration now @");       Serial.print(wintimerS);       Serial.println("Seconds");       beep(tilttimerS);break;
             move=max(1, move-1); break;
-			case BUTTON_1:		kTilt();
-			case BUTTON_2:		wTilt();
-			case BUTTON_3:		dwTilt();
-			case BUTTON_4:		kTiltR();
-			case BUTTON_5:		wTiltR();
-			case BUTTON_6:		dwTiltR();
-			case BUTTON_7:		lTilt();
-			case BUTTON_8:		lTiltR();
+			case BUTTON_1:		kTilt();break;
+			case BUTTON_2:		wTilt();break;
+			case BUTTON_3:		dwTilt();break;
+			case BUTTON_4:		kTiltR();break;
+			case BUTTON_5:		wTiltR();break;
+			case BUTTON_6:		dwTiltR();break;
+			case BUTTON_7:		lTilt();break;
+			case BUTTON_8:		lTiltR();break;
         case PRESET_PREV: senseMoveWin();break;
         case PRESET_NEXT: senseMoveWin(); break;
 		case BLUE:   pos=min(180,pos+move);  break;
@@ -482,21 +514,6 @@ void senseMoveWin(){
       }
 }
 
-
-
-void readAndPrint(){
-  readSensors();
-  printSensors();
-  //setluxBar();
-}
-void readSensors() {
-  
-}
-void printSensors(){
-  } 
-void printAverage(){
-  delay(500);
-}
 
 void beep(int num){
   for (int i = 0; i < num; i++){
