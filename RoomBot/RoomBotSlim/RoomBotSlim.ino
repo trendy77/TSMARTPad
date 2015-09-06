@@ -175,6 +175,9 @@ if(My_Decoder.decode_type==MY_PROTOCOL) {
 Serial.println("Code is for TSMARTPad"); 
 //lcd.clear(); lcd.setCursor(0,3); lcd.print("**TSMARTPad Code**");
 switch(My_Decoder.value) {
+case UP_ARROW:     shortBobU();break;
+case DOWN_ARROW:    	shortBobD();break;
+
 	case SELECT_BUTTON: 	buzzUP();	break;
 case SOUND_PREV:	autolowerBob(); break;	// raise room bob
 case SOUND_NEXT: autoraiseBob(); break; 	 // lower room bob
@@ -310,7 +313,8 @@ void scrollio(){
 }
 
 void windowSense(){
-long tempdistance; long tempdistance2;	digitalWrite(trigPin2, LOW);  // Added this line
+long tempdistance; long tempdistance2;	
+digitalWrite(trigPin2, LOW);  // Added this line
 	delayMicroseconds(2); // Added this line
 	digitalWrite(trigPin2, HIGH);
 	delayMicroseconds(10); // Added this line
@@ -318,6 +322,9 @@ long tempdistance; long tempdistance2;	digitalWrite(trigPin2, LOW);  // Added th
 	duration2 = pulseIn(echoPin2, HIGH);
 	tempdistance2 = (duration2 / 2) / 29.1;
 	delay(20);
+distance2 = tempdistance2;
+
+
 	digitalWrite(trigPin, LOW);  // Added this line
 	delayMicroseconds(2); // Added this line
 	digitalWrite(trigPin, HIGH);
@@ -331,7 +338,6 @@ long tempdistance; long tempdistance2;	digitalWrite(trigPin2, LOW);  // Added th
 	else{
 		distance = tempdistance;
 	}
-distance2 = tempdistance2;
 	}
 void senseMoveBob(){
 		windowSense();

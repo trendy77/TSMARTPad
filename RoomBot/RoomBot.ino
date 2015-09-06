@@ -54,6 +54,7 @@ MDNSResponder mdns;
 #define WLAN_PASS       "4328646517"
 #define WLAN_SECURITY   WLAN_SEC_WPA2
 
+long prevdistance; long prevdistance2;
 #define MY_PROTOCOL 	SONY
 #define UP_ARROW      	0x1E108 //	INCREASE TILT TIME +1SEC
 #define DOWN_ARROW    	0x9E108 //DECREASE TILT TIME -1SEC
@@ -109,7 +110,8 @@ int rm_temp; String temperature; float celsius;float temp_c;
 int lightMin =0;int lightMax = 1023;
 int potVal = 0;int potDialVal = 0; 
 static char tempbuffer[10];int prevPot = 0;
-Average<float> aveRT(10);Average<float> aveRL(10);int logged = 0; int nonSense = 0; int senseLog = 0;
+Average<float> aveRT(10);Average<float> aveRL(10);int logged = 0; int nonSense = 0; int nonSense2; 
+int senseLog = 0;
 
 uint32_t ip = cc3000.IP2U32(192,168,0,110);//your computer's ip address
 int port = 80;String repository = "/energy_project/";
@@ -132,9 +134,11 @@ const int ledCount = 10;
 void setup(){
 	Serial.begin(115200);
 	Serial.println("ROOMBOT INITIALISING...");
-	lcd.begin(20, 4);	lcd.setBacklight(HIGH);lcd.setCursor(0, 2);
-	lcd.print("** INITIALISING.. **");
-
+	//lcd.begin(20, 4);	lcd.setBacklight(HIGH);lcd.setCursor(0, 2);
+	//lcd.print("** INITIALISING.. **");
+Serial1.begin(4800);
+	Serial1.println("ROOMBOTbt INITIALISING...");
+	
 	pinMode(trigPin, OUTPUT);pinMode(echoPin, INPUT);
   	pinMode(trigPin2, OUTPUT);pinMode(echoPin2, INPUT);
   /*
@@ -256,7 +260,7 @@ void windowSense(){
 		nonSense++;
 		windowSense();
 		} 
-		else if (((tempdistance < (distance+5)) && (tempdistance > (prevdistance-5)) && ((tempdistance < (prevdistance+8)) && ((tempdistance > (prevdistance-8))){
+		else if (tempdistance < (distance+5) && (tempdistance > (prevdistance-5)) && (tempdistance < (prevdistance+8)) && (tempdistance > (prevdistance-8))){
 		distance = tempdistance;
 		}
 			
@@ -267,10 +271,10 @@ void windowSense(){
 		Serial.print("nonsense2 alert - recalibrating BOB2");
 		delay(2500);
 		nonSense2=0;
-		windowSense2();
+		windowSense();
 		} else if ((tempdistance2 > (distance2+5)) || (tempdistance2 < (distance2-5))){
 		nonSense2++;
-		windowSense2();
+		windowSense();
 		} else {
 		distance2 = tempdistance2;
 		}
@@ -278,8 +282,6 @@ delay(300);
 	prevdistance = distance;
 	prevdistance2 = distance2;
 	}
-	int prevdistance = 0;
-	int prevdistance2 =0;
 	
 void senseMoveBob(){
 		windowSense();
@@ -688,5 +690,5 @@ void printSensors(){
 	Serial.print("StdDev: "); Serial.println(aveRT.stddev());
 	Serial.print("Sample Size:"); Serial.println(logged);
 	Serial.print("BOB DISTANCE @ ");Serial.print(distance);	Serial.println("cm");
-	delay(500);
+	Serial.print("BOB DISTANCE2 @ ");Serial.print(distance2);	Serial.println("cm");	delay(500);
 }
