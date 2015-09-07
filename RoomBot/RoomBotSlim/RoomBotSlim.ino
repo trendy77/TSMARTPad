@@ -176,19 +176,15 @@ Serial.println("Code is for TSMARTPad");
 switch(My_Decoder.value) {
 case UP_ARROW:     shortBobU();break;
 case DOWN_ARROW:    	shortBobD();break;
-
-	case SELECT_BUTTON: 	buzzUP();	break;
+case SELECT_BUTTON: 	buzzUP();	break;
 case SOUND_PREV:	autolowerBob(); break;	// raise room bob
 case SOUND_NEXT: autoraiseBob(); break; 	 // lower room bob
 //case SUBTITLE: 
 case BUTTON_0: senseMoveBob(); break;
 case BUTTON_9: sendValueToLatch(0); Serial.println("resetting all relays"); break;
-}
-}lcd.clear(); lcd.setCursor(0,3); lcd.print("**TSMARTPad Code**");
-switch(My_Decoder.value) {
-case BUTTON_9: lowerBob(); break;
+			}
 		}
-		}	
+	}	
 }
     
 void loop() {
@@ -197,7 +193,6 @@ if (Serial.available()) Serial1.print(Serial.read());
    if (Serial1.available()) Serial.print(Serial1.read());
 
    windowSense();
-		
 	nextup = ((interval + lastup) - time);
 	readSensors();
 
@@ -342,7 +337,8 @@ Serial.print("e+100");
 	windowSense();
 	}else{
 	if (distance == 0){
-		distance = tempdistance;nonSense++;
+		distance = tempdistance;
+		nonSense++;
 		} 
 	else if (nonSense > 3){
 	Serial.print("nonsense alert - recalibrating BOB");
@@ -661,6 +657,6 @@ void readSensors() {
 	temperature.trim();
 	aveRL.push(rm_light);
 	aveRT.push(temp_c);
-
+logged++;
 }
 
