@@ -21,8 +21,8 @@ TiltBot - Lounge
 #include <LiquidTWI.h>
 #include <FTRGBLED.h>
 #include <Adafruit_NeoPixel.h>
-
-
+#include <EEPROM.h>
+#include <DFBLE.h>
 // VARIABLES 	
 // Sensors
 OneWire ds(A1);  
@@ -219,7 +219,7 @@ void tiltAllF(){
 	  delay(50);
   }
 
-void tiltAllB(){
+void tiltAllB(){  Serial2.println(" Direction: BACKWARD - Tilting ALL... ");
   Serial.println(" Direction: BACKWARD - Tilting ALL... ");
   winTilt.run(BACKWARD);
 	  doorwTilt.run(BACKWARD);
@@ -275,8 +275,8 @@ void settiltTime(){
 void loop(){
  time = millis();
   nextup = ((interval + lastup) - time);
-  
-  settiltTime();
+  Serial2.print("time is ");
+   Serial2.print(time); settiltTime();
   
 	//leftGear.write(invertpos); rightGear.write(pos);
 
