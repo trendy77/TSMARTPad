@@ -17,11 +17,19 @@ reassembled - optional internet (to speed-up startup) and LCD (general ease of t
 #include <LiquidTWI.h>
 
 
+<<<<<<< HEAD
 IRrecv My_Receiver(A15);
 #define trigPin 26    
 #define echoPin 28		
 #define trigPin2 27     
 #define echoPin2 29
+=======
+IRrecv My_Receiver(2);
+#define trigPin 28    
+#define echoPin 30		
+#define trigPin2 31     
+#define echoPin2 27
+>>>>>>> 0e9f623fa9ffe8379ca4599192b202e0c55e4958
 BH1750 lightMeter;
 const int potDialPin = A8;
 OneWire  ds(A3);
@@ -229,6 +237,9 @@ void serialcomms(){
 			Serial.print("BOB@ ");
 			Serial.print(distance);
 			Serial.println("cm");
+Serial.print("BOB2@ ");
+			Serial.print(distance2);
+			Serial.println("cm");
 
 			Serial.println("TSMARTPad- ROOM OPTIONS");
 			Serial.println(" Current Sensor Readings: "); readAndPrint();
@@ -339,23 +350,24 @@ void buzzUP(){
 }
 
 void autoraiseBob(){
-	windowSense();
-	while (distance <90) {
-		sendValueToLatch(1); 
+	if (distance <70){
+  sendValueToLatch(1); 
+        windowSense();
+	Serial.print("dist @");Serial.print(distance);
+	while (distance <70) {
 		windowSense();
+	Serial.print("dist @");Serial.print(distance);
 		}
 	sendValueToLatch(0); 	
 	delay(50);
-	}
-	
+}
+}	
 void autolowerBob(){
-	windowSense();
 	if (distance >2 ) { 
 	sendValueToLatch(2); 
 	windowSense(); 
-	Serial.print("dist @");Serial.print(distance);
-		while (distance >2){
-		windowSense(); 
+while 	(distance >2){
+  windowSense();
 		Serial.print("dist @");Serial.print(distance);
 		}
 	sendValueToLatch(0); 
@@ -430,10 +442,10 @@ int lowerBOB(String Command){
 void updateLcd(){
 		lcd.setCursor(0, 0); lcd.print("BOB@ ");
 	lcd.setCursor(15, 0);	lcd.print(distance);	lcd.print("cm");
-		lcd.setCursor(0,1);	lcd.print("Next@");
-		lcd.setCursor(15, 1); lcd.print(nextup);
-		lcd.setCursor(0, 2);  lcd.print("Time-");  lcd.print(time); lcd.print("*Last-");  lcd.print(lastup);
-	lcd.setCursor(0, 3); lcd.print("*Lux=");  lcd.print(rm_light);  lcd.print("**Temp=");  lcd.print(temperature);lcd.print("C");
+		lcd.setCursor(0,1);	lcd.print("BOB2@");
+		lcd.setCursor(15, 1); lcd.print(distance2);	lcd.print("cm");
+		lcd.setCursor(0, 2);  lcd.print("T-");  lcd.print(time); lcd.print("*NXT-");  lcd.print(nextup);
+	lcd.setCursor(0, 3); lcd.print("Lux=");  lcd.print(rm_light);  lcd.print("*Temp=");  lcd.print(temperature);lcd.print("C");
 	}
 	
 void raiseBob2(){

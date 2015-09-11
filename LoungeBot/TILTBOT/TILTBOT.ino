@@ -352,6 +352,7 @@ void wTiltR(){
       tilttimer = min(tilttimer + 1000, tiltmax);       Serial.println("");       Serial.print("Tilt duration has been changed to "); 
       Serial.print(tilttimer / 1000);       Serial.println("Seconds");       Serial.print("...whilst WindowAction Duration now @");       Serial.print(wintimerS);       Serial.println("Seconds");       beep(tilttimerS);break;
             move=max(1, move-1); break;
+<<<<<<< HEAD
 			case BUTTON_1:		kTilt();break;
 			case BUTTON_2:		wTilt();break;
 			case BUTTON_3:		dwTilt();break;
@@ -360,6 +361,27 @@ void wTiltR(){
 			case BUTTON_6:		dwTiltR();break;
 			case BUTTON_7:		lTilt();break;
 			case BUTTON_8:		lTiltR();break;
+=======
+<<<<<<< HEAD
+			case BUTTON_1:		kTilt();break;
+			case BUTTON_2:		kTiltR();break;
+			case BUTTON_3:		wTilt();break;
+			case BUTTON_4:		wTiltR();break;
+			case BUTTON_5:		dwTilt();break;
+			case BUTTON_6:		dwTiltR();break;
+			case BUTTON_7:		lTilt();break;
+			case BUTTON_8:		lTiltR();break;
+=======
+			case BUTTON_1:		kTilt();
+			case BUTTON_2:		wTilt();
+			case BUTTON_3:		dwTilt();
+			case BUTTON_4:		kTiltR();
+			case BUTTON_5:		wTiltR();
+			case BUTTON_6:		dwTiltR();
+			case BUTTON_7:		lTilt();
+			case BUTTON_8:		lTiltR();
+>>>>>>> dc73b2c884f57cdd574aca09607adcc8fe27805f
+>>>>>>> 0e9f623fa9ffe8379ca4599192b202e0c55e4958
         case PRESET_PREV: senseMoveWin();break;
         case PRESET_NEXT: senseMoveWin(); break;
 		case BLUE:   pos=min(180,pos+move);  break;
