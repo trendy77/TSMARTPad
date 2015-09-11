@@ -129,11 +129,25 @@ const int dataPin = A14;
 void setup(){
   Serial.begin(115200);
   Serial.println("TLOUNGE INITIALISING...");
- GotOne = false; GotNew = false;   codeType = UNKNOWN;  codeValue = 0;
+   Serial2.begin(9600);
+  // set the contrast-- 200 is a good middle place to try out
+Serial2.write(0xFE);  Serial2.write(0x50);  Serial2.write(200);
+  delay(10);       
+    // set the brightness - we'll max it (255 is max brightness)
+  Serial2.write(0xFE);  Serial2.write(0x99);  Serial2.write(255);
+  delay(10);
+  //backlight to Red
+  Serial2.write(0xFE);Serial2.write(0xD0);Serial2.write(0x255);Serial2.write(0x0); Serial2.write(0x0);	
+  delay(10);
+  
+  //strip.begin();  strip.setBrightness(255);	 strip.show(); 	
+  //colorWipe(strip.Color(255, 0, 0), 50);    // red?
+  		
+  Serial2.print("TrendySMARTPad -- Connecting");
+  GotOne = false; GotNew = false;   codeType = UNKNOWN;  codeValue = 0;
 
   kitchTilt.setSpeed(255);   doorwTilt.setSpeed(255);
-  loungeTilt.setSpeed(255);
-  winTilt.setSpeed(255);  
+  loungeTilt.setSpeed(255);  winTilt.setSpeed(255);  
   kitchTilt.run(RELEASE);doorwTilt.run(RELEASE);loungeTilt.run(RELEASE);winTilt.run(RELEASE);
  	//pinMode(potPin, INPUT);
  leftGear.attach(10);  // attaches the servo on pin 9 to the servo object 
@@ -183,7 +197,10 @@ void setup(){
 */ 
  Serial.println("TILTBOT SETUP COMPLETE");
  Serial.println("Press ZERO for Options");
-
+Serial2.write(0xFE);Serial2.write(0xD0);Serial2.write(0x0);Serial2.write(0x0); Serial2.write(0x255);	// blue
+delay(10);
+clearTTL();
+Serial2.write("CONNECTED!");
   My_Receiver.No_Output();//Turn off any unused IR LED output circuit
   My_Receiver.enableIRIn(); // Start the receiver
 }
@@ -217,6 +234,9 @@ void tiltAllB(){
   delay(50);
    }
    
+void clearTTL(){
+Serial2.write(0xFE); Serial2.write(0x58);delay(10);
+}
     /*   
 void windowSense(){
 	digitalWrite(trigPin, LOW);  // Added this line
@@ -252,13 +272,13 @@ void settiltTime(){
 }
 
 
-void loop() {
+void loop(){
  time = millis();
   nextup = ((interval + lastup) - time);
   
   settiltTime();
   
-	leftGear.write(invertpos); rightGear.write(pos);
+	//leftGear.write(invertpos); rightGear.write(pos);
 
 	if (My_Receiver.GetResults(&My_Decoder)) {
 		GotOne=true;
@@ -272,7 +292,7 @@ void loop() {
         }
     
 serialcomms();
-Serial.print(".");
+Serial.println(".");
 }
 
 
@@ -310,7 +330,7 @@ void wTiltR(){
   winTilt.run(FORWARD); winTilt.run(BACKWARD);	  delay(1000);	  winTilt.run(RELEASE);      delay(50);
 }
 
- void IRrec(){
+void IRrec(){
    switch(My_Decoder.value) {
             case LEFT_ARROW:   tiltAllF();break;
             case RIGHT_ARROW:   tiltAllB(); break;
@@ -320,7 +340,6 @@ void wTiltR(){
       tilttimer = min(tilttimer + 1000, tiltmax);       Serial.println("");       Serial.print("Tilt duration has been changed to "); 
       Serial.print(tilttimer / 1000);       Serial.println("Seconds");       Serial.print("...whilst WindowAction Duration now @");       Serial.print(wintimerS);       Serial.println("Seconds");       beep(tilttimerS);break;
             move=max(1, move-1); break;
-<<<<<<< HEAD
 			case BUTTON_1:		kTilt();break;
 			case BUTTON_2:		kTiltR();break;
 			case BUTTON_3:		wTilt();break;
@@ -329,43 +348,19 @@ void wTiltR(){
 			case BUTTON_6:		dwTiltR();break;
 			case BUTTON_7:		lTilt();break;
 			case BUTTON_8:		lTiltR();break;
-=======
-			case BUTTON_1:		kTilt();
-			case BUTTON_2:		wTilt();
-			case BUTTON_3:		dwTilt();
-			case BUTTON_4:		kTiltR();
-			case BUTTON_5:		wTiltR();
-			case BUTTON_6:		dwTiltR();
-			case BUTTON_7:		lTilt();
-			case BUTTON_8:		lTiltR();
->>>>>>> dc73b2c884f57cdd574aca09607adcc8fe27805f
-        case PRESET_PREV: senseMoveWin();break;
-        case PRESET_NEXT: senseMoveWin(); break;
-		case BLUE:   pos=min(180,pos+move);  break;
-        case YELLOW: pos=max(0,pos-move); break; 
+//        case PRESET_PREV: senseMoveWin();break;
+  //      case PRESET_NEXT: senseMoveWin(); break;
+	//	case BLUE:   pos=min(180,pos+move);  break;
+      //  case YELLOW: pos=max(0,pos-move); break; 
 		}
 		invertpos = (pos -180);
 leftGear.write(pos); rightGear.write(invertpos);
    }  
  
 void senseMoveWin(){
-/*  lcd.clear(); lcd.setCursor(2,0); lcd.print("AUTOBOB ACTIVATING");
-  windowSense();
-      if (distance >= 200 || distance <= 0){
-      Serial.println("ERROR Out of range");//lcd.print("ERROR Out of range");
-      }
-      else if (distance > 2){
-    //lcd.setCursor(3,0); lcd.print("AUTOBOB RAISING BLIND");
-     autocloseWin();
-      }
-      else if (distance <= 2){
-    autoopenWin();// openlwin();
-    }
-  delay(300);
 
-*/
 }
- void serialcomms(){
+void serialcomms(){
 	if (Serial.available()){
 		int command = Serial.read();
 		switch (command){
@@ -478,7 +473,7 @@ void senseMoveWin(){
 	}
 }
 
-   void storeCode(void) {
+void storeCode(void) {
   GotNew=true;
   codeType = My_Decoder.decode_type;
   if (codeType == UNKNOWN) {

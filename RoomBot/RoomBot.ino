@@ -318,28 +318,7 @@ delay(500);
        	sendValueToLatch(0);
 		delay(200);
 }
-
-void testM2(){
-sendValueToLatch(4);
-delay(2000);
-sendValueToLatch(0);	
-delay(2000);
-sendValueToLatch(4);
-delay(2000);
-sendValueToLatch(0);
-delay(200);
-}
-
-void testM2rev(){
-sendValueToLatch(32);
-delay(2000);
-sendValueToLatch(0);		
-delay(2000);
-sendValueToLatch(32);
-delay(2000);
-sendValueToLatch(0);
-delay(200);	
-}
+ 
 
 void autoraiseBob(){
 	windowSense();

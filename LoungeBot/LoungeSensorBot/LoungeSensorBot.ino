@@ -28,7 +28,7 @@
 //i. Sensors
 OneWire ds(A1);  
 BH1750 lightMeter;
-IRrecv My_Receiver(A3);
+IRrecv My_Receiver(A0);
 
 #define KWtrigPin 0
 #define KWechoPin 0
@@ -42,7 +42,7 @@ const int piezoPin = A8;
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(8, NEOPIN, NEO_GRB + NEO_KHZ800);
 
 
-/*
+
 const int potDialPin = A13;
  const int potPin = A14;
  const int loungeWinF = 0;// NOW DONE BY V1 SHIELD IN LOUNGE
@@ -54,11 +54,12 @@ const int potDialPin = A13;
  #define BLUEPIN 2
  #define FADESPEED 5   
  int r, g, b;
- */
+ 
 const int num_leds = 1;const int PIN_CKI = 12;const int PIN_SDI = 13;RGBLEDChain leds(num_leds, PIN_CKI, PIN_SDI);
 const byte rleds[] = {  0};//22,23,24,25};
 const byte gleds[] = {  0};//26,27,28,29};
-const byte bleds[] = {  0};//30,31,32,33};
+const byte bleds[] = {  37,39, A3, 41};
+const int ledCount = 10; 
 const byte aleds[] = {  0};// 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33 };
 
 #define LISTEN_PORT           8071
@@ -73,8 +74,8 @@ Adafruit_CC3000_Server restServer(LISTEN_PORT);
 MDNSResponder mdns;
 
 // lux bar pin
-int barpins[] = { 22, 24, 26, 28, 30, 32, 34, 36, 38,40 };   // an array of pin numbers to which LEDs are attached
-const int ledCount = 10; 
+int barpins[] = { 23, 25, 27, 29, 31, 33, 35, 37, 39,41 };   // an array of pin numbers to which LEDs are attached
+
 int barlevel;
 int ledmin = 100;        // sets the max speed (0 = fast) the lower the number the faster it
 int ledmax = 200;      // sets the min speed (100 = slow) the higher the number the slower it can go
@@ -172,21 +173,21 @@ IRdecode My_Decoder;
 void setup(){
   Serial.begin(115200);
   Serial.println("TLOUNGE INITIALISING...");
-  Serial2.begin(9600);
+  //Serial2.begin(9600);
   // set the contrast-- 200 is a good middle place to try out
-Serial2.write(0xFE);  Serial2.write(0x50);  Serial2.write(200);
-  delay(10);       
+//Serial2.write(0xFE);  Serial2.write(0x50);  Serial2.write(200);
+ // delay(10);       
     // set the brightness - we'll max it (255 is max brightness)
-  Serial2.write(0xFE);  Serial2.write(0x99);  Serial2.write(255);
-  delay(10);
+  //Serial2.write(0xFE);  Serial2.write(0x99);  Serial2.write(255);
+  //delay(10);
   //backlight to Red
-  Serial2.write(0xFE);Serial2.write(0xD0);Serial2.write(0x255);Serial2.write(0x0); Serial2.write(0x0);	
-  delay(10);
+ // Serial2.write(0xFE);Serial2.write(0xD0);Serial2.write(0x255);Serial2.write(0x0); Serial2.write(0x0);	
+ // delay(10);
   
-  strip.begin();  strip.setBrightness(255);	 strip.show(); 	
-  colorWipe(strip.Color(255, 0, 0), 50);    // red?
+ // strip.begin();  strip.setBrightness(255);	 strip.show(); 	
+  //colorWipe(strip.Color(255, 0, 0), 50);    // red?
   		
-  Serial2.print("TrendySMARTPad -- Connecting");
+  //Serial2.print("TrendySMARTPad -- Connecting?");
  /* pinMode(dataPin, OUTPUT);  
  pinMode(clockPin, OUTPUT);
  pinMode(latchPin, OUTPUT);
@@ -200,34 +201,39 @@ Serial2.write(0xFE);  Serial2.write(0x50);  Serial2.write(200);
    for (byte count = 0; count < 4; count++) {
    	pinMode(rleds[count], OUTPUT);   		pinMode(gleds[count], OUTPUT);   		digitalWrite(gleds[count], HIGH);   		digitalWrite(rleds[count], HIGH);
    	}
-   	for (byte count1 = 0; count1 < 4; count1++) {
-   	pinMode(bleds[count1], OUTPUT);	digitalWrite(bleds[count1], HIGH);   delay(300);
+   */	for (byte count1 = 0; count1 < 4; count1++) {
+   	pinMode(bleds[count1], OUTPUT);delay(300);
          }
-   	pinMode(potPin, INPUT); pinMode(potDialPin, INPUT); 	   
-	*/
+   	//pinMode(potPin, INPUT); pinMode(potDialPin, INPUT); 	   
+	
+  for (int thisLed = 0; thisLed < ledCount; thisLed++) {
+    pinMode(barpins[thisLed], OUTPUT); 
+	digitalWrite(barpins[thisLed], HIGH);
+	delay(200);
+  }
   
   GotOne = false; GotNew = false;   codeType = UNKNOWN;  codeValue = 0;
-    Serial1.begin(9600);	
+Serial1.begin(9600);	
 	Serial1.println("hello on BT?");
 	if (Serial1.available()){
    	Serial.println("Bluetooth Client Online");
    }   else {
    	Serial.println("BT Not Found");
    }
-   pinMode(piezoPin, OUTPUT);
- // leds.begin();   leds.setLEDs(LED_RED);   leds.update();
+//   pinMode(piezoPin, OUTPUT);
+leds.begin();   leds.setLEDs(LED_RED);   leds.update();
   AFMSi.begin();			 
 
-  //Start your Engines...
+  /*Start your Engines...
  // LoungeTilt->setSpeed(255);
  // LoungeTilt->run(RELEASE);
-  KitchenTilt->setSpeed(255);
+  //KitchenTilt->setSpeed(255);
   KitchenTilt->run(RELEASE);
 //  DoorWindowTilt->setSpeed(255);
  // DoorWindowTilt->run(RELEASE);
   WindowTilt->setSpeed(255);
   WindowTilt->run(RELEASE);
-  
+  */
   lightMeter.begin();
   lux = lightMeter.readLightLevel();
   lg_light = lux;
@@ -235,10 +241,10 @@ Serial2.write(0xFE);  Serial2.write(0x50);  Serial2.write(200);
 
   rest.variable("lg_light", &lg_light);
   rest.variable("lg_temp", &lg_temp);
-  rest.function("raiseKW",raiseKW);
-  rest.function("lowerKW",lowerKW);
-  rest.function("tiltFW",tiltFW);		// Function to be exposed
-  rest.function("tiltBK",tiltBK);	
+  //rest.function("raiseKW",raiseKW);
+  //rest.function("lowerKW",lowerKW);
+  //rest.function("tiltFW",tiltFW);		// Function to be exposed
+  //rest.function("tiltBK",tiltBK);	
   rest.set_id("171");			  			// Give name and ID to device
   rest.set_name("LoungeBot");
 
@@ -263,50 +269,51 @@ Serial2.write(0xFE);  Serial2.write(0x50);  Serial2.write(200);
   Serial.println("Press ZERO for Options");
 Serial2.write(0xFE);Serial2.write(0xD0);Serial2.write(0x0);Serial2.write(0x0); Serial2.write(0x255);	// blue
 delay(10);
-clearTTL();
-Serial2.write("CONNECTED!");
-   Wire.begin();
+//clearTTL();
+//Serial2.write("CONNECTED!");
+  // Wire.begin();
    //rainbowCycle(20);
-  My_Receiver.enableIRIn(); 
+	My_Receiver.enableIRIn();  leds.setLEDs(LED_BLUE);   leds.update();
 }
 
 void loop(void){
-      colorWipe(strip.Color(0, 0, 255), 50);   
+   //   colorWipe(strip.Color(0, 0, 255), 50);   
 	  Serial.print(".");  
-  //if (Serial.available()) Serial1.print(Serial.read());
+//if (Serial.available()) Serial1.print(Serial.read());
    // if (Serial1.available()) Serial.print(Serial1.read());
     readSensors();
    time = millis();
   nextup = ((interval + lastup) - time);
   
-  settiltTime();
+ // settiltTime();
   setluxBar();
- // leds.setLEDs(LED_BLUE);   leds.update();
+
 
   mdns.update();
   Adafruit_CC3000_ClientRef client = restServer.available();
   rest.handle(client);
-
+kitttheBar();
   if (time > (lastup + interval)){
     Serial.println("TIME TO SEND 2 SERVER");	
     readAndPrint();
     printAverage();
-  //  leds.setLEDs(LED_GREEN);     leds.update();
+    leds.setLEDs(LED_GREEN);     leds.update();
         send2server();
-  //  sevSegPrint(String(temperature));	
+    sevSegPrint(String(temperature));	
         lastup = time;
   }
 
-  if (My_Receiver.GetResults(&My_Decoder)) {
+ // if (My_Receiver.GetResults(&My_Decoder)) {
+//knightrider();
   //  theaterChaseRainbow(50);
-      clearsevSeg();	
-    IRDetected();
-    delay(100);
-    My_Receiver.resume();
-  }
+ //     clearsevSeg();	
+//kitttheBar();
+  //  delay(100);
+//My_Receiver.resume();
+ // }    
   serialcomms();
 }
-
+/*
 int lowerKW(String Command){
   kitchWinFwd();
   return 1;
@@ -358,12 +365,14 @@ void tiltbwd(){
   LoungeTilt->run(RELEASE);	
   KitchenTilt->run(RELEASE);			
 }
-
+*/
 void IRDetected(){
+  kitttheBar();
   Serial.println("IR COMMAND DETECTED - DECODING...");
-  My_Decoder.decode();
-  GotOne = true;
-  //	leds.setLEDs(LED_VIOLET); leds.update();
+}
+/*My_Decoder.decode();
+ GotOne = true;
+  	leds.setLEDs(LED_VIOLET); leds.update();
   codeType = My_Decoder.decode_type;
   if (codeType == UNKNOWN) {
     Serial.println("Received unknown code, no known protocol");
@@ -388,9 +397,9 @@ void IRDetected(){
     Serial.println(My_Decoder.value, HEX);
 
     if (My_Decoder.decode_type == MY_PROTOCOL) {
-      //	leds.setLEDs(LED_YELLOW); leds.update();
+	leds.setLEDs(LED_YELLOW); leds.update();
       Serial.println("Code is IR command for TSMARTPad");
-      //beep(1);
+      beep(1);
       switch (My_Decoder.value) {
       case DOWN_ARROW:
         tilttimer = max(tilttimer - 1000, tiltmin); 
@@ -541,9 +550,10 @@ void blink(int globe, byte many){
     digitalWrite(gleds[globe], LOW);
     digitalWrite(rleds[globe], LOW);
     delay(1000);
+
   }
 }
-
+*/
 void serialcomms() {
 
   if (Serial.available()){
@@ -570,21 +580,14 @@ void serialcomms() {
       Serial.print("Current Average TempC is "); 
       Serial.println(aveLT.mean());
       readAndPrint();
-      Serial.println(" 1/q-  KitchenTILT 5 SEC ");
-      Serial.println(" 2/w-  WindowTILT 5 SEC ");
-      Serial.println(" 3/e- DoorWindowTILT 5 SEC ");
-      Serial.println(" 4/r- LoungeTilt 5 SEC ");
-      Serial.println(" **5/t- ALL TILT 6 SEC");
-      Serial.println(" 6/y- KITCHEN WINDOW OPEN/CLOSE");
-      Serial.println("   P = POTMODE ALL TILTSPEED ** ");
-      Serial.println(" z/x/c/v- relays 1-4; m to reset ");
+  
       Serial.println(" 8- Lux Lumen Info");
       Serial.println(" 9-  SEND2SERVER ");
       delay(100);
       break;
 
-    case '1':
-      Serial.println(" Direction: FORWARD - KitchenTilt ... ");
+    case '1':readAndPrint();break;
+       /*   Serial.println(" Direction: FORWARD - KitchenTilt ... ");
       KitchenTilt->run(FORWARD);
       delay(tilttimer);
       KitchenTilt->run(RELEASE);
@@ -626,7 +629,7 @@ void serialcomms() {
       readAndPrint();
       break;
     case 'p':
-      /*		Serial.println("ENTERING MANUAL CONTROL MODE, PRESS ANY KEY TO ESC");
+  		Serial.println("ENTERING MANUAL CONTROL MODE, PRESS ANY KEY TO ESC");
        			while (command == 0){
        			int speed = map(potDialVal, 0, 1023, 0, 255);
        				if (potDialVal > 500) {
@@ -641,7 +644,7 @@ void serialcomms() {
        					Serial.print("speed @ ");
        					Serial.println(speed);
        				}
-       		*/      Serial.print("done");
+       		      Serial.print("done");
       break;
 
     case 'e':
@@ -731,7 +734,7 @@ void serialcomms() {
     case 'u': 
       Serial.println("nada ");  
       break;
-
+*/
     case '9':
       send2server();         
       break;
@@ -791,7 +794,7 @@ void clearsevSeg(){		// attempt to clear the shift register
 }
 
 void kitttheBar(){
-  int ledtimer;
+  int ledtimer = 30;
   for (byte count = 0; count < ledCount; count++) {     // cycles threw 
     digitalWrite(barpins[count], HIGH);      // turns the first led on
     delay(ledtimer);                             // sets the delay 
@@ -800,7 +803,7 @@ void kitttheBar(){
     digitalWrite(barpins[count], LOW);       
     delay(ledtimer*1.5);                        
   }
-  for (byte count = ledCount; count > 0; count--) { 
+  for (byte count = ledCount; count >= 0; count--) { 
     digitalWrite(barpins[count], HIGH);
     delay(ledtimer);
     digitalWrite(barpins[count- 1], HIGH);
@@ -935,7 +938,7 @@ void beep(int num){
     delay(500);
   }
 }
-
+/*
 void kitchWinFwd(){
   Serial.print(" kitchWindow Opening "); 
   Serial.print(wintimerS); 
@@ -957,7 +960,7 @@ void kitchWinBwd(){
 
 }
 
-
+*/
 void send2server(){
 
   Serial.println("Time to send server");
@@ -1035,7 +1038,7 @@ void knightrider() {
     digitalWrite(aleds[count], LOW);       // turns it back off
     delay(ledtimer*1.5);                             // sets the delay (for how fas it will go)
   }
-  for (byte count = 8; count > 0; count--) {    // same thing but in reverse so it will end up going back and forth
+  for (byte count = 8; count >= 0; count--) {    
     digitalWrite(aleds[count], HIGH);
     delay(ledtimer);
     digitalWrite(aleds[count- 1], HIGH);
@@ -1063,55 +1066,6 @@ void gedoff() {
   for (byte count = 0; count > 4; count++) {    // same thing but in reverse so it will end up going back and forth
     digitalWrite(gleds[count], LOW);
   }
-}
-
-void windowSense(){
-  digitalWrite(KWtrigPin, LOW);  // Added this line
-  delayMicroseconds(2); // Added this line
-  digitalWrite(KWtrigPin, HIGH);
-  delayMicroseconds(10); // Added this line
-  digitalWrite(KWtrigPin, LOW);
-  duration = pulseIn(KWechoPin, HIGH);
-  distance = (duration / 2) / 29.1;
-  Serial.print("KitchWin DISTANCE @ ");	
-  Serial.print(distance);	
-  Serial.println("cm");
-  //	lcd.setCursor(0, 0); lcd.print(" @ "); lcd.setCursor(15,0); lcd.print(distance);
-  //lcd.print("cm");
-}
-void senseMoveBob(){
-  //	lcd.clear(); lcd.setCursor(2,0); lcd.print("AUTOBOB ACTIVATING");
-  windowSense();
-  if (distance >= 200 || distance <= 0){
-    Serial.println("ERROR Out of range");//lcd.print("ERROR Out of range");
-  }
-  else if (distance > 5){
-    //	lcd.setCursor(3,0); lcd.print("AUTOBOB RAISING BLIND");
-    autolowerKW();
-  }
-  else if (distance <= 5){
-    //lcd.setCursor(3,0); lcd.print("AUTOBOB RAISING BLIND");
-    autoraiseKW();
-  }
-  delay(300);
-}
-void autoraiseKW(){
-  windowSense();
-  while (distance > 3) {  
- 	sendValueToLatch(1);
-	delay(300);
-  }
-	sendValueToLatch(0);
-  delay(50);
-}
-void autolowerKW(){
-  windowSense();
-  while (distance < 100) { 
-	sendValueToLatch(2);
-delay(300);
-  }
-	sendValueToLatch(0);
-  delay(50);
 }
 
 void settiltTime(){
