@@ -75,6 +75,9 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>C:\Users\ReverendDrTrendyDA\Dropbox\Duino1.0.6\hardware\arduino\cores\arduino;C:\Users\ReverendDrTrendyDA\Dropbox\Duino1.0.6\hardware\arduino\variants\mega;C:\Users\ReverendDrTrendyDA\Documents\TSMARTPad\RoomBot\RoomBotSlim;C:\Users\ReverendDrTrendyDA\Dropbox\DuinoUp\libraries\Adafruit_CC3000;C:\Users\ReverendDrTrendyDA\Dropbox\DuinoUp\libraries\Adafruit_CC3000\utility;C:\Users\ReverendDrTrendyDA\Dropbox\DuinoUp\libraries\aREST;C:\Users\ReverendDrTrendyDA\Dropbox\DuinoUp\libraries\aREST\utility;C:\Users\ReverendDrTrendyDA\Dropbox\DuinoUp\libraries\Average;C:\Users\ReverendDrTrendyDA\Dropbox\DuinoUp\libraries\Average\utility;C:\Users\ReverendDrTrendyDA\Dropbox\DuinoUp\libraries\BH1750;C:\Users\ReverendDrTrendyDA\Dropbox\DuinoUp\libraries\BH1750\utility;C:\Users\ReverendDrTrendyDA\Dropbox\DuinoUp\libraries\CC3000_MDNS;C:\Users\ReverendDrTrendyDA\Dropbox\DuinoUp\libraries\CC3000_MDNS\utility;C:\Users\ReverendDrTrendyDA\Dropbox\DuinoUp\libraries\IRLib;C:\Users\ReverendDrTrendyDA\Dropbox\DuinoUp\libraries\IRLib\utility;C:\Users\ReverendDrTrendyDA\Dropbox\DuinoUp\libraries\LiquidTWI;C:\Users\ReverendDrTrendyDA\Dropbox\DuinoUp\libraries\LiquidTWI\utility;C:\Users\ReverendDrTrendyDA\Dropbox\DuinoUp\libraries\OneWire;C:\Users\ReverendDrTrendyDA\Dropbox\DuinoUp\libraries\OneWire\utility;C:\Users\ReverendDrTrendyDA\Dropbox\Duino1.0.6\libraries\SPI;C:\Users\ReverendDrTrendyDA\Dropbox\Duino1.0.6\libraries\SPI\utility;C:\Users\ReverendDrTrendyDA\Dropbox\Duino1.0.6\libraries\Wire;C:\Users\ReverendDrTrendyDA\Dropbox\Duino1.0.6\libraries\Wire\utility;C:\Users\ReverendDrTrendyDA\Dropbox\Duino1.0.6\libraries;C:\Users\ReverendDrTrendyDA\Dropbox\Duino1.0.6\hardware\arduino\libraries;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\Extensions\lprgwpee.cul\Micro Platforms\default\debuggers;C:\Users\ReverendDrTrendyDA\Dropbox\DuinoUp\libraries;c:\users\reverenddrtrendyda\dropbox\duino1.0.6\hardware\tools\avr\avr\include\;c:\users\reverenddrtrendyda\dropbox\duino1.0.6\hardware\tools\avr\avr\include\avr\;c:\users\reverenddrtrendyda\dropbox\duino1.0.6\hardware\tools\avr\avr\;c:\users\reverenddrtrendyda\dropbox\duino1.0.6\hardware\tools\avr\lib\gcc\avr\4.3.2\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>C:\Users\ReverendDrTrendyDA\Documents\TSMARTPad\RoomBot\RoomBotSlim\Visual Micro\.RoomBotSlim.vsarduino.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <IgnoreStandardIncludePath>true</IgnoreStandardIncludePath>
+      <PreprocessorDefinitions>__AVR_ATmega2560__;ARDUINO=106;ARDUINO_MAIN;__AVR__;__avr__;F_CPU=16000000L;__cplusplus;GCC_VERSION=40302;ARDUINO_ARCH_AVR;ARDUINO_AVR_MEGA2560;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -122,6 +125,9 @@
     <None Include="RoomBotSlim.ino">
       <FileType>CppCode</FileType>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Visual Micro\.RoomBotSlim.vsarduino.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

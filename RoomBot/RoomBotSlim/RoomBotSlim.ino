@@ -23,7 +23,7 @@ IRrecv My_Receiver(A15);
 #define trigPin2 31     
 #define echoPin2 27
 BH1750 lightMeter;
-const int potDialPin = A15;
+const int potDialPin = A10;
 OneWire  ds(A3);
 #define I2C_ADDR  0x20
 const int piezoPin = 0;
@@ -86,15 +86,14 @@ unsigned long time; long nextup; long lastup;
 
 IRTYPES codeType;        
 unsigned long codeValue; 
-int codeBits;            
-unsigned int rawCodes[RAWBUF]; 
+int codeBits; unsigned int rawCodes[RAWBUF]; 
 int rawCount;                  
 bool GotOne, GotNew; IRdecode My_Decoder; 
 
 int rm_light; uint16_t lux; int lightPercent;
 int rm_temp; String temperature; float celsius;float temp_c;
 int lightMin =0;int lightMax = 1023;
-int potVal = 0;int potDialVal = 0; 
+int potDialVal = 0; 
 static char tempbuffer[10];int prevPot = 0;
 Average<float> aveRT(10);Average<float> aveRL(10);int logged = 0; long nonSense = 0; long nonSense2 = 0;
 Average<float> aveSense1(10); Average<float> aveSense2(10);
@@ -139,10 +138,10 @@ Serial1.print("hiBT?");
 
 	lightMeter.begin();
 	delay(500);
-/* TO ENABLE INTERNET :
+  /* //TO ENABLE INTERNET :
     wdt_enable(WDTO_4S);wdt_reset();	
 		rest.variable("room_temp",&rm_temp);	rest.variable("room_light",&rm_light);      
-        rest.function("raiseBob",raiseBOB);	rest.function("lowerBob",lowerBOB);	rest.function("pussPull",pussPull);
+        rest.function("raiseBob",raiseBOB);	rest.function("lowerBob",lowerBOB);	
 	rest.function("buzz",buzz);	  rest.set_id("172");			rest.set_name("RoomBot");
 
 	Serial.println("LOADING WIFI CONNECTION");
@@ -160,33 +159,7 @@ Serial.println("ROOMBOT SETUP COMPLETE");
 	Serial.println("Press ZERO for Options"); 
 	
 }
-    
-    void IRDetected(){
- 	 Serial.println("IR COMMAND DETECTED - DECODING...");
-	My_Decoder.decode(); GotOne=true;
-	GotNew=true;  codeType = My_Decoder.decode_type;  if (codeType == UNKNOWN) {    Serial.println("Received unknown code");
-    rawCount = My_Decoder.rawlen-1;    }   
-	else{	Serial.print(F("Received "));    Serial.print(Pnames(codeType));
-	if (My_Decoder.value == REPEAT) {	Serial.println(F("repeat; ignoring."));     } 
-	 else{       codeValue = My_Decoder.value; codeBits = My_Decoder.bits;
-} 	Serial.print(F(" Value:0x"));Serial.println(My_Decoder.value, HEX);
-if(My_Decoder.decode_type==MY_PROTOCOL) {
-Serial.println("Code is for TSMARTPad"); 
-//lcd.clear(); lcd.setCursor(0,3); lcd.print("**TSMARTPad Code**");
-switch(My_Decoder.value) {
-case UP_ARROW:     shortBobU();break;
-case DOWN_ARROW:    	shortBobD();break;
-case SELECT_BUTTON: 	buzzUP();	break;
-case SOUND_PREV:	autolowerBob(); break;	// raise room bob
-case SOUND_NEXT: autoraiseBob(); break; 	 // lower room bob
-//case SUBTITLE: 
-case BUTTON_0: senseMoveBob(); break;
-case BUTTON_9: sendValueToLatch(0); Serial.println("resetting all relays"); break;
-			}
-		}
-	}	
-}
-    
+
 void loop() {
 time = millis();
 if (Serial.available()) Serial1.print(Serial.read());
@@ -214,7 +187,7 @@ Serial.println("*");
 }
 
 void serialcomms(){
-	int tempPot1 = analogRead(potDialPin);
+	
 	if (Serial.available()){
 	int command = Serial.read();
 		switch (command)
@@ -231,7 +204,7 @@ Serial.print("BOB2@ ");
 			Serial.println(" Current Sensor Readings: "); readAndPrint();
 			Serial.println(" 1/q- Auto raise/lower BOB ");
 			Serial.println(" 2/w-  shortBobU/D  ");
-			Serial.println(" 3/e- bob norm 4- r4 5-r5 6-r6  p-pot mode ");
+			Serial.println(" 3/e- bob norm 4-motor2 5-motor2 rev   p-pot mode ");
 			Serial.println(" 9- SEND2SERVER");
 			Serial.println(" r- reset all relays ");
 			delay(100);			break;
@@ -243,14 +216,16 @@ Serial.print("BOB2@ ");
 		case '3': raiseBob(); break;
 		case 'e':lowerBob(); break;
 		case 'f': readAndPrint(); break;
-		case '4':      sendValueToLatch(8); Serial.println("Activating relay 4"); break;
+		case '4':    testM2(); break;
+			//sendValueToLatch(8); Serial.println("Activating relay 4"); break;
 		case '6':      sendValueToLatch(32);      Serial.println("Activating relay 6"); break;
-		case '5':  sendValueToLatch(16);  Serial.println("Activating relay 5");   break;
+		case '5': testM2rev(); break;
+		//	sendValueToLatch(16);  Serial.println("Activating relay 5");   break;
 		case '7':     sendValueToLatch(64);  Serial.println("Activating relay 7"); break;
 		case '8':    sendValueToLatch(128);      Serial.println("Activating relay 8");   break;
 		case 'p': 	potDialVal = analogRead(potDialPin);
 			Serial.print("pot is");		Serial.println(potDialVal);
-
+/*
 			if (tempPot1 = !potDialVal){
 				while (tempPot1 < ((potDialVal - 2) && distance>1)){
 					sendValueToLatch(2);
@@ -262,15 +237,40 @@ Serial.print("BOB2@ ");
 				}
 				sendValueToLatch(0);
 				prevPot = potDialVal;
-			}	
+			}	*/
 			break;
 		case 'r':sendValueToLatch(0);      Serial.println("Resetting all relays");  break;
 		case '9':          break;
 		}
 	}
 }
-
-
+    
+void IRDetected(){
+ 	 Serial.println("IR COMMAND DETECTED - DECODING...");
+	My_Decoder.decode(); GotOne=true;
+	GotNew=true;  codeType = My_Decoder.decode_type;  if (codeType == UNKNOWN) {    Serial.println("Received unknown code");
+    rawCount = My_Decoder.rawlen-1;    }   
+	else{	Serial.print(F("Received "));    Serial.print(Pnames(codeType));
+	if (My_Decoder.value == REPEAT) {	Serial.println(F("repeat; ignoring."));     } 
+	 else{       codeValue = My_Decoder.value; codeBits = My_Decoder.bits;
+} 	Serial.print(F(" Value:0x"));Serial.println(My_Decoder.value, HEX);
+if(My_Decoder.decode_type==MY_PROTOCOL) {
+Serial.println("Code is for TSMARTPad"); 
+//lcd.clear(); lcd.setCursor(0,3); lcd.print("**TSMARTPad Code**");
+switch(My_Decoder.value) {
+case UP_ARROW:     shortBobU();break;
+case DOWN_ARROW:    	shortBobD();break;
+case SELECT_BUTTON: 	buzzUP();	break;
+case SOUND_PREV:	autolowerBob(); break;	// raise room bob
+case SOUND_NEXT: autoraiseBob(); break; 	 // lower room bob
+//case SUBTITLE: 
+case BUTTON_0: senseMoveBob(); break;
+case BUTTON_9: sendValueToLatch(0); Serial.println("resetting all relays"); break;
+			}
+		}
+	}	
+}
+    
 void printSensors(){
 	Serial.print("BOB2 DISTANCE @ ");
 	Serial.print(distance2);	Serial.println("cm");
@@ -332,45 +332,27 @@ aveSense2.push(distance2);
 	duration = pulseIn(echoPin, HIGH);
 	tempdistance = (duration / 2) / 29.1;
 
-	if (tempdistance > 100){
-Serial.print("e+100");
-	windowSense();
-	}else{
 	if (distance == 0){
 		distance = tempdistance;
 		nonSense++;
 		} 
-	else if (nonSense > 3){
+	if (tempdistance > (distance + 15) || tempdistance < (distance - 15)) {
+		nonSense++; Serial.println("5outError");
+		delay(300);
+		windowSense();
+	}
+	if (nonSense > 3){
 	Serial.print("nonsense alert - recalibrating BOB");
 		delay(2500);
 		nonSense=0;distance=0;
 		windowSense();
-		} 
-		else if (tempdistance > (distance+5) || tempdistance < (distance-5)){
-		nonSense++;Serial.println("5outError");
-		delay(300);windowSense();
 		} else {
-		distance = tempdistance;aveSense1.push(distance);
+		distance = tempdistance;
+		aveSense1.push(distance);
 		}
-			
-int tempdistance2 = (duration2 / 2) / 29.1;
-		if (distance2 == 0){
-		distance2 = tempdistance2;
-		} else if (nonSense2 > 3){
-		Serial.print("nonsense2 alert - recalibrating BOB2");
-		delay(2500);
-		nonSense2=0;
-		windowSense();
-		} else if ((tempdistance2 > (distance2+5)) || (tempdistance2 < (distance2-5))){
-		nonSense2++;
-		windowSense();
-		} else {
-		distance2 = tempdistance2;
-		aveSense2.push(distance2);
-		}
-delay(300);
+delay(130);
 	}
-	}
+
 void senseMoveBob(){
 		windowSense();
 			if (distance >= 200 || distance <= 0){
@@ -388,22 +370,24 @@ void buzzUP(){
 
 }
 
-void autoraiseBob(){
-	if (distance <70){
-  sendValueToLatch(1); 
-        windowSense();
-	Serial.print("dist @");Serial.print(distance);
-	while (distance <70) {
+void autoraiseBob() {
+	if (distance < 70) {
+		sendValueToLatch(1);
 		windowSense();
-	Serial.print("dist @");Serial.print(distance);
+		Serial.print("dist @"); Serial.println(distance);
+		while (distance < 70) {
+			windowSense();
+			Serial.print("dist @"); Serial.println(distance);
 		}
-	sendValueToLatch(0); 	
-	delay(1000);
+		sendValueToLatch(0);
+		delay(1000);
+	}
+	windowSense();
+	Serial.print("dist @"); Serial.print(distance);
+	if (distance < 70) {
+		autoraiseBob();
+	}
 }
-windowSense();
-Serial.print("dist @");Serial.print(distance);
-autoraiseBob();
-}	
 void autolowerBob(){
 	if (distance >2 ) { 
 	sendValueToLatch(2); 
@@ -489,14 +473,20 @@ void updateLcd(){
 		lcd.setCursor(0, 2);  lcd.print("T-");  lcd.print(time); lcd.print("*NXT-");  lcd.print(nextup);
 	lcd.setCursor(0, 3); lcd.print("Lux=");  lcd.print(rm_light);  lcd.print("*Temp=");  lcd.print(temperature);lcd.print("C");
 	}
-	
-void raiseBob2(){
-	Serial.println("DONE");
-  }
-	
-void lowerBob2(){
-  Serial.println("DONE");
-  }
+
+void testM2() {
+	sendValueToLatch(4);
+	delay(2000);
+	sendValueToLatch(0);
+	delay(200);
+}
+
+void testM2rev() {
+	sendValueToLatch(32);
+	delay(2000);
+	sendValueToLatch(0);
+	delay(200);
+}
    
 void beep(int num){
 for (int i = 0; i < num; i++){

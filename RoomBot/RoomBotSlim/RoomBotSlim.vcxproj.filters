@@ -17,4 +17,9 @@
   <ItemGroup>
     <None Include="RoomBotSlim.ino" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Visual Micro\.RoomBotSlim.vsarduino.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
 </Project>
