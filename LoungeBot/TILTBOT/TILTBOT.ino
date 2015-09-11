@@ -98,8 +98,8 @@ int wintimerS = (wintimer / 1000);
   Servo leftGear; Servo rightGear;  
   int pos; int invertpos;int move;   
 
-AF_DCMotor kitchTilt(4, MOTOR12_64KHZ); 
-AF_DCMotor winTilt(3, MOTOR12_64KHZ);
+AF_DCMotor kitchTilt(3, MOTOR12_64KHZ); 
+AF_DCMotor winTilt(4, MOTOR12_64KHZ);
 AF_DCMotor loungeTilt(1, MOTOR34_64KHZ);   
 AF_DCMotor doorwTilt(2, MOTOR34_64KHZ);
 
