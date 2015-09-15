@@ -23,13 +23,14 @@
 #include <FTRGBLED.h>
 #include <Adafruit_NeoPixel.h>
 
+String aiokey = "ff43ff22b3aba7f9aaf9b91b7cb6f950b8deaee9";
 
 // VARIABLES 	
 //i. Sensors
 OneWire ds(A1);  
 BH1750 lightMeter;
 IRrecv My_Receiver(A0);
-
+uint32_t ip; 
 #define KWtrigPin 0
 #define KWechoPin 0
 int maximumRange = 200; // Maximum range needed
@@ -81,9 +82,9 @@ int ledmin = 100;        // sets the max speed (0 = fast) the lower the number t
 int ledmax = 200;      // sets the min speed (100 = slow) the higher the number the slower it can go
 
 Adafruit_CC3000 cc3000 = Adafruit_CC3000(ADAFRUIT_CC3000_CS, ADAFRUIT_CC3000_IRQ, ADAFRUIT_CC3000_VBAT,SPI_CLOCK_DIV2);
-uint32_t ip = cc3000.IP2U32(192,168,0,110);
+
 int port = 80;
-String repository = "/energy_project/";
+String repository = "io.adafruit.com/";
 
 Adafruit_MotorShield AFMSi = Adafruit_MotorShield(0x61);
 Adafruit_DCMotor *KitchenTilt = AFMSi.getMotor(4);
@@ -150,6 +151,9 @@ int tilttimerS = (tilttimer / 1000);
 int wintimer = (tilttimer * 5);
 int wintimerS = (wintimer / 1000);
 
+// What page to grab!
+#define WEBSITE      "www.adafruit.io"
+
 int logged;int lg_light; int lg_temp;
 const int lightMin = 0;const int lightMax = 1023;
 int lightPercent;float celsius; float temp_c; 
@@ -169,25 +173,40 @@ IRdecode My_Decoder;
 //int num;		// for BEEP function
 
 #define I2C_ADDR  0x20
+void redTTL() {
+	Serial2.write(0xFE); Serial2.write(0xD0); Serial2.write(0x255); Serial2.write(0x0); Serial2.write(0x0);
+	delay(10);		//backlight to Red
+	}
+
+void whiteTTL() {
+	Serial2.write(0xFE); Serial2.write(0xD0); Serial2.write(0x255); Serial2.write(0x255); Serial2.write(0x255);	// White
+	delay(10);		//backlight to Red
+}
+
 
 void setup(){
   Serial.begin(115200);
-  Serial.println("TLOUNGE INITIALISING...");
-  //Serial2.begin(9600);
+  Serial.println("TLOUNGE INITIALISING..."); 
+  Serial2.begin(9600);
   // set the contrast-- 200 is a good middle place to try out
-//Serial2.write(0xFE);  Serial2.write(0x50);  Serial2.write(200);
- // delay(10);       
-    // set the brightness - we'll max it (255 is max brightness)
-  //Serial2.write(0xFE);  Serial2.write(0x99);  Serial2.write(255);
-  //delay(10);
-  //backlight to Red
- // Serial2.write(0xFE);Serial2.write(0xD0);Serial2.write(0x255);Serial2.write(0x0); Serial2.write(0x0);	
- // delay(10);
+  Serial2.write(0xFE);  Serial2.write(0x50);  Serial2.write(200);
+  delay(10);
+  // set the brightness - we'll max it (255 is max brightness)
+  Serial2.write(0xFE);  Serial2.write(0x99);  Serial2.write(255);
+  delay(10);
+  redTTL();
+  Serial2.write(0xFE); Serial2.write(0x53);		//turn on the blinking block cursor
+  delay(20);
+    leds.begin();   leds.setLEDs(LED_RED);   leds.update();
+  clearTTL();
+    Serial2.write("TrendySMARTPad ");
+	delay(20);
+
   
  // strip.begin();  strip.setBrightness(255);	 strip.show(); 	
   //colorWipe(strip.Color(255, 0, 0), 50);    // red?
   		
-  //Serial2.print("TrendySMARTPad -- Connecting?");
+
  /* pinMode(dataPin, OUTPUT);  
  pinMode(clockPin, OUTPUT);
  pinMode(latchPin, OUTPUT);
@@ -201,30 +220,20 @@ void setup(){
    for (byte count = 0; count < 4; count++) {
    	pinMode(rleds[count], OUTPUT);   		pinMode(gleds[count], OUTPUT);   		digitalWrite(gleds[count], HIGH);   		digitalWrite(rleds[count], HIGH);
    	}
-   */	for (byte count1 = 0; count1 < 4; count1++) {
-   	pinMode(bleds[count1], OUTPUT);delay(300);
-         }
-   	//pinMode(potPin, INPUT); pinMode(potDialPin, INPUT); 	   
-	
-  for (int thisLed = 0; thisLed < ledCount; thisLed++) {
-    pinMode(barpins[thisLed], OUTPUT); 
-	digitalWrite(barpins[thisLed], HIGH);
-	delay(200);
-  }
-  
+
   GotOne = false; GotNew = false;   codeType = UNKNOWN;  codeValue = 0;
 Serial1.begin(9600);	
-	Serial1.println("hello on BT?");
+Serial1.println("hello on BT?");
 	if (Serial1.available()){
    	Serial.println("Bluetooth Client Online");
    }   else {
    	Serial.println("BT Not Found");
    }
-//   pinMode(piezoPin, OUTPUT);
-leds.begin();   leds.setLEDs(LED_RED);   leds.update();
+  pinMode(piezoPin, OUTPUT);
+
   AFMSi.begin();			 
 
-  /*Start your Engines...
+Start your Engines...
  // LoungeTilt->setSpeed(255);
  // LoungeTilt->run(RELEASE);
   //KitchenTilt->setSpeed(255);
@@ -239,8 +248,8 @@ leds.begin();   leds.setLEDs(LED_RED);   leds.update();
   lg_light = lux;
   Serial.println("initiALISING WiFi");
 
-  rest.variable("lg_light", &lg_light);
-  rest.variable("lg_temp", &lg_temp);
+ // rest.variable("lg_light", &lg_light);
+//  rest.variable("lg_temp", &lg_temp);
   //rest.function("raiseKW",raiseKW);
   //rest.function("lowerKW",lowerKW);
   //rest.function("tiltFW",tiltFW);		// Function to be exposed
@@ -267,40 +276,46 @@ leds.begin();   leds.setLEDs(LED_RED);   leds.update();
   Serial.println("Connected to WiFi network");
   Serial.println("MEGA IR SETUP COMPLETE");
   Serial.println("Press ZERO for Options");
-Serial2.write(0xFE);Serial2.write(0xD0);Serial2.write(0x0);Serial2.write(0x0); Serial2.write(0x255);	// blue
-delay(10);
-//clearTTL();
-//Serial2.write("CONNECTED!");
+clearTTL();
+blueTTL();
+delay(20);
+Serial2.write("CONNECTED!");
   // Wire.begin();
    //rainbowCycle(20);
-	My_Receiver.enableIRIn();  leds.setLEDs(LED_BLUE);   leds.update();
+	My_Receiver.enableIRIn();  
+	leds.setLEDs(LED_BLUE);   leds.update();
 }
 
+void blueTTL() {
+	Serial2.write(0xFE); Serial2.write(0xD0); Serial2.write(0x0); Serial2.write(0x0); Serial2.write(0x255);	 	// blue
+	delay(10);
+}
 void loop(void){
    //   colorWipe(strip.Color(0, 0, 255), 50);   
-	  Serial.print(".");  
-//if (Serial.available()) Serial1.print(Serial.read());
-   // if (Serial1.available()) Serial.print(Serial1.read());
+	   time = millis();  Serial.print(".");  
+if (Serial.available()) Serial1.print(Serial.read());
+   if (Serial1.available()) Serial.print(Serial1.read());
     readSensors();
-   time = millis();
+
   nextup = ((interval + lastup) - time);
   
  // settiltTime();
   setluxBar();
-
-
+Serial.print(".");  
+setTTTempLux();
   mdns.update();
   Adafruit_CC3000_ClientRef client = restServer.available();
   rest.handle(client);
-kitttheBar();
+//kitttheBar();
   if (time > (lastup + interval)){
     Serial.println("TIME TO SEND 2 SERVER");	
     readAndPrint();
     printAverage();
     leds.setLEDs(LED_GREEN);     leds.update();
-        send2server();
-    sevSegPrint(String(temperature));	
+	delay(20); send2server();
+  //  sevSegPrint(String(temperature));	
         lastup = time;
+		logged = 0;
   }
 
  // if (My_Receiver.GetResults(&My_Decoder)) {
@@ -367,8 +382,11 @@ void tiltbwd(){
 }
 */
 void IRDetected(){
-  kitttheBar();
-  Serial.println("IR COMMAND DETECTED - DECODING...");
+	whiteTTL();
+	Serial2.write(0xFE); Serial2.write(0x4A);	//turn on the underline cursor
+	clearTTL();
+	Serial.println("IR COMMAND DETECTED - DECODING...");
+	Serial2.write("IR COMMAND ");
 }
 /*My_Decoder.decode();
  GotOne = true;
@@ -782,6 +800,16 @@ void sevSeg(int bitToSet) {
   }
 }
 
+void setTTTempLux() {
+	clearTTL();
+	Serial2.write(0xFE); Serial2.write(0x4A);	//turn on the underline cursor
+	Serial2.write("Temp = ");
+		Serial2.write(lg_temp);
+	Serial2.write(0xFE); Serial2.write(0x64); 		// HOME- place the c
+	Serial2.write("Lux = ");
+		Serial2.write(lux);
+}
+
 void clearTTL(){
 Serial2.write(0xFE); Serial2.write(0x58);delay(10);
 }
@@ -966,23 +994,32 @@ void send2server(){
   Serial.println("Time to send server");
   readAndPrint(); 
   //	aveLL.push(lg_light); aveLT.push(lg_temp); 
+  
+	 String request = "GET " + repository + "api/groups/envirosensor-feeds/send.json?x-aio-key="	
++ aiokey + "&rm_temp=" + aveLT.mean() +"&stddev="+ aveLT.stddev() + "&samplesize=" + logged + " HTTP/1.0";
 
-  String request = "GET " + repository + "sensor.php?lg_temp=" + aveLT.mean() +","+ aveLT.stddev() + "," + logged + " HTTP/1.0";
-  String request2 = "GET " + repository + "sensor.php?lg_light=" + aveLL.mean() + "," + aveLL.stddev() + "," + logged + " HTTP/1.0";
-  send_request(request);
-  delay(20);	Serial.print("request: ");
+ send_request(request);	Serial.print("request: ");	Serial.println(request);	Serial.println("Temp Data SENT");
+delay(200);
+  String request2 = "GET io.adafruit.com/api/groups/envirosensor-feeds/send.json?x-aio-key="
++ aiokey + "&rm_light=" + aveLL.mean() + "&stddev=" + aveLL.stddev() + "&samplesize=" + logged + " HTTP/1.0";
+  delay(200);	
+  Serial.print("request: ");
   Serial.println(request);	
   Serial.println("Temp Data SENT");
-  delay(20); 
+  delay(200); 
   send_request(request2);
   Serial.print("request2: ");	
   Serial.println(request2);	
   Serial.println("Light Data SENT");
+  delay(200); 
 }
 void send_request(String req) {
-wdt_enable(WDTO_8S); wdt_reset();
+	wdt_enable(WDTO_8S);
+	wdt_reset();
   Serial.println("Attempting connection to server...");
- Adafruit_CC3000_Client client = cc3000.connectTCP(ip, port);
+
+  if (cc3000.getHostByName(WEBSITE, &ip)) {
+	 Adafruit_CC3000_Client client = cc3000.connectTCP(ip, 80);
  delay(20);
  wdt_reset();
     if (client.connected()) {
@@ -1005,6 +1042,9 @@ wdt_enable(WDTO_8S); wdt_reset();
 wdt_reset();
 wdt_disable();
 }
+}
+
+
 
 void storeCode(void) {
   GotNew = true;

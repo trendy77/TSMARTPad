@@ -23,7 +23,7 @@
 #include <FTRGBLED.h>
 #include <Adafruit_NeoPixel.h>
 
-
+char aiokey[] = "ff43ff22b3aba7f9aaf9b91b7cb6f950b8deaee9";
 // VARIABLES 	
 //i. Sensors
 OneWire ds(A1);  
@@ -35,6 +35,17 @@ IRrecv My_Receiver(A3);
 int maximumRange = 200; // Maximum range needed
 int minimumRange = 0; // Minimum range needed
 long duration, distance; // Duration used to calculate distance
+
+#define LISTEN_PORT           8071
+#define ADAFRUIT_CC3000_IRQ   3		// Define CC3000 chip pins
+#define ADAFRUIT_CC3000_VBAT  5
+#define ADAFRUIT_CC3000_CS    10
+#define WLAN_SSID       "10011011001101"        // cannot be longer than 32 characters!
+#define WLAN_PASS       "4328646517"
+#define WLAN_SECURITY   WLAN_SEC_WPA2 // This can be WLAN_SEC_UNSEC, WLAN_SEC_WEP, WLAN_SEC_WPA or WLAN_SEC_WPA2
+aREST rest = aREST();// The port to listen for incoming TCP connections 
+Adafruit_CC3000_Server restServer(LISTEN_PORT);
+MDNSResponder mdns;
 
 const int piezoPin = A8;
 
@@ -61,17 +72,6 @@ const byte gleds[] = {  0};//26,27,28,29};
 const byte bleds[] = {  0};//30,31,32,33};
 const byte aleds[] = {  0};// 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33 };
 
-#define LISTEN_PORT           8071
-#define ADAFRUIT_CC3000_IRQ   3		// Define CC3000 chip pins
-#define ADAFRUIT_CC3000_VBAT  5
-#define ADAFRUIT_CC3000_CS    10
-#define WLAN_SSID       "10011011001101"        // cannot be longer than 32 characters!
-#define WLAN_PASS       "4328646517"
-#define WLAN_SECURITY   WLAN_SEC_WPA2 // This can be WLAN_SEC_UNSEC, WLAN_SEC_WEP, WLAN_SEC_WPA or WLAN_SEC_WPA2
-aREST rest = aREST();// The port to listen for incoming TCP connections 
-Adafruit_CC3000_Server restServer(LISTEN_PORT);
-MDNSResponder mdns;
-
 // lux bar pin
 int barpins[] = { 22, 24, 26, 28, 30, 32, 34, 36, 38,40 };   // an array of pin numbers to which LEDs are attached
 const int ledCount = 10; 
@@ -80,7 +80,8 @@ int ledmin = 100;        // sets the max speed (0 = fast) the lower the number t
 int ledmax = 200;      // sets the min speed (100 = slow) the higher the number the slower it can go
 
 Adafruit_CC3000 cc3000 = Adafruit_CC3000(ADAFRUIT_CC3000_CS, ADAFRUIT_CC3000_IRQ, ADAFRUIT_CC3000_VBAT,SPI_CLOCK_DIV2);
-uint32_t ip = cc3000.IP2U32(192,168,0,110);
+
+uint32_t ip;
 int port = 80;
 String repository = "/energy_project/";
 
@@ -101,13 +102,7 @@ unsigned long interval = 300000;           // every minute interval at which to 
 unsigned long time;long nextup; long lastup;
 
 #define MY_PROTOCOL 	SONY
-#define MY_PRO2COL 	NEC
-#define UP_ARROW2      	0x61D6D827 //	INCREASE TILT TIME +1SEC
-#define DOWN_ARROW2    	0x61D658A7 //DECREASE TILT TIME -1SEC
-#define RIGHT_ARROW2   	0x61D6609F //Move All tilt FWD
-#define LEFT_ARROW2    	0x61D620DF //Move All tilt BKD
-#define SELECT_BUTTON2 	0x61D6A05F //	BUZZER!!
-#define UP_ARROW      	0x1E108 //	INCREASE TILT TIME +1SEC
+ #define UP_ARROW      	0x1E108 //	INCREASE TILT TIME +1SEC
 #define SUBTITLE		0x88108
 #define DOWN_ARROW    	0x9E108 //DECREASE TILT TIME -1SEC
 #define RIGHT_ARROW   	0xDE108 //Move All tilt FWD
@@ -271,17 +266,17 @@ Serial2.write("CONNECTED!");
 }
 
 void loop(void){
-      colorWipe(strip.Color(0, 0, 255), 50);   
+      //colorWipe(strip.Color(0, 0, 255), 50);   
 	  Serial.print(".");  
-  //if (Serial.available()) Serial1.print(Serial.read());
-   // if (Serial1.available()) Serial.print(Serial1.read());
+  if (Serial.available()) Serial1.print(Serial.read());
+   if (Serial1.available()) Serial.print(Serial1.read());
     readSensors();
    time = millis();
   nextup = ((interval + lastup) - time);
   
   settiltTime();
   setluxBar();
- // leds.setLEDs(LED_BLUE);   leds.update();
+ leds.setLEDs(LED_BLUE);   leds.update();
 
   mdns.update();
   Adafruit_CC3000_ClientRef client = restServer.available();
@@ -291,7 +286,7 @@ void loop(void){
     Serial.println("TIME TO SEND 2 SERVER");	
     readAndPrint();
     printAverage();
-  //  leds.setLEDs(LED_GREEN);     leds.update();
+ leds.setLEDs(LED_GREEN);     leds.update();
         send2server();
   //  sevSegPrint(String(temperature));	
         lastup = time;
@@ -959,27 +954,30 @@ void kitchWinBwd(){
 
 
 void send2server(){
-
   Serial.println("Time to send server");
   readAndPrint(); 
   //	aveLL.push(lg_light); aveLT.push(lg_temp); 
 
-  String request = "GET " + repository + "sensor.php?lg_temp=" + aveLT.mean() +","+ aveLT.stddev() + "," + logged + " HTTP/1.0";
-  String request2 = "GET " + repository + "sensor.php?lg_light=" + aveLL.mean() + "," + aveLL.stddev() + "," + logged + " HTTP/1.0";
+	  String request = "GET " + "/api/groups/weather/send.json?x-aio-key="	
+	+ aiokey + "&lg_temp=" + aveLT.mean() +"&stddev="+ aveLT.stddev() + "&samplesize=" + logged + " HTTP/1.0";
+  delay(200);	
   send_request(request);
-  delay(20);	Serial.print("request: ");
-  Serial.println(request);	
-  Serial.println("Temp Data SENT");
-  delay(20); 
-  send_request(request2);
-  Serial.print("request2: ");	
+  delay(200);	
+Serial.println("Temp Data SENT:");
+Serial.println(request);
+delay(200);
+	  String request2 = "GET " + "/api/groups/weather/send.json?x-aio-key="	
+	+ aiokey + "&lg_light=" + aveLL.mean() + "&stddev=" + aveLL.stddev() + "&samplesize=" + logged + " HTTP/1.0";
+	    delay(200);	
+	  send_request(request2);	
+delay(200);	
   Serial.println(request2);	
   Serial.println("Light Data SENT");
 }
 void send_request(String req) {
 wdt_enable(WDTO_8S); wdt_reset();
   Serial.println("Attempting connection to server...");
- Adafruit_CC3000_Client client = cc3000.connectTCP(ip, port);
+ Adafruit_CC3000_Client client = cc3000.connectTCP(ip, 80);
  delay(20);
  wdt_reset();
     if (client.connected()) {
