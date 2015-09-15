@@ -15,15 +15,20 @@ reassembled - optional internet (to speed-up startup) and LCD (general ease of t
 #include <OneWire.h>
 #include <Average.h>
 #include <LiquidTWI.h>
+String aiokey = "ff43ff22b3aba7f9aaf9b91b7cb6f950b8deaee9";
+// aiokey for adafruit io account
 
-
+    int minat = 0;
+    int maxat = 0;
+    int minat2= 0;
+    int maxat2 = 0;
 IRrecv My_Receiver(A15);
-#define trigPin 28    
-#define echoPin 30		
-#define trigPin2 31     
-#define echoPin2 27
+#define trigPin 33    
+#define echoPin 31		
+#define trigPin2 37     
+#define echoPin2 35
 BH1750 lightMeter;
-const int potDialPin = A10;
+const int potDialPin = A0;
 OneWire  ds(A3);
 #define I2C_ADDR  0x20
 const int piezoPin = 0;
@@ -89,6 +94,12 @@ unsigned long codeValue;
 int codeBits; unsigned int rawCodes[RAWBUF]; 
 int rawCount;                  
 bool GotOne, GotNew; IRdecode My_Decoder; 
+#define MY_PROTOCOL2 	NEC
+#define UP_ARROW2      	0x61D6D827 //	INCREASE TILT TIME +1SEC
+#define DOWN_ARROW2    	0x61D658A7 //DECREASE TILT TIME -1SEC
+#define RIGHT_ARROW2   	0x61D6609F //Move All tilt FWD
+#define LEFT_ARROW2    	0x61D620DF //Move All tilt BKD
+#define SELECT_BUTTON2 	0x61D6A05F //	BUZZER!!
 
 int rm_light; uint16_t lux; int lightPercent;
 int rm_temp; String temperature; float celsius;float temp_c;
@@ -98,11 +109,16 @@ static char tempbuffer[10];int prevPot = 0;
 Average<float> aveRT(10);Average<float> aveRL(10);int logged = 0; long nonSense = 0; long nonSense2 = 0;
 Average<float> aveSense1(10); Average<float> aveSense2(10);
 
-uint32_t ip = cc3000.IP2U32(192,168,0,110);//your computer's ip address
-int port = 80;String repository = "/energy_project/";
+#define IDLE_TIMEOUT_MS  3000      // Amount of time to wait (in milliseconds) with no data 
+#define WEBSITE      "io.adafruit.com"
+#define WEBPAGE      "/api/groups/envirosensor-feeds/send.json"
+
+uint32_t ip;
+
+int port = 1883;
 int maximumRange = 200; int minimumRange = 0; // Minimum range needed
-long duration, distance; // Duration used to calculate distance
-long duration2, distance2; // Duration used to calculate distance
+long duration; long distance; // Duration used to calculate distance
+long duration2; long distance2; // Duration used to calculate distance
 
 uint8_t bell[8]  = {0x4,0xe,0xe,0xe,0x1f,0x0,0x4};
 uint8_t note[8]  = {0x2,0x3,0x2,0xe,0x1e,0xc,0x0};
@@ -137,9 +153,9 @@ Serial1.print("hiBT?");
   delay(15);
 
 	lightMeter.begin();
-	delay(500);
-  /* //TO ENABLE INTERNET :
-    wdt_enable(WDTO_4S);wdt_reset();	
+	delay(50);
+  //TO ENABLE INTERNET :
+ //   wdt_enable(WDTO_4S);wdt_reset();	
 		rest.variable("room_temp",&rm_temp);	rest.variable("room_light",&rm_light);      
         rest.function("raiseBob",raiseBOB);	rest.function("lowerBob",lowerBOB);	
 	rest.function("buzz",buzz);	  rest.set_id("172");			rest.set_name("RoomBot");
@@ -148,16 +164,14 @@ Serial1.print("hiBT?");
   if (!cc3000.begin())  {    while(1);  }  if (!cc3000.connectToAP(WLAN_SSID, WLAN_PASS, WLAN_SECURITY)) {    while(1);  }  while (!cc3000.checkDHCP())  {    delay(100);  }  
   if (!mdns.begin("arduino", cc3000)) {   while(1);   }  restServer.begin();
   Serial.println("Online and listening for connections...");  
-
+/*
 for lcd:
-
 	lcd.begin(20, 4);	lcd.setBacklight(HIGH);lcd.setCursor(0, 2);
 	lcd.print("** INITIALISING.. **");
 */
 Serial.println("ROOMBOT SETUP COMPLETE");
 	My_Receiver.enableIRIn(); // Start the receiver
 	Serial.println("Press ZERO for Options"); 
-	
 }
 
 void loop() {
@@ -166,6 +180,7 @@ if (Serial.available()) Serial1.print(Serial.read());
    if (Serial1.available()) Serial.print(Serial1.read());
 
    windowSense();
+   windowSense2();
 	nextup = ((interval + lastup) - time);
 	readSensors();
 
@@ -177,7 +192,7 @@ My_Receiver.resume();
 
 if (time > (lastup + interval)){
 	Serial.println("Time to send server");
-//send2server();
+send2server();
     logged =0;
 	lastup = time;
     }
@@ -196,33 +211,33 @@ void serialcomms(){
 			Serial.print("BOB@ ");
 			Serial.print(distance);
 			Serial.print("cm **");
-Serial.print("BOB2@ ");
+			Serial.print("BOB2@ ");
 			Serial.print(distance2);
 			Serial.println("cm");
-
 			Serial.println("TSMARTPad- ROOM OPTIONS");
 			Serial.println(" Current Sensor Readings: "); readAndPrint();
 			Serial.println(" 1/q- Auto raise/lower BOB ");
 			Serial.println(" 2/w-  shortBobU/D  ");
-			Serial.println(" 3/e- bob norm 4-motor2 5-motor2 rev   p-pot mode ");
+			Serial.println(" 3/e- bob norm 4/r-motor2secs 5/t-Sense Open/CloseWin   p-pot mode ");
 			Serial.println(" 9- SEND2SERVER");
-			Serial.println(" r- reset all relays ");
-			delay(100);			break;
+			Serial.println(" z- reset all relays ");
+			delay(1000);			break;
 
 		case '1':    autoraiseBob();	break;
 		case 'q': autolowerBob(); break;
 		case '2':	shortBobU();	break;
 		case 'w':shortBobD(); break;
 		case '3': raiseBob(); break;
-		case 'e':lowerBob(); break;
+		case 'e': lowerBob(); break;
+		case '4': openWin(); break;
+		case 'r': closeWin(); break;
 		case 'f': readAndPrint(); break;
-		case '4':    testM2(); break;
-			//sendValueToLatch(8); Serial.println("Activating relay 4"); break;
-		case '6':      sendValueToLatch(32);      Serial.println("Activating relay 6"); break;
-		case '5': testM2rev(); break;
-		//	sendValueToLatch(16);  Serial.println("Activating relay 5");   break;
-		case '7':     sendValueToLatch(64);  Serial.println("Activating relay 7"); break;
-		case '8':    sendValueToLatch(128);      Serial.println("Activating relay 8");   break;
+		case '5': openSenseWin(); break;
+		case 't': closeSenseWin(); break;
+		case '6': sendValueToLatch(32);      Serial.println("Activating relay 6"); break;
+			//	sendValueToLatch(16);  Serial.println("Activating relay 5");   break;
+		case '7':  sendValueToLatch(64);  Serial.println("Activating relay 7"); break;
+		case '8':  sendValueToLatch(128);      Serial.println("Activating relay 8");   break;
 		case 'p': 	potDialVal = analogRead(potDialPin);
 			Serial.print("pot is");		Serial.println(potDialVal);
 /*
@@ -239,13 +254,23 @@ Serial.print("BOB2@ ");
 				prevPot = potDialVal;
 			}	*/
 			break;
-		case 'r':sendValueToLatch(0);      Serial.println("Resetting all relays");  break;
-		case '9':          break;
+		case 'z':sendValueToLatch(0);      Serial.println("Resetting all relays");  break;
+		case '9':   send2server();       break;
 		}
 	}
 }
     
-void IRDetected(){
+	void openSenseWin(){
+		
+		
+	}
+void closeSenseWin(){
+		
+		
+	}
+
+	
+	void IRDetected(){
  	 Serial.println("IR COMMAND DETECTED - DECODING...");
 	My_Decoder.decode(); GotOne=true;
 	GotNew=true;  codeType = My_Decoder.decode_type;  if (codeType == UNKNOWN) {    Serial.println("Received unknown code");
@@ -267,7 +292,23 @@ case SOUND_NEXT: autoraiseBob(); break; 	 // lower room bob
 case BUTTON_0: senseMoveBob(); break;
 case BUTTON_9: sendValueToLatch(0); Serial.println("resetting all relays"); break;
 			}
-		}
+}
+else if (My_Decoder.decode_type == MY_PROTOCOL2) {
+      //	leds.setLEDs(LED_YELLOW); leds.update();
+      Serial.println("Code is IR command for TSMARTPad");
+      
+      switch (My_Decoder.value) {
+      case DOWN_ARROW2:
+        printSensors();
+        break;
+      case UP_ARROW2:printSensors();
+        break;
+      case LEFT_ARROW2:printSensors();
+        break;
+
+      case RIGHT_ARROW2:printSensors();
+break;
+      }		}
 	}	
 }
     
@@ -311,8 +352,8 @@ void scrollio(){
 	}
 }
 
-void windowSense(){
-long tempdistance; long tempdistance2;	
+void windowSense2(){
+long tempdistance2;	
 digitalWrite(trigPin2, LOW);  // Added this line
 	delayMicroseconds(2); // Added this line
 	digitalWrite(trigPin2, HIGH);
@@ -320,10 +361,23 @@ digitalWrite(trigPin2, LOW);  // Added this line
 	digitalWrite(trigPin2, LOW);
 	duration2 = pulseIn(echoPin2, HIGH);
 	tempdistance2 = (duration2 / 2) / 29.1;
-	delay(20);
-distance2 = tempdistance2;
 aveSense2.push(distance2);
+	if (tempdistance2 == 0){
+		distance2 = tempdistance2;
+		//nonSense++;
+		} 
+	if (tempdistance2 > aveSense2.maximum(&maxat2) || tempdistance2 < aveSense2.minimum(&minat2)){
+		nonSense2++; //Serial.println("5outError");
+		delay(30);
+distance = aveSense2.mean();
+	}else {
+		distance2 = tempdistance2;
+	}
+delay(130);
+}
 
+void windowSense(){
+long tempdistance; 
 	digitalWrite(trigPin, LOW);  // Added this line
 	delayMicroseconds(2); // Added this line
 	digitalWrite(trigPin, HIGH);
@@ -331,27 +385,22 @@ aveSense2.push(distance2);
 	digitalWrite(trigPin, LOW);
 	duration = pulseIn(echoPin, HIGH);
 	tempdistance = (duration / 2) / 29.1;
-
-	if (distance == 0){
+    	  aveSense1.push(tempdistance);
+	if (tempdistance == 0){
 		distance = tempdistance;
-		nonSense++;
+		//nonSense++;
 		} 
-	if (tempdistance > (distance + 15) || tempdistance < (distance - 15)) {
-		nonSense++; Serial.println("5outError");
-		delay(300);
-		windowSense();
-	}
-	if (nonSense > 3){
-	Serial.print("nonsense alert - recalibrating BOB");
-		delay(2500);
-		nonSense=0;distance=0;
-		windowSense();
-		} else {
+	if (tempdistance > aveSense1.maximum(&maxat) || (tempdistance < aveSense1.minimum(&minat))) {
+		nonSense++; //Serial.println("5outError");
+		delay(30);
+distance = aveSense1.mean();
+//	windowSense();
+	}else {
 		distance = tempdistance;
-		aveSense1.push(distance);
-		}
-delay(130);
+
 	}
+delay(130);
+}
 
 void senseMoveBob(){
 		windowSense();
@@ -415,35 +464,48 @@ sendValueToLatch(2);
 
 void send2server(){
 	Serial.println("Connecting....");
-	
-	String request = "GET" + repository + "sensor.php?rm_temp=" + aveRT.mean() +","+ aveRT.stddev() + "," + logged + "HTTP/1.0";
-	String request2 = "GET" + repository + "sensor.php?rm_light=" + aveRL.mean() + "," + aveRL.stddev() + "," + logged + "HTTP/1.0";
-	send_request(request);	Serial.print("request: ");
-	Serial.println(request);	Serial.println("Temp Data SENT");
-		send_request(request2);Serial.print("request2: ");	Serial.println(request2);	Serial.println("Light Data SENT");
-    }
-void send_request(String req) {
-	Serial.println("Attempting connection to server...");
-	Adafruit_CC3000_Client client = cc3000.connectTCP(ip, port);
-	// Send request
+	 String request = "GET io.adafruit.com/api/groups/envirosensor-feeds/send.json?x-aio-key="	
++ aiokey + "&rm_temp=" + aveRT.mean() +"&stddev="+ aveRT.stddev() + "&samplesize=" + logged + " HTTP/1.0";
 
-	if (client.connected()) {
-		client.println(req);
-			client.println(F(""));
-	}
-	else {
-		Serial.println("Connection failed");
-	}
-	while (client.connected()) {
-		while (client.available()) {
-			char c = client.read();
-                        Serial.print(c);
-		}
-	}
-	Serial.println("Closing connection");
-	Serial.println("");
-	client.close();
-	}
+ send_request(request);	Serial.print("request: ");	Serial.println(request);	Serial.println("Temp Data SENT");
+delay(20);
+
+  String request2 = "GET io.adafruit.com/api/groups/envirosensor-feeds/send.json?x-aio-key="
++ aiokey + "&rm_light=" + aveRL.mean() + "&stddev=" + aveRL.stddev() + "&samplesize=" + logged + " HTTP/1.0";
+send_request(request2);Serial.print("request2: ");	Serial.println(request2);	Serial.println("Light Data SENT");
+    }
+
+	void send_request(String req) {
+  Adafruit_CC3000_Client www = cc3000.connectTCP(ip, 80);
+  if (www.connected()) {
+    www.print(req);
+    www.println(F(""));
+	  } else {
+    Serial.println(F("Connection failed"));    
+   
+  }
+
+  Serial.println(F("-------------------------------------"));
+  
+  /* Read data until either the connection is closed, or the idle timeout is reached. */ 
+  unsigned long lastRead = millis();
+  while (www.connected() && (millis() - lastRead < IDLE_TIMEOUT_MS)) {
+    while (www.available()) {
+      char c = www.read();
+      Serial.print(c);
+      lastRead = millis();
+    }
+  }
+  www.close();
+  Serial.println(F("-------------------------------------"));
+  
+  /* You need to make sure to clean up after yourself or the CC3000 can freak out */
+  /* the next time your try to connect ... */
+  Serial.println(F("\n\nDisconnecting"));
+  cc3000.disconnect();
+  
+}
+
 
 void settiltTime(){
 tilttimerS = (tilttimer/1000);
@@ -474,15 +536,17 @@ void updateLcd(){
 	lcd.setCursor(0, 3); lcd.print("Lux=");  lcd.print(rm_light);  lcd.print("*Temp=");  lcd.print(temperature);lcd.print("C");
 	}
 
-void testM2() {
-	sendValueToLatch(4);
+void closeWin() {
+	  Serial.println("window forward");
+	  sendValueToLatch(4);
 	delay(2000);
 	sendValueToLatch(0);
 	delay(200);
 }
 
-void testM2rev() {
-	sendValueToLatch(32);
+void openWin() {
+	  Serial.println("window bwd");
+	  sendValueToLatch(32);
 	delay(2000);
 	sendValueToLatch(0);
 	delay(200);

@@ -21,7 +21,7 @@ TiltBot - Lounge
 #include <LiquidTWI.h>
 #include <FTRGBLED.h>
 #include <Adafruit_NeoPixel.h>
-#include <EEPROM.h>
+
 #include <DFBLE.h>
 // VARIABLES 	
 // Sensors
@@ -158,7 +158,7 @@ Serial2.write(0xFE);  Serial2.write(0x50);  Serial2.write(200);
  leftGear.write(pos); // Set initial position
  rightGear.write(invertpos); // Set initial position
  
-	Serial1.begin(9600);	
+	Serial1.begin(115200);	
 	Serial1.println("hello on BT?");
 	if (Serial1.available()){
    	Serial.println("Bluetooth Client Online");
@@ -273,6 +273,7 @@ void settiltTime(){
 
 
 void loop(){
+  clearTTL();
  time = millis();
   nextup = ((interval + lastup) - time);
   Serial2.print("time is ");
@@ -287,12 +288,12 @@ void loop(){
 			if(My_Decoder.decode_type==MY_PROTOCOL) {
 			Serial.print("COMMAND RECEIVED");
 			IRrec();	
-			}
+		
 		My_Receiver.resume();
         }
-    
+      }
 serialcomms();
-Serial.println(".");
+Serial.println(".");delay(500);
 }
 
 
@@ -361,7 +362,9 @@ void senseMoveWin(){
 
 }
 void serialcomms(){
-	if (Serial.available()){
+	Serial2.write(0xFE); Serial2.write(0xD0); Serial2.write(0x255); Serial2.write(0x255); Serial2.write(0x255);	// White
+delay(20);
+if (Serial.available()){
 		int command = Serial.read();
 		switch (command){
 			case '0':
