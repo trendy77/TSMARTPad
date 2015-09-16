@@ -22,11 +22,11 @@ String aiokey = "ff43ff22b3aba7f9aaf9b91b7cb6f950b8deaee9";
     int maxat = 0;
     int minat2= 0;
     int maxat2 = 0;
-IRrecv My_Receiver(A15);
-#define trigPin 33    
-#define echoPin 31		
-#define trigPin2 37     
-#define echoPin2 35
+IRrecv My_Receiver(2);
+#define trigPin2 33    
+#define echoPin2 31		
+#define trigPin 37     
+#define echoPin 35
 BH1750 lightMeter;
 const int potDialPin = A0;
 OneWire  ds(A3);
@@ -154,7 +154,7 @@ Serial1.print("hiBT?");
 
 	lightMeter.begin();
 	delay(50);
-  //TO ENABLE INTERNET :
+  /*TO ENABLE INTERNET :
  //   wdt_enable(WDTO_4S);wdt_reset();	
 		rest.variable("room_temp",&rm_temp);	rest.variable("room_light",&rm_light);      
         rest.function("raiseBob",raiseBOB);	rest.function("lowerBob",lowerBOB);	
@@ -164,11 +164,11 @@ Serial1.print("hiBT?");
   if (!cc3000.begin())  {    while(1);  }  if (!cc3000.connectToAP(WLAN_SSID, WLAN_PASS, WLAN_SECURITY)) {    while(1);  }  while (!cc3000.checkDHCP())  {    delay(100);  }  
   if (!mdns.begin("arduino", cc3000)) {   while(1);   }  restServer.begin();
   Serial.println("Online and listening for connections...");  
-/*
+
 for lcd:
-	lcd.begin(20, 4);	lcd.setBacklight(HIGH);lcd.setCursor(0, 2);
+*/	lcd.begin(20, 4);	lcd.setBacklight(HIGH);lcd.setCursor(0, 2);
 	lcd.print("** INITIALISING.. **");
-*/
+
 Serial.println("ROOMBOT SETUP COMPLETE");
 	My_Receiver.enableIRIn(); // Start the receiver
 	Serial.println("Press ZERO for Options"); 
@@ -181,9 +181,10 @@ if (Serial.available()) Serial1.print(Serial.read());
 
    windowSense();
    windowSense2();
+
 	nextup = ((interval + lastup) - time);
 	readSensors();
-
+updateLcd();
 if (My_Receiver.GetResults(&My_Decoder)) {
    IRDetected();
 	delay(100);
@@ -192,7 +193,7 @@ My_Receiver.resume();
 
 if (time > (lastup + interval)){
 	Serial.println("Time to send server");
-send2server();
+//send2server();
     logged =0;
 	lastup = time;
     }
@@ -217,8 +218,8 @@ void serialcomms(){
 			Serial.println("TSMARTPad- ROOM OPTIONS");
 			Serial.println(" Current Sensor Readings: "); readAndPrint();
 			Serial.println(" 1/q- Auto raise/lower BOB ");
-			Serial.println(" 2/w-  shortBobU/D  ");
-			Serial.println(" 3/e- bob norm 4/r-motor2secs 5/t-Sense Open/CloseWin   p-pot mode ");
+			Serial.println(" 2/w-  shortBobU/D   3/e- bob norm ");
+			Serial.println("4/r-motor2secs g- halfOpen 5/t-SenseOpen/CloseWin   p-pot mode ");
 			Serial.println(" 9- SEND2SERVER");
 			Serial.println(" z- reset all relays ");
 			delay(1000);			break;
@@ -233,6 +234,7 @@ void serialcomms(){
 		case 'r': closeWin(); break;
 		case 'f': readAndPrint(); break;
 		case '5': openSenseWin(); break;
+case 'g': winHalf(); break;
 		case 't': closeSenseWin(); break;
 		case '6': sendValueToLatch(32);      Serial.println("Activating relay 6"); break;
 			//	sendValueToLatch(16);  Serial.println("Activating relay 5");   break;
@@ -261,13 +263,52 @@ void serialcomms(){
 }
     
 	void openSenseWin(){
-		
-		
+	windowSense2();
+Serial.println("OPENING WINDOW TO 30CM...");
+	sendValueToLatch(32); 
+while 	(distance2 <30){
+                windowSense2();
+		Serial.print("dist @");Serial.println(distance2);
+        delay(100);
 	}
+	sendValueToLatch(0); 
+	delay(50);
+	}
+		
+void winHalf(){
+windowSense2();
+Serial.println("OPENING WINDOW TO halfway15CM...");
+if (distance2 <15){
+  	sendValueToLatch(32); 
+  while (distance2 <15){
+windowSense2();
+Serial.print("win @");Serial.println(distance2);
+  }
+  sendValueToLatch(0); 
+}
+else if (distance2 >15){
+  	sendValueToLatch(4); 
+  while (distance2 <15){
+windowSense2();
+Serial.print("win @");Serial.println(distance2);
+  }
+  sendValueToLatch(0); 
+}
+}
+
 void closeSenseWin(){
-		
-		
+  	windowSense2();
+	if (distance2 >3 ) { 
+	sendValueToLatch(4); 
+while 	(distance2 >4){
+                windowSense2();
+		Serial.print("dist @");Serial.println(distance2);
+        delay(100);
 	}
+	sendValueToLatch(0); 
+	delay(50);
+	}
+}	
 
 	
 	void IRDetected(){
@@ -281,7 +322,7 @@ void closeSenseWin(){
 } 	Serial.print(F(" Value:0x"));Serial.println(My_Decoder.value, HEX);
 if(My_Decoder.decode_type==MY_PROTOCOL) {
 Serial.println("Code is for TSMARTPad"); 
-//lcd.clear(); lcd.setCursor(0,3); lcd.print("**TSMARTPad Code**");
+lcd.clear(); lcd.setCursor(0,3); lcd.print("**TSMARTPad Code**");
 switch(My_Decoder.value) {
 case UP_ARROW:     shortBobU();break;
 case DOWN_ARROW:    	shortBobD();break;
@@ -360,19 +401,8 @@ digitalWrite(trigPin2, LOW);  // Added this line
 	delayMicroseconds(10); // Added this line
 	digitalWrite(trigPin2, LOW);
 	duration2 = pulseIn(echoPin2, HIGH);
-	tempdistance2 = (duration2 / 2) / 29.1;
+	distance2 = (duration2 / 2) / 29.1;
 aveSense2.push(distance2);
-	if (tempdistance2 == 0){
-		distance2 = tempdistance2;
-		//nonSense++;
-		} 
-	if (tempdistance2 > aveSense2.maximum(&maxat2) || tempdistance2 < aveSense2.minimum(&minat2)){
-		nonSense2++; //Serial.println("5outError");
-		delay(30);
-distance = aveSense2.mean();
-	}else {
-		distance2 = tempdistance2;
-	}
 delay(130);
 }
 
@@ -384,21 +414,9 @@ long tempdistance;
 	delayMicroseconds(10); // Added this line
 	digitalWrite(trigPin, LOW);
 	duration = pulseIn(echoPin, HIGH);
-	tempdistance = (duration / 2) / 29.1;
+	distance = (duration / 2) / 29.1;
     	  aveSense1.push(tempdistance);
-	if (tempdistance == 0){
-		distance = tempdistance;
-		//nonSense++;
-		} 
-	if (tempdistance > aveSense1.maximum(&maxat) || (tempdistance < aveSense1.minimum(&minat))) {
-		nonSense++; //Serial.println("5outError");
-		delay(30);
-distance = aveSense1.mean();
-//	windowSense();
-	}else {
-		distance = tempdistance;
-
-	}
+	
 delay(130);
 }
 
@@ -532,12 +550,12 @@ void updateLcd(){
 	lcd.setCursor(15, 0);	lcd.print(distance);	lcd.print("cm");
 		lcd.setCursor(0,1);	lcd.print("BOB2@");
 		lcd.setCursor(15, 1); lcd.print(distance2);	lcd.print("cm");
-		lcd.setCursor(0, 2);  lcd.print("T-");  lcd.print(time); lcd.print("*NXT-");  lcd.print(nextup);
-	lcd.setCursor(0, 3); lcd.print("Lux=");  lcd.print(rm_light);  lcd.print("*Temp=");  lcd.print(temperature);lcd.print("C");
+		lcd.setCursor(0, 2);  lcd.print("Lux=");  lcd.print(rm_light);  lcd.print("*Temp=");  lcd.print(temperature);lcd.print("C");
+	lcd.setCursor(0, 3); lcd.print("T-");  lcd.print(time); lcd.print("*NXT-");  lcd.print(nextup);
 	}
 
 void closeWin() {
-	  Serial.println("window forward");
+	  Serial.println("window CLOSE");
 	  sendValueToLatch(4);
 	delay(2000);
 	sendValueToLatch(0);
@@ -545,7 +563,7 @@ void closeWin() {
 }
 
 void openWin() {
-	  Serial.println("window bwd");
+	  Serial.println("window OPEN");
 	  sendValueToLatch(32);
 	delay(2000);
 	sendValueToLatch(0);

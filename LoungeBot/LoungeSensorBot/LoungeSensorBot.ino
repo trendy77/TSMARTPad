@@ -997,18 +997,18 @@ void send2server(){
   
 	 String request = "GET " + repository + "api/groups/envirosensor-feeds/send.json?x-aio-key="	
 + aiokey + "&rm_temp=" + aveLT.mean() +"&stddev="+ aveLT.stddev() + "&samplesize=" + logged + " HTTP/1.0";
-
- send_request(request);	Serial.print("request: ");	Serial.println(request);	Serial.println("Temp Data SENT");
 delay(200);
+ send_request(request);	delay(200);
+ Serial.print("request: ");	Serial.println(request);	Serial.println("Temp Data SENT");
+delay(200);
+  
   String request2 = "GET io.adafruit.com/api/groups/envirosensor-feeds/send.json?x-aio-key="
 + aiokey + "&rm_light=" + aveLL.mean() + "&stddev=" + aveLL.stddev() + "&samplesize=" + logged + " HTTP/1.0";
-  delay(200);	
-  Serial.print("request: ");
-  Serial.println(request);	
-  Serial.println("Temp Data SENT");
-  delay(200); 
+   delay(200); 
   send_request(request2);
-  Serial.print("request2: ");	
+    delay(200);	
+	Serial.print("request2: ");
+  delay(200);	  
   Serial.println(request2);	
   Serial.println("Light Data SENT");
   delay(200); 
