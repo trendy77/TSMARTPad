@@ -45,6 +45,38 @@ MDNSResponder mdns;
 #define WLAN_SSID       "10011011001101"
 #define WLAN_PASS       "4328646517"
 #define WLAN_SECURITY   WLAN_SEC_WPA2
+/************************* Adafruit.io Setup *********************************/
+#include <Adafruit_SleepyDog.h>
+#include "utility/debug.h"
+#include "Adafruit_MQTT.h"
+#include "Adafruit_MQTT_CC3000.h"
+
+#define AIO_SERVER      "io.adafruit.com"
+#define AIO_SERVERPORT  1883
+#define AIO_USERNAME    "trendy"
+#define AIO_KEY         "ff43ff22b3aba7f9aaf9b91b7cb6f950b8deaee9"
+const char MQTT_SERVER[] PROGMEM    = AIO_SERVER;
+// Set a unique MQTT client ID using the AIO key + the date and time the sketch
+// was compiled (so this should be unique across multiple devices for a user,
+// alternatively you can manually set this to a GUID or other random value).
+const char MQTT_CLIENTID[] PROGMEM  = __TIME__ AIO_USERNAME;
+const char MQTT_USERNAME[] PROGMEM  = AIO_USERNAME;
+const char MQTT_PASSWORD[] PROGMEM  = AIO_KEY;
+// Setup the CC3000 MQTT class by passing in the CC3000 class and MQTT server and login details.
+Adafruit_MQTT_CC3000 mqtt(&cc3000, MQTT_SERVER, AIO_SERVERPORT, MQTT_CLIENTID, MQTT_USERNAME, MQTT_PASSWORD);
+// You don't need to change anything below this line!
+#define halt(s) { Serial.println(F( s )); while(1);  }
+// CC3000connect is a helper function that sets up the CC3000 and connects to
+// the WiFi network. See the cc3000helper.cpp tab above for the source!
+boolean CC3000connect(const char* wlan_ssid, const char* wlan_pass, uint8_t wlan_security);
+/****************************** Feeds ***************************************/
+// Setup a feed called 'boblevel' for subscribing to changes.
+// Notice MQTT paths for AIO follow the form: <username>/feeds/<feedname>
+const char boblevel_FEED[] PROGMEM = AIO_USERNAME "/feeds/boblevel";
+Adafruit_MQTT_Subscribe boblevel = Adafruit_MQTT_Subscribe(&mqtt, boblevel_FEED);
+
+
+
 
 #define MY_PROTOCOL 	SONY
 #define UP_ARROW      	0x1E108 //	INCREASE TILT TIME +1SEC
@@ -135,6 +167,8 @@ const int ledCount = 10;
 void setup(){
 	Serial.begin(115200);
 	Serial.println("ROOMBOT INITIALISING...");
+	lcd.begin(20, 4);	lcd.setBacklight(HIGH);lcd.setCursor(0, 2);
+	lcd.print("** INITIALISING.. **");
 
 Serial1.begin(9600);
 Serial1.print("hiBT?");
@@ -164,21 +198,65 @@ Serial1.print("hiBT?");
   if (!cc3000.begin())  {    while(1);  }  if (!cc3000.connectToAP(WLAN_SSID, WLAN_PASS, WLAN_SECURITY)) {    while(1);  }  while (!cc3000.checkDHCP())  {    delay(100);  }  
   if (!mdns.begin("arduino", cc3000)) {   while(1);   }  restServer.begin();
   Serial.println("Online and listening for connections...");  
+//////
+  Serial.println(F("Adafruit IO Example:"));
+  Serial.print(F("Free RAM: ")); Serial.println(getFreeRam(), DEC);
+  // Initialise the CC3000 module
+  Serial.print(F("\nInit the CC3000..."));
+  if (! cc3000.begin())
+    halt("Failed");
+  // attempt wifi connection
+  while (! CC3000connect(WLAN_SSID, WLAN_PASS, WLAN_SECURITY)) {
+    Serial.println(F("Retrying WiFi"));
+    while(1);}
+  Serial.println(F("Connected to WiFi!"));
+  // listen for events 
+  mqtt.subscribe(&boblevel);
+  // connect to adafruit io
+  connect();
 
 for lcd:
-*/	lcd.begin(20, 4);	lcd.setBacklight(HIGH);lcd.setCursor(0, 2);
-	lcd.print("** INITIALISING.. **");
-
+*/  
 Serial.println("ROOMBOT SETUP COMPLETE");
 	My_Receiver.enableIRIn(); // Start the receiver
 	Serial.println("Press ZERO for Options"); 
+
+lcd.clear();
+lcd.print("** READY **");
 }
 
 void loop() {
 time = millis();
+/*
+  Adafruit_MQTT_Subscribe *subscription;
+  // Make sure to reset watchdog every loop iteration!
+  Watchdog.reset();
+  // ping adafruit io a few times to make sure we remain connected
+  if(! mqtt.ping(3)) {
+    // reconnect to adafruit io
+    if(! mqtt.connected())
+      connect();  }
+  // this is our 'wait for incoming subscription packets' busy subloop
+  while (subscription = mqtt.readSubscription(1000)) {
+
+    // we only care about the lamp events
+    if (subscription == &boblevel) {
+
+      // convert mqtt ascii payload to int
+      char *value = (char *)boblevel.lastread;
+      Serial.print(F("Received: "));
+      Serial.println(value);
+      int current = atoi(value);
+if (current == 1){
+  Watchdog.disable();autoraiseBob();
+}
+ }
+}
+
+
 if (Serial.available()) Serial1.print(Serial.read());
    if (Serial1.available()) Serial.print(Serial1.read());
-
+*/
    windowSense();
    windowSense2();
 
@@ -352,6 +430,33 @@ break;
       }		}
 	}	
 }
+
+
+// connect to adafruit io via MQTT
+void connect() {
+  Serial.print(F("Connecting to Adafruit IO... "));
+  int8_t ret;
+  while ((ret = mqtt.connect()) != 0) {
+    switch (ret) {
+      case 1: Serial.println(F("Wrong protocol")); break;
+      case 2: Serial.println(F("ID rejected")); break;
+      case 3: Serial.println(F("Server unavail")); break;
+      case 4: Serial.println(F("Bad user/pass")); break;
+      case 5: Serial.println(F("Not authed")); break;
+      case 6: Serial.println(F("Failed to subscribe")); break;
+      default:
+        Serial.println(F("Connection failed"));
+        CC3000connect(WLAN_SSID, WLAN_PASS, WLAN_SECURITY);
+        break;
+    }
+    if(ret >= 0)
+      mqtt.disconnect();
+    Serial.println(F("Retrying connection..."));
+    delay(5000);
+  }
+  Serial.println(F("Adafruit IO Connected!"));
+}
+
     
 void printSensors(){
 	Serial.print("BOB2 DISTANCE @ ");
@@ -392,7 +497,21 @@ void scrollio(){
 		delay(100);
 	}
 }
+void miniScroll(int num, int num2){
+	for (int positionCounter = 0; positionCounter < num; positionCounter++) {
+		lcd.scrollDisplayLeft();
+		delay(200);
+	}
+		for (int positionCounter = 0; positionCounter < num; positionCounter++) {
+		lcd.scrollDisplayRight();
+		delay(200);
+	}
+	for (int positionCounter = 0; positionCounter < num; positionCounter++) {
+		lcd.scrollDisplayLeft();
+		delay(200);
+	}
 
+}
 void windowSense2(){
 long tempdistance2;	
 digitalWrite(trigPin2, LOW);  // Added this line
@@ -546,12 +665,14 @@ int lowerBOB(String Command){
 
 
 void updateLcd(){
-		lcd.setCursor(0, 0); lcd.print("BOB@ ");
+		lcd.setCursor(0, 0); lcd.print("BLIND");
 	lcd.setCursor(15, 0);	lcd.print(distance);	lcd.print("cm");
-		lcd.setCursor(0,1);	lcd.print("BOB2@");
+		lcd.setCursor(0,1);	lcd.print("WINDOW");
 		lcd.setCursor(15, 1); lcd.print(distance2);	lcd.print("cm");
-		lcd.setCursor(0, 2);  lcd.print("Lux=");  lcd.print(rm_light);  lcd.print("*Temp=");  lcd.print(temperature);lcd.print("C");
-	lcd.setCursor(0, 3); lcd.print("T-");  lcd.print(time); lcd.print("*NXT-");  lcd.print(nextup);
+		int barlevel = map(rm_light, 0, 1023, 0, 100); 
+		lcd.setCursor(0, 2); lcd.print("Time-");  lcd.print(time); 
+	lcd.setCursor(0, 3); lcd.print("Lux=");  lcd.print(rm_light);  lcd.print("~");lcd.print(barlevel);  lcd.print("%"); lcd.print(" T:");lcd.print(temperature);lcd.print("C");
+//	miniScroll(, 3);
 	}
 
 void closeWin() {
@@ -643,6 +764,7 @@ void setluxBar(){
 
 void readAndPrint(){
 	readSensors();
+	int barlevel = map(rm_light, 0, 1023, 0, ledCount);
 	printSensors();
 }
 
