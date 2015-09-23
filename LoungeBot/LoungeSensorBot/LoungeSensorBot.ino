@@ -35,7 +35,7 @@ uint32_t ip;
 #define KWechoPin 0
 int maximumRange = 200; // Maximum range needed
 int minimumRange = 0; // Minimum range needed
-long duration, distance; // Duration used to calculate distance
+int duration, distance; // Duration used to calculate distance
 
 const int piezoPin = A8;
 

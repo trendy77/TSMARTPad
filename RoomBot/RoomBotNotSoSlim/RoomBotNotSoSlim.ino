@@ -16,6 +16,11 @@ reassembled - optional internet (to speed-up startup) and LCD (general ease of t
 #include <OneWire.h>
 #include <Average.h>
 #include <LiquidTWI.h>
+/************************* Adafruit.io Setup *********************************/
+#include <Adafruit_SleepyDog.h>
+#include "utility/debug.h"
+#include "Adafruit_MQTT.h"
+#include "Adafruit_MQTT_CC3000.h"
 
     int minat = 0;
     int maxat = 0;
@@ -31,6 +36,7 @@ OneWire  ds(A3);
 #define I2C_ADDR  0x20
 const int piezoPin = 0;
 LiquidTWI lcd(0);
+
 int bobPos = 0;
 int winPos = 0;
 
@@ -106,8 +112,8 @@ uint32_t ip;
 const int potDialPin = A14;
 int port = 1883;
 int maximumRange = 200; int minimumRange = 0; // Minimum range needed
-int duration; int distance; // Duration used to calculate distance
-int duration2; int distance2; // Duration used to calculate distance
+long duration; int distance;
+long duration2; int distance2; // Duration used to calculate distance
 
 uint8_t bell[8]  = {0x4,0xe,0xe,0xe,0x1f,0x0,0x4};
 uint8_t note[8]  = {0x2,0x3,0x2,0xe,0x1e,0xc,0x0};
@@ -117,9 +123,35 @@ uint8_t duck[8]  = {0x0,0xc,0x1d,0xf,0xf,0x6,0x0};
 uint8_t check[8] = {0x0,0x1,0x3,0x16,0x1c,0x8,0x0};
 uint8_t cross[8] = {0x0,0x1b,0xe,0x4,0xe,0x1b,0x0};
 uint8_t retarrow[8] = {	0x1,0x1,0x5,0x9,0x1f,0x8,0x4};
+#define LISTEN_PORT           8072
+#define ADAFRUIT_CC3000_IRQ   3		// Define CC3000 chip pins
+#define ADAFRUIT_CC3000_VBAT  5
+#define ADAFRUIT_CC3000_CS    10
+#define WLAN_SSID       "LANoftheTriBand"        // cannot be longer than 32 characters!
+#define WLAN_PASS       "tttttttt"
+#define WLAN_SECURITY   WLAN_SEC_WPA2 // This can be WLAN_SEC_UNSEC, WLAN_SEC_WEP, WLAN_SEC_WPA or WLAN_SEC_WPA2
+aREST rest = aREST();// The port to listen for incoming TCP connections 
+Adafruit_CC3000_Server restServer(LISTEN_PORT);
+MDNSResponder mdns;
+//Adafruit_CC3000 cc3000 = Adafruit_CC3000(ADAFRUIT_CC3000_CS, ADAFRUIT_CC3000_IRQ, ADAFRUIT_CC3000_VBAT,SPI_CLOCK_DIV2);
+#include <BlynkSimpleCC3000.h>
+WidgetTerminal terminal(2);
 
+char auth[] = "c7c3e985cbc747bc852dd9b7d010cc3e";
 //int barlevel; const byte barpins[10] = {23,25,27,29,31,33,35,37,39,41};
 const int ledCount = 10;
+
+//This function will be called every time Widget in the Blynk App writes value to Virtual Pin 1:
+
+BLYNK_WRITE(1){
+  BLYNK_LOG("Got a value for Bob: %cm" param.asStr());
+  // You can also use: param.asInt() and param.asDouble()
+}
+// For example, this function will be called every time Widget in the Blynk App requests data for Virtual Pin 5:
+BLYNK_READ(5){
+    Blynk.virtualWrite(5, temp_c);
+}
+
 
 void setup(){
 	Serial.begin(115200);
@@ -138,17 +170,20 @@ void setup(){
   delay(15);
 	lightMeter.begin();
 	delay(50);
-  /*TO ENABLE INTERNET :
- //   wdt_enable(WDTO_4S);wdt_reset();	
-		rest.variable("room_temp",&rm_temp);	rest.variable("room_light",&rm_light);      
+/*   wdt_enable(WDTO_8S);wdt_reset();	
+		rest.variable("rm_temp",&rm_temp);	rest.variable("rm_light",&rm_light);      rest.variable("bobSense",&distance);	rest.variable("winSense",&distance2);      
         rest.function("raiseBob",raiseBOB);	rest.function("lowerBob",lowerBOB);	
 	rest.function("buzz",buzz);	  rest.set_id("172");			rest.set_name("RoomBot");
-
-	Serial.println("LOADING WIFI CONNECTION");
+ */
+ Blynk.begin(auth, "LANoftheTriBand", "tttttttt", WLAN_SEC_WPA2);
+bool result = Blynk.connect();
+//	Serial.println("LOADING WIFI CONNECTION");
+/*	wdt_reset();
   if (!cc3000.begin())  {    while(1);  }  if (!cc3000.connectToAP(WLAN_SSID, WLAN_PASS, WLAN_SECURITY)) {    while(1);  }  while (!cc3000.checkDHCP())  {    delay(100);  }  
-  if (!mdns.begin("arduino", cc3000)) {   while(1);   }  restServer.begin();
-  Serial.println("Online and listening for connections...");  
-//////
+  if (!mdns.begin("arduino", cc3000)) {   while(1);   }  restServer.begin();//wdt_reset();wdt_disable();
+delay(200);
+Serial.println("Online and listening for connections...");  
+/*
   Serial.println(F("Adafruit IO Example:"));
   Serial.print(F("Free RAM: ")); Serial.println(getFreeRam(), DEC);
   // Initialise the CC3000 module
@@ -165,19 +200,24 @@ void setup(){
   // connect to adafruit io
   connect();
 
-for lcd:
 */  
+delay(500);
+  while (Blynk.connect() == false) {
+    // Wait until connected
+  }
+
+  terminal.println(F("Blynk v" BLYNK_VERSION ": Device started"));
+  terminal.flush();
 Serial.println("ROOMBOT SETUP COMPLETE");
 	My_Receiver.enableIRIn(); // Start the receiver
 	Serial.println("Press ZERO for Options"); 
 
-lcd.clear();
 }
 
 void loop() {
 time = millis();
 	nextup = ((interval + lastup) - time);
-
+  Blynk.run();
 /*
   Adafruit_MQTT_Subscribe *subscription;
   // Make sure to reset watchdog every loop iteration!
@@ -205,6 +245,10 @@ if (current == 1){
 }
 */
 
+  mdns.update();
+  Adafruit_CC3000_ClientRef client = restServer.available();
+  rest.handle(client);
+
    windowSense();
    windowSense2();
 	readSensors();
@@ -221,6 +265,7 @@ if (time > (lastup + interval)){
     logged =0;
 	lastup = time;
     }
+
 
 serialcomms();
 loopcounter++;
@@ -282,7 +327,6 @@ case 'g': winHalf(); break;
 		}
 	}
     
-    
 void openSenseWin(){
 	windowSense2();
 Serial.println("OPENING WINDOW TO 23CM...");
@@ -298,7 +342,7 @@ while 	(distance2 <23){
 void closeSenseWin(){
   	windowSense2();
 	if (distance2 >3 ) { 
-	sendValueToLatch(\4); 
+	sendValueToLatch(4); 
 while 	(distance2 >3){
                 windowSense2();
 		Serial.print("dist @");Serial.println(distance2);
@@ -328,7 +372,8 @@ Serial.print("win @");Serial.println(distance2);
   }
   sendValueToLatch(0); 
 }
-
+}
+	
 void IRDetected(){
  	 Serial.println("IR COMMAND DETECTED - DECODING...");
 	My_Decoder.decode(); GotOne=true;
@@ -548,9 +593,9 @@ shortBobD();
 if (distance ==1 || distance ==2) {
 		shortBobU();
 }
-}
  
- void shortBobU(){
+}
+void shortBobU(){
 sendValueToLatch(1); 
 	Serial.println("miniRaising ");
 	delay(1500);
@@ -576,7 +621,8 @@ int buzz(String command) {
 }
 
 void updateLcd(){
-	lcd.setCursor(0, 0); lcd.print("BLIND");
+	lcd.clear();
+lcd.setCursor(0, 0); lcd.print("BLIND");
 	lcd.setCursor(15, 0);	lcd.print(distance);	lcd.print("cm");
 		lcd.setCursor(0,1);	lcd.print("WINDOW");
 		lcd.setCursor(15, 1); lcd.print(distance2);	lcd.print("cm");
@@ -759,3 +805,4 @@ void readSensors() {
 	aveRT.push(temp_c);
 logged++;
 }
+
