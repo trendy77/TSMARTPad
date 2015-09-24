@@ -15,11 +15,11 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Visual Micro\.TILTBOT.vsarduino.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
+    <None Include="RoomBotSlim.ino" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="TILTBOT.ino" />
+    <ClInclude Include="Visual Micro\.RoomBotSlim.vsarduino.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

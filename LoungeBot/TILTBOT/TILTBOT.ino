@@ -21,8 +21,8 @@ TiltBot - Lounge
 #include <LiquidTWI.h>
 #include <FTRGBLED.h>
 #include <Adafruit_NeoPixel.h>
-
-
+#include <EEPROM.h>
+#include <DFBLE.h>
 // VARIABLES 	
 // Sensors
 OneWire ds(A1);  
@@ -45,6 +45,9 @@ int port = 80;
 String repository = "/energy_project/";
 unsigned long interval = 300000;           // every minute interval at which to send sensor data to server
 unsigned long time;long nextup; long lastup;
+
+#define NEOPIN A15
+Adafruit_NeoPixel strip = Adafruit_NeoPixel(8, NEOPIN, NEO_GRB + NEO_KHZ800);
 
 #define MY_PROTOCOL 	SONY
 #define MY_PRO2COL 	NEC
@@ -98,8 +101,8 @@ int wintimerS = (wintimer / 1000);
   Servo leftGear; Servo rightGear;  
   int pos; int invertpos;int move;   
 
-AF_DCMotor kitchTilt(4, MOTOR12_64KHZ); 
-AF_DCMotor winTilt(3, MOTOR12_64KHZ);
+AF_DCMotor kitchTilt(3, MOTOR12_64KHZ); 
+AF_DCMotor winTilt(4, MOTOR12_64KHZ);
 AF_DCMotor loungeTilt(1, MOTOR34_64KHZ);   
 AF_DCMotor doorwTilt(2, MOTOR34_64KHZ);
 
@@ -129,22 +132,7 @@ const int dataPin = A14;
 void setup(){
   Serial.begin(115200);
   Serial.println("TLOUNGE INITIALISING...");
- GotOne = false; GotNew = false;   codeType = UNKNOWN;  codeValue = 0;
-
-  kitchTilt.setSpeed(255);   doorwTilt.setSpeed(255);
-  loungeTilt.setSpeed(255);
-  winTilt.setSpeed(255);  
-  kitchTilt.run(RELEASE);doorwTilt.run(RELEASE);loungeTilt.run(RELEASE);winTilt.run(RELEASE);
- 	//pinMode(potPin, INPUT);
- leftGear.attach(10);  // attaches the servo on pin 9 to the servo object 
- rightGear.attach(9);  // attaches the servo on pin 9 to the servo object 
- pos = 0;            // start at Zeropoint allowing 180 deg movement 1 way...
- invertpos = 180;
- move = 1;           // servo moves this number of degrees each time left/right is pushed
- leftGear.write(pos); // Set initial position
- rightGear.write(invertpos); // Set initial position
- 
-  Serial2.begin(9600);
+   Serial2.begin(9600);
   // set the contrast-- 200 is a good middle place to try out
 Serial2.write(0xFE);  Serial2.write(0x50);  Serial2.write(200);
   delay(10);       
@@ -155,6 +143,24 @@ Serial2.write(0xFE);  Serial2.write(0x50);  Serial2.write(200);
   Serial2.write(0xFE);Serial2.write(0xD0);Serial2.write(0x255);Serial2.write(0x0); Serial2.write(0x0);	
   delay(10);
   
+strip.begin();  strip.setBrightness(255);colorWipe(strip.Color(255, 0, 0), 50);   	 strip.show(); 	
+ // red?
+  		
+  Serial2.print("TrendySMARTPad -- Connecting");
+  GotOne = false; GotNew = false;   codeType = UNKNOWN;  codeValue = 0;
+
+  kitchTilt.setSpeed(255);  kitchTilt.run(RELEASE); doorwTilt.setSpeed(255);doorwTilt.run(RELEASE);
+  loungeTilt.setSpeed(255);loungeTilt.run(RELEASE);  winTilt.setSpeed(255);  winTilt.run(RELEASE);
+  
+ 	/*pinMode(potPin, INPUT);
+ leftGear.attach(10);  // attaches the servo on pin 9 to the servo object 
+ rightGear.attach(9);  // attaches the servo on pin 9 to the servo object 
+ pos = 0;            // start at Zeropoint allowing 180 deg movement 1 way...
+ invertpos = 180;
+ move = 1;           // servo moves this number of degrees each time left/right is pushed
+ leftGear.write(pos); // Set initial position
+ rightGear.write(invertpos); // Set initial position
+ 
 	Serial1.begin(9600);	
 	Serial1.println("hello on BT?");
 	if (Serial1.available()){
@@ -165,7 +171,7 @@ Serial2.write(0xFE);  Serial2.write(0x50);  Serial2.write(200);
   //lightMeter.begin();
   //lux = lightMeter.readLightLevel();
   //lg_light = lux;
-/*
+
   Serial.println("initiALISING WiFi");
   rest.variable("lg_light", &lg_light);
   rest.variable("lg_temp", &lg_temp);
@@ -194,17 +200,15 @@ Serial2.write(0xFE);  Serial2.write(0x50);  Serial2.write(200);
 */ 
  Serial.println("TILTBOT SETUP COMPLETE");
  Serial.println("Press ZERO for Options");
-
+Serial2.write(0xFE);Serial2.write(0xD0);Serial2.write(0x0);Serial2.write(0x0); Serial2.write(0x255);	// blue
+delay(10);
+clearTTL();
+Serial2.write("CONNECTED!");
   My_Receiver.No_Output();//Turn off any unused IR LED output circuit
   My_Receiver.enableIRIn(); // Start the receiver
 }
 
 void tiltAllF(){
-
-Serial2.write(0xFE);Serial2.write(0xD0);Serial2.write(0x0);Serial2.write(0x0); Serial2.write(0x255);	// blue
-delay(10);
-clearTTL();
-Serial2.write("TILTING!");
   Serial.println(" Direction: FORWARD - Tilting ALL... ");
   winTilt.run(FORWARD);
 	  doorwTilt.run(FORWARD);
@@ -218,12 +222,7 @@ Serial2.write("TILTING!");
 	  delay(50);
   }
 
-void tiltAllB(){
-	
-Serial2.write(0xFE);Serial2.write(0xD0);Serial2.write(0x0);Serial2.write(0x0); Serial2.write(0x255);	// blue
-delay(10);
-clearTTL();
-Serial2.write("TILTING!");
+void tiltAllB(){  Serial2.println(" Direction: BACKWARD - Tilting ALL... ");
   Serial.println(" Direction: BACKWARD - Tilting ALL... ");
   winTilt.run(BACKWARD);
 	  doorwTilt.run(BACKWARD);
@@ -238,6 +237,9 @@ Serial2.write("TILTING!");
   delay(50);
    }
    
+void clearTTL(){
+Serial2.write(0xFE); Serial2.write(0x58);delay(10);
+}
     /*   
 void windowSense(){
 	digitalWrite(trigPin, LOW);  // Added this line
@@ -272,25 +274,14 @@ void settiltTime(){
   wintimerS = (wintimer/1000);
 }
 
-void clearTTL(){
-Serial2.write(0xFE); Serial2.write(0x58);delay(10);
-}
 
-void clearsevSeg(){		// attempt to clear the shift register 
-  digitalWrite(latchPin, LOW);
-  shiftOut(dataPin, clockPin, MSBFIRST, Tab[0]);
-  delay(100);	
-  digitalWrite(latchPin, HIGH);
-}
-
-
-void loop() {
+void loop(){
  time = millis();
   nextup = ((interval + lastup) - time);
+  Serial2.print("time is ");
+   Serial2.print(time); settiltTime();
   
-  settiltTime();
-  
-//	leftGear.write(invertpos); rightGear.write(pos);
+	//leftGear.write(invertpos); rightGear.write(pos);
 
 	if (My_Receiver.GetResults(&My_Decoder)) {
 		GotOne=true;
@@ -304,7 +295,7 @@ void loop() {
         }
     
 serialcomms();
-Serial.print(".");
+Serial.println(".");
 }
 
 
@@ -335,35 +326,21 @@ void dwTiltR(){
 
 void wTilt(){
 	   Serial.println(" Direction: FORWARD - Tilting win... ");
-  winTilt.run(FORWARD);	  delay(1000);	  winTilt.run(RELEASE);      delay(50);
+  winTilt.run(FORWARD);  delay(1000);	  winTilt.run(RELEASE);      delay(50);
 }
 void wTiltR(){
 	  Serial.println(" Direction: BACKWARD - Tilting win... ");
-   winTilt.run(BACKWARD);	  delay(1000);	  winTilt.run(RELEASE);      delay(50);
+  winTilt.run(BACKWARD); 	  delay(1000);	  winTilt.run(RELEASE);      delay(50);
 }
 
- void IRrec(){
+void IRrec(){
    switch(My_Decoder.value) {
             case LEFT_ARROW:   tiltAllF();break;
             case RIGHT_ARROW:   tiltAllB(); break;
 			case SELECT_BUTTON: pos=90; break;
-            case UP_ARROW:       tilttimer = max(tilttimer - 1000, tiltmin);       Serial.print("Tilt duration has been changed to ");       Serial.print(tilttimerS);       Serial.println("Seconds");       Serial.print("...whilst WindowAction Duration now @");       Serial.print(wintimerS);       Serial.println("Seconds");       beep(tilttimerS);      break;
-     case DOWN_ARROW:  
-      tilttimer = min(tilttimer + 1000, tiltmax);       Serial.println("");       Serial.print("Tilt duration has been changed to "); 
+            case DOWN_ARROW: tilttimer = min(tilttimer + 1000, tiltmax);       Serial.println("");       Serial.print("Tilt duration has been changed to "); 
       Serial.print(tilttimer / 1000);       Serial.println("Seconds");       Serial.print("...whilst WindowAction Duration now @");       Serial.print(wintimerS);       Serial.println("Seconds");       beep(tilttimerS);break;
-            move=max(1, move-1); break;
-<<<<<<< HEAD
-			case BUTTON_1:		kTilt();break;
-			case BUTTON_2:		wTilt();break;
-			case BUTTON_3:		dwTilt();break;
-			case BUTTON_4:		kTiltR();break;
-			case BUTTON_5:		wTiltR();break;
-			case BUTTON_6:		dwTiltR();break;
-			case BUTTON_7:		lTilt();break;
-			case BUTTON_8:		lTiltR();break;
-=======
-<<<<<<< HEAD
-			case BUTTON_1:		kTilt();break;
+           			case BUTTON_1:		kTilt();break;
 			case BUTTON_2:		kTiltR();break;
 			case BUTTON_3:		wTilt();break;
 			case BUTTON_4:		wTiltR();break;
@@ -371,44 +348,19 @@ void wTiltR(){
 			case BUTTON_6:		dwTiltR();break;
 			case BUTTON_7:		lTilt();break;
 			case BUTTON_8:		lTiltR();break;
-=======
-			case BUTTON_1:		kTilt();
-			case BUTTON_2:		wTilt();
-			case BUTTON_3:		dwTilt();
-			case BUTTON_4:		kTiltR();
-			case BUTTON_5:		wTiltR();
-			case BUTTON_6:		dwTiltR();
-			case BUTTON_7:		lTilt();
-			case BUTTON_8:		lTiltR();
->>>>>>> dc73b2c884f57cdd574aca09607adcc8fe27805f
->>>>>>> 0e9f623fa9ffe8379ca4599192b202e0c55e4958
-        case PRESET_PREV: senseMoveWin();break;
-        case PRESET_NEXT: senseMoveWin(); break;
-		case BLUE:   pos=min(180,pos+move);  break;
-        case YELLOW: pos=max(0,pos-move); break; 
+//        case PRESET_PREV: senseMoveWin();break;
+  //      case PRESET_NEXT: senseMoveWin(); break;
+	//	case BLUE:   pos=min(180,pos+move);  break;
+      //  case YELLOW: pos=max(0,pos-move); break; 
 		}
-		invertpos = (pos -180);
-leftGear.write(pos); rightGear.write(invertpos);
+	//	invertpos = (pos -180);
+//leftGear.write(pos); rightGear.write(invertpos);
    }  
  
 void senseMoveWin(){
-/*  lcd.clear(); lcd.setCursor(2,0); lcd.print("AUTOBOB ACTIVATING");
-  windowSense();
-      if (distance >= 200 || distance <= 0){
-      Serial.println("ERROR Out of range");//lcd.print("ERROR Out of range");
-      }
-      else if (distance > 2){
-    //lcd.setCursor(3,0); lcd.print("AUTOBOB RAISING BLIND");
-     autocloseWin();
-      }
-      else if (distance <= 2){
-    autoopenWin();// openlwin();
-    }
-  delay(300);
 
-*/
 }
- void serialcomms(){
+void serialcomms(){
 	if (Serial.available()){
 		int command = Serial.read();
 		switch (command){
@@ -521,7 +473,7 @@ void senseMoveWin(){
 	}
 }
 
-   void storeCode(void) {
+void storeCode(void) {
   GotNew=true;
   codeType = My_Decoder.decode_type;
   if (codeType == UNKNOWN) {
@@ -536,6 +488,19 @@ void senseMoveWin(){
       }
 }
 
+void readAndPrint(){
+  readSensors();
+  printSensors();
+  //setluxBar();
+}
+void readSensors() {
+  
+}
+void printSensors(){
+  } 
+void printAverage(){
+  delay(500);
+}
 
 void beep(int num){
   for (int i = 0; i < num; i++){
@@ -545,3 +510,78 @@ void beep(int num){
     delay(500);
   }
 }
+
+void colorWipe(uint32_t c, uint8_t wait) {		// Fill the dots one after the other
+  for(uint16_t i=0; i<strip.numPixels(); i++) {
+    strip.setPixelColor(i, c);    
+    strip.show();    
+    delay(wait);  
+  }
+}
+
+void rainbow(uint8_t wait) {
+  uint16_t i, j;
+
+  for(j=0; j<256; j++) {
+    for(i=0; i<strip.numPixels(); i++) {
+      strip.setPixelColor(i, Wheel((i+j) & 255));
+    }
+    strip.show();
+    delay(wait);
+  }
+}
+
+void rainbowCycle(uint8_t wait) {
+  uint16_t i, j;
+  for(j=0; j<256*5; j++) { // 5 cycles of all colors on wheel
+    for(i=0; i< strip.numPixels(); i++) {
+      strip.setPixelColor(i, Wheel(((i * 256 / strip.numPixels()) + j) & 255));
+    }
+    strip.show();delay(wait);
+  }
+}
+
+void theaterChase(uint32_t c, uint8_t wait) {		//Theatre-style crawling lights.
+  for (int j=0; j<10; j++) {  //do 10 cycles of chasing
+    for (int q=0; q < 3; q++) {
+      for (int i=0; i < strip.numPixels(); i=i+3) {
+        strip.setPixelColor(i+q, c);    //turn every third pixel on
+      }
+      strip.show();
+      delay(wait);
+      for (int i=0; i < strip.numPixels(); i=i+3) {
+        strip.setPixelColor(i+q, 0);        //turn every third pixel off
+      }
+    }
+  }
+}
+
+void theaterChaseRainbow(uint8_t wait) {		//Theatre-style crawling lights with rainbow
+  for (int j=0; j < 256; j++) {     // cycle all 256 colors in the wheel
+    for (int q=0; q < 3; q++) {
+      for (int i=0; i < strip.numPixels(); i=i+3) {
+        strip.setPixelColor(i+q, Wheel( (i+j) % 255));    //turn every third pixel on
+      }
+      strip.show();      
+      delay(wait);
+      for (int i=0; i < strip.numPixels(); i=i+3) {
+        strip.setPixelColor(i+q, 0);        //turn every third pixel off
+      }
+    }
+  }
+}
+
+// The colours are a transition r - g - b - back to r. Input a value 0 to 255 to get a color value.
+uint32_t Wheel(byte WheelPos) {
+  WheelPos = 255 - WheelPos;
+  if(WheelPos < 85) {    
+    return strip.Color(255 - WheelPos * 3, 0, WheelPos * 3);
+  }
+  if(WheelPos < 170) {    
+    WheelPos -= 85;    
+    return strip.Color(0, WheelPos * 3, 255 - WheelPos * 3);
+  }
+  WheelPos -= 170;  
+  return strip.Color(WheelPos * 3, 255 - WheelPos * 3, 0);
+}
+
