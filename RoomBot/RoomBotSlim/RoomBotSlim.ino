@@ -16,6 +16,7 @@ reassembled - optional internet (to speed-up startup) and LCD (general ease of t
 #include <OneWire.h>
 #include <Average.h>
 #include <LiquidTWI.h>
+<<<<<<< HEAD
 #include <FTRGBLED.h>
 /*
 pin 12 DataIn (purple)
@@ -39,6 +40,30 @@ IRrecv My_Receiver(23);
 #define echoPin 29
 BH1750 lightMeter;
 OneWire  ds(A2);
+=======
+
+    int minat = 0;
+    int maxat = 0;
+    int minat2= 0;
+    int maxat2 = 0;
+<<<<<<< HEAD
+IRrecv My_Receiver(A15);
+#define trigPin 33    
+#define echoPin 31		
+#define trigPin2 37     
+#define echoPin2 35
+BH1750 lightMeter;
+const int potDialPin = A0;
+=======
+IRrecv My_Receiver(A0);
+#define trigPin2 33    
+#define echoPin2 31		
+#define trigPin 37     
+#define echoPin 35
+BH1750 lightMeter;
+>>>>>>> b9a19a7aace5f282f7418d1172a4f38ae3270fef
+OneWire  ds(A3);
+>>>>>>> e172efcf5ce99788dea2af0383424f51ad5de190
 #define I2C_ADDR  0x20
 const int piezoPin = 0;
 LiquidTWI lcd(0);
@@ -46,6 +71,14 @@ int bobPos = 0;
 int winPos = 0;
 
 #define MY_PROTOCOL 	SONY
+#define MY_PROTOCOL2 	NEC
+//NEC CODES FOR DEBUG
+#define UP_ARROW2      	0x61D6D827 //	INCREASE TILT TIME +1SEC
+#define DOWN_ARROW2    	0x61D658A7 //DECREASE TILT TIME -1SEC
+#define RIGHT_ARROW2   	0x61D6609F //Move All tilt FWD
+#define LEFT_ARROW2    	0x61D620DF //Move All tilt BKD
+#define SELECT_BUTTON2 	0x61D6A05F //	BUZZER!!
+
 #define UP_ARROW      	0x1E108 //	INCREASE TILT TIME +1SEC
 #define DOWN_ARROW    	0x9E108 //DECREASE TILT TIME -1SEC
 #define RIGHT_ARROW   	0xDE108 //Move All tilt FWD
@@ -131,6 +164,7 @@ uint8_t retarrow[8] = {	0x1, 0x1, 0x5, 0x9, 0x1f, 0x8, 0x4};
 
 int barlevel; const int barpins[] = {40,41,42,43,44,45,46,47,48,49};
 const int ledCount = 10;
+<<<<<<< HEAD
 const int potDialPin = A3;
 
 void setup() {
@@ -145,12 +179,32 @@ void setup() {
 /*Serial.println("LOADING SENSORS");
   pinMode(piezoPin, OUTPUT); pinMode(potDialPin, INPUT);
   GotOne = false; GotNew = false; codeType = UNKNOWN;   codeValue = 0;
+=======
+
+void setup(){
+	Serial.begin(115200);
+	Serial.println("ROOMBOT INITIALISING...");
+	lcd.begin(20, 4);	lcd.setBacklight(HIGH);lcd.setCursor(0, 2);
+	lcd.print("** INITIALISING.. **");
+
+	Serial.println("LOADING SENSORS");
+<<<<<<< HEAD
+	pinMode(trigPin, OUTPUT);
+	pinMode(echoPin, INPUT);
+	pinMode(trigPin2, OUTPUT);
+	pinMode(echoPin2, INPUT);	
+=======
+>>>>>>> b9a19a7aace5f282f7418d1172a4f38ae3270fef
+	pinMode(piezoPin, OUTPUT);pinMode(potDialPin, INPUT);
+	GotOne = false; GotNew = false; codeType = UNKNOWN;   codeValue = 0;	
+>>>>>>> e172efcf5ce99788dea2af0383424f51ad5de190
   Wire.begin(); // Wake up I2C bus
   Wire.beginTransmission(I2C_ADDR);// Set I/O bank A to outputs
   Wire.write(0x00); // IODIRA register
   Wire.write(0x00); // Set all of bank A to outputs
   Wire.endTransmission();
   delay(15);
+<<<<<<< HEAD
   lightMeter.begin();
   delay(50);
   TO ENABLE INTERNET :
@@ -161,6 +215,23 @@ void setup() {
 
   Serial.println("LOADING WIFI CONNECTION");
   if (!cc3000.begin())  {    while(1);  }  if (!cc3000.connectToAP(WLAN_SSID, WLAN_PASS, WLAN_SECURITY)) {    while(1);  }  while (!cc3000.checkDHCP())  {    delay(100);  }
+=======
+	lightMeter.begin();
+	delay(50);
+<<<<<<< HEAD
+  /* //TO ENABLE INTERNET :
+    wdt_enable(WDTO_4S);wdt_reset();	
+=======
+  /*TO ENABLE INTERNET :
+ //   wdt_enable(WDTO_4S);wdt_reset();	
+>>>>>>> b9a19a7aace5f282f7418d1172a4f38ae3270fef
+		rest.variable("room_temp",&rm_temp);	rest.variable("room_light",&rm_light);      
+        rest.function("raiseBob",raiseBOB);	rest.function("lowerBob",lowerBOB);	
+	rest.function("buzz",buzz);	  rest.set_id("172");			rest.set_name("RoomBot");
+
+	Serial.println("LOADING WIFI CONNECTION");
+  if (!cc3000.begin())  {    while(1);  }  if (!cc3000.connectToAP(WLAN_SSID, WLAN_PASS, WLAN_SECURITY)) {    while(1);  }  while (!cc3000.checkDHCP())  {    delay(100);  }  
+>>>>>>> e172efcf5ce99788dea2af0383424f51ad5de190
   if (!mdns.begin("arduino", cc3000)) {   while(1);   }  restServer.begin();
   Serial.println("Online and listening for connections...");
   //////
@@ -180,6 +251,7 @@ void setup() {
   // connect to adafruit io
   connect();
 
+<<<<<<< HEAD
   for lcd:
   */
   Serial.println("ROOMBOT SETUP COMPLETE");
@@ -187,6 +259,24 @@ void setup() {
   Serial.println("Press ZERO for Options");
 
   //lcd.clear();
+=======
+for lcd:
+<<<<<<< HEAD
+	lcd.begin(20, 4);	lcd.setBacklight(HIGH);lcd.setCursor(0, 2);
+	lcd.print("** INITIALISING.. **");
+*/
+Serial.println("ROOMBOT SETUP COMPLETE");
+	My_Receiver.enableIRIn(); // Start the receiver
+	Serial.println("Press ZERO for Options"); 
+=======
+*/  
+Serial.println("ROOMBOT SETUP COMPLETE");
+	My_Receiver.enableIRIn(); // Start the receiver
+	Serial.println("Press ZERO for Options"); 
+
+lcd.clear();
+>>>>>>> b9a19a7aace5f282f7418d1172a4f38ae3270fef
+>>>>>>> e172efcf5ce99788dea2af0383424f51ad5de190
 }
 
 void loop() {
@@ -247,6 +337,7 @@ digitalWrite(barpins[thisLed], HIGH);delay(1000);
   }
 }
 
+<<<<<<< HEAD
 void serialcomms() {
   if (Serial.available()) {
     int command = Serial.read();
@@ -295,10 +386,32 @@ void serialcomms() {
       			}	*/
 
       case 'z': sendValueToLatch(0);      Serial.println("Resetting all relays");  break;
+=======
+   windowSense();
+   windowSense2();
+<<<<<<< HEAD
+	nextup = ((interval + lastup) - time);
+=======
+>>>>>>> b9a19a7aace5f282f7418d1172a4f38ae3270fef
+	readSensors();
+updateLcd();
+if (My_Receiver.GetResults(&My_Decoder)) {
+   IRDetected();
+	delay(100);
+My_Receiver.resume();
+	}
+
+if (time > (lastup + interval)){
+	Serial.println("Time to send server");
+//send2server();
+    logged =0;
+	lastup = time;
+>>>>>>> e172efcf5ce99788dea2af0383424f51ad5de190
     }
   }
 }
 
+<<<<<<< HEAD
 
 void openSenseWin() {
   windowSense2();
@@ -389,6 +502,219 @@ void IRDetected() {
       }
     }
   }
+=======
+serialcomms();
+loopcounter++;
+if (loopcounter == 5){
+Serial.print("*");
+loopcounter =0;
+}
+}
+
+void serialcomms(){	
+	if (Serial.available()){
+	int command = Serial.read();
+		switch (command)
+		{
+		case '0':
+<<<<<<< HEAD
+			Serial.print("BOB@ ");
+			Serial.print(distance);
+			Serial.print("cm **");
+			Serial.print("BOB2@ ");
+			Serial.print(distance2);
+			Serial.println("cm");
+			Serial.println("TSMARTPad- ROOM OPTIONS");
+			Serial.println(" Current Sensor Readings: "); readAndPrint();
+			Serial.println(" 1/q- Auto raise/lower BOB ");
+			Serial.println(" 2/w-  shortBobU/D  ");
+			Serial.println(" 3/e- bob norm 4/r-motor2secs 5/t-Sense Open/CloseWin   p-pot mode ");
+			Serial.println(" 9- SEND2SERVER");
+=======
+			Serial.println("TSMARTPad- ROOM OPTIONS");
+			Serial.println(" Current Sensor Readings: "); readAndPrint();
+			Serial.println(" 1/q- Auto raise/lower BOB ");
+			Serial.println(" 2/w-  shortBobU/D   3/e- bob raise/lower ");
+			Serial.println("4/r-window motor2secs  ^^ 'g'- WinhalfOpen");
+Serial.println("	5/t-SenseOpen/CloseWin    ");
+			Serial.println(" 'b' - raise both!");
+>>>>>>> b9a19a7aace5f282f7418d1172a4f38ae3270fef
+			Serial.println(" z- reset all relays ");
+			delay(1000);			break;
+
+		case '1':    autoraiseBob();	break;
+		case 'q': autolowerBob(); break;
+		case '2':	shortBobU();	break;
+		case 'w':shortBobD(); break;
+		case '3': raiseBob(); break;
+		case 'e': lowerBob(); break;
+		case '4': openWin(); break;
+		case 'r': closeWin(); break;
+		case 'f': readAndPrint(); break;
+		case '5': openSenseWin(); break;
+<<<<<<< HEAD
+=======
+case 'g': winHalf(); break;
+>>>>>>> b9a19a7aace5f282f7418d1172a4f38ae3270fef
+		case 't': closeSenseWin(); break;
+		case '6': sendValueToLatch(32);      Serial.println("Activating relay 6"); break;
+			//	sendValueToLatch(16);  Serial.println("Activating relay 5");   break;
+		case '7':  sendValueToLatch(64);  Serial.println("Activating relay 7"); break;
+		case '8':  sendValueToLatch(128);      Serial.println("Activating relay 8");   break;
+<<<<<<< HEAD
+		case 'p': 	potDialVal = analogRead(potDialPin);
+			Serial.print("pot is");		Serial.println(potDialVal);
+=======
+		case 'b': raiseBoth(); break;
+>>>>>>> b9a19a7aace5f282f7418d1172a4f38ae3270fef
+/*
+			if (tempPot1 = !potDialVal){
+				while (tempPot1 < ((potDialVal - 2) && distance>1)){
+					sendValueToLatch(2);
+					delay(tempPot1 * 10);
+				}
+				while (tempPot1 > (potDialVal + 2)){
+					sendValueToLatch(1);
+					delay(tempPot1 * 15);
+				}
+				sendValueToLatch(0);
+				prevPot = potDialVal;
+			}	*/
+<<<<<<< HEAD
+			break;
+		case 'z':sendValueToLatch(0);      Serial.println("Resetting all relays");  break;
+		case '9':          break;
+=======
+
+		case 'z':sendValueToLatch(0);      Serial.println("Resetting all relays");  break;
+		}
+>>>>>>> b9a19a7aace5f282f7418d1172a4f38ae3270fef
+		}
+	}
+    
+<<<<<<< HEAD
+	void openSenseWin(){
+	windowSense();
+if (distance < 70) {
+	sendValueToLatch(32);
+	while (distance < 30){
+  	windowSense();
+        Serial.print("dist @"); Serial.println(distance);
+      }
+      sendValueToLatch(0);
+	delay(1000);
+	}
+}
+void closeSenseWin(){
+	windowSense();
+if (distance > 10) {
+	sendValueToLatch(4);
+while (distance > 5){
+  	windowSense();
+        Serial.print("dist @"); Serial.println(distance);
+      }
+      sendValueToLatch(0);
+	delay(1000);
+}
+}
+	
+	void IRDetected(){
+=======
+    
+void openSenseWin(){
+	windowSense2();
+Serial.println("OPENING WINDOW TO 23CM...");
+	sendValueToLatch(32); 
+while 	(distance2 <23){
+                windowSense2();
+		Serial.print("dist @");Serial.println(distance2);
+        delay(100);
+	}
+	sendValueToLatch(0); 
+	delay(50);
+	}
+void closeSenseWin(){
+  	windowSense2();
+	if (distance2 >3 ) { 
+	sendValueToLatch(\4); 
+while 	(distance2 >3){
+                windowSense2();
+		Serial.print("dist @");Serial.println(distance2);
+        delay(100);
+	}
+	sendValueToLatch(0); 
+	delay(50);
+	}
+}	
+	
+void winHalf(){
+windowSense2();
+Serial.println("OPENING WINDOW TO halfway15CM...");
+if (distance2 <15){
+  	sendValueToLatch(32); 
+  while (distance2 <15){
+windowSense2();
+Serial.print("win @");Serial.println(distance2);
+  }
+  sendValueToLatch(0); 
+}
+else if (distance2 >15){
+  	sendValueToLatch(4); 
+  while (distance2 <15){
+windowSense2();
+Serial.print("win @");Serial.println(distance2);
+  }
+  sendValueToLatch(0); 
+}
+
+void IRDetected(){
+>>>>>>> b9a19a7aace5f282f7418d1172a4f38ae3270fef
+ 	 Serial.println("IR COMMAND DETECTED - DECODING...");
+	My_Decoder.decode(); GotOne=true;
+	GotNew=true;  codeType = My_Decoder.decode_type;  if (codeType == UNKNOWN) {    
+	Serial.println("Received unknown code");
+    rawCount = My_Decoder.rawlen-1;    }   
+	else{	Serial.print(F("Received "));    Serial.print(Pnames(codeType));
+	if (My_Decoder.value == REPEAT) {	Serial.println(F("repeat; ignoring."));     } 
+	 else{ codeValue = My_Decoder.value; codeBits = My_Decoder.bits;
+} 	Serial.print(F(" Value:0x"));Serial.println(My_Decoder.value, HEX);
+if((My_Decoder.decode_type==MY_PROTOCOL)  ||(My_Decoder.decode_type == MY_PROTOCOL2)){
+Serial.println("Code is for TSMARTPad"); 
+switch(My_Decoder.value) {
+case UP_ARROW:     autoraiseBob(); break; 	 // lower room bob
+case DOWN_ARROW:    	autolowerBob(); break;	// raise room bob
+case SELECT_BUTTON: 	buzzUP();	break;
+case SOUND_PREV:	shortBobD();break;
+case SOUND_NEXT: shortBobU();break;
+//case SUBTITLE: 
+<<<<<<< HEAD
+case BUTTON_0: senseMoveBob(); break;
+case BUTTON_9: sendValueToLatch(0); Serial.println("resetting all relays"); break;
+			}
+}
+else if (My_Decoder.decode_type == MY_PROTOCOL2) {
+      //	leds.setLEDs(LED_YELLOW); leds.update();
+      Serial.println("Code is IR command for TSMARTPad");
+            switch (My_Decoder.value) {
+      case DOWN_ARROW2:        printSensors();        break;
+      case UP_ARROW2:printSensors();        break;
+      case LEFT_ARROW2:printSensors();        break;
+      case RIGHT_ARROW2:printSensors();break;
+      }
+    	}
+=======
+case BUTTON_0: Serial.println("closng window"); closeSenseWin();break;
+case BUTTON_9: Serial.println("opening window");openSenseWin();  break;
+case BUTTON_8: Serial.println("open half window");winHalf();  break;
+     case DOWN_ARROW2:        printSensors();break;
+      case UP_ARROW2:printSensors();        break;
+      case LEFT_ARROW2:printSensors();        break;
+      case RIGHT_ARROW2:printSensors();break;
+      }		
+	  }
+>>>>>>> b9a19a7aace5f282f7418d1172a4f38ae3270fef
+	}	
+>>>>>>> e172efcf5ce99788dea2af0383424f51ad5de190
 }
 
 // connect to adafruit io via MQTT
@@ -413,6 +739,7 @@ void connect() {
       Serial.println(F("Retrying connection..."));
       delay(5000);
     }
+<<<<<<< HEAD
     */Serial.println(F("Adafruit IO Connected!"));
 }
 void printSensors() {
@@ -453,6 +780,209 @@ void scrollio() {
     lcd.scrollDisplayLeft();
     delay(100);
   }
+=======
+    if(ret >= 0)
+      mqtt.disconnect();
+    Serial.println(F("Retrying connection..."));
+    delay(5000);
+  }
+  */Serial.println(F("Adafruit IO Connected!"));
+}
+    
+void printSensors(){
+	Serial.print("BOB2 DISTANCE @ ");
+	Serial.print(distance2);	Serial.println("cm");
+	Serial.print("BOB DISTANCE @ ");
+	Serial.print(distance);	Serial.println("cm");
+	Serial.print("Temperature: ");	Serial.print(temp_c);	Serial.println("C ");
+	Serial.print("Light=");  Serial.print(rm_light);  Serial.print("(lux)/");  
+	Serial.print(" Averages ~ ");Serial.print(logged);	Serial.println("Readings");
+	Serial.print("LUX Mean:   "); Serial.println(aveRL.mean());
+	Serial.print(" LUX Mode:   "); Serial.println(aveRL.mode());
+	//   Serial.print("Max:    "); Serial.println(aveRL.maximum(&maxat));
+	//    Serial.print(" at:    "); Serial.println(maxat);
+	//   Serial.print("Min:    "); Serial.println(aveRL.minimum(&minat));
+	//  Serial.print(" at:    "); Serial.println(minat);
+	Serial.print("StdDev: "); Serial.println(aveRL.stddev());
+	Serial.print("TEMP Mean:   "); Serial.println(aveRT.mean());
+	Serial.print("TEMP Mode:   "); Serial.println(aveRT.mode());
+	//   Serial.print("Max:    "); Serial.println(aveRT.maximum(&maxat));
+	//    Serial.print(" at:    "); Serial.println(maxat);
+	//   Serial.print("Min:    "); Serial.println(aveRT.minimum(&minat));
+	//  Serial.print(" at:    "); Serial.println(minat);
+	Serial.print("StdDev: "); Serial.println(aveRT.stddev());
+	delay(500);
+}
+
+void scrollio(){
+	for (int positionCounter = 0; positionCounter < 8; positionCounter++) {
+		lcd.scrollDisplayLeft();
+		delay(100);
+	}
+		for (int positionCounter = 0; positionCounter < 13; positionCounter++) {
+		lcd.scrollDisplayRight();
+		delay(100);
+	}
+	for (int positionCounter = 0; positionCounter < 8; positionCounter++) {
+		lcd.scrollDisplayLeft();
+		delay(100);
+	}
+}
+void miniScroll(int num, int num2){
+	for (int positionCounter = 0; positionCounter < num; positionCounter++) {
+		lcd.scrollDisplayLeft();
+		delay(200);
+	}
+		for (int positionCounter = 0; positionCounter < num; positionCounter++) {
+		lcd.scrollDisplayRight();
+		delay(200);
+	}
+	for (int positionCounter = 0; positionCounter < num; positionCounter++) {
+		lcd.scrollDisplayLeft();
+		delay(200);
+	}
+
+<<<<<<< HEAD
+=======
+}
+
+>>>>>>> b9a19a7aace5f282f7418d1172a4f38ae3270fef
+void windowSense2(){
+long tempdistance2;	
+digitalWrite(trigPin2, LOW);  // Added this line
+	delayMicroseconds(2); // Added this line
+	digitalWrite(trigPin2, HIGH);
+	delayMicroseconds(10); // Added this line
+	digitalWrite(trigPin2, LOW);
+	duration2 = pulseIn(echoPin2, HIGH);
+<<<<<<< HEAD
+	distance2 = (duration2 / 2) / 29.1;
+	aveSense2.push(distance2);
+delay(130);
+}
+
+=======
+		tempdistance2 = (duration2 / 2) / 29.1;
+aveSense2.push(tempdistance2);
+
+		if (tempdistance2 < (aveSense2.mean()+7) && tempdistance2 > (aveSense2.mean()-7)){
+distance2 = tempdistance2;
+delay(130);
+		}
+}
+>>>>>>> b9a19a7aace5f282f7418d1172a4f38ae3270fef
+void windowSense(){
+long tempdistance; 
+	digitalWrite(trigPin, LOW);  // Added this line
+	delayMicroseconds(2); // Added this line
+	digitalWrite(trigPin, HIGH);
+	delayMicroseconds(10); // Added this line
+	digitalWrite(trigPin, LOW);
+	duration = pulseIn(echoPin, HIGH);
+<<<<<<< HEAD
+	distance = (duration / 2) / 29.1;
+	aveSense1.push(distance);
+	delay(130);
+=======
+	tempdistance = (duration / 2) / 29.1;
+    	  aveSense1.push(tempdistance);
+		if (tempdistance < (aveSense1.mean()+7) && tempdistance > (aveSense1.mean()-7)){
+			distance = tempdistance;
+		delay(130);
+}
+>>>>>>> b9a19a7aace5f282f7418d1172a4f38ae3270fef
+}
+
+void senseMoveBob(){
+		windowSense();
+			if (distance >= 200 || distance <= 0){
+			Serial.println("ERROR Out of range");
+			}
+			else if (distance > 2){
+			autolowerBob();
+			}
+			else if (distance <= 2){
+			autoraiseBob();
+			}
+	delay(300);
+}
+void buzzUP(){
+
+}
+
+<<<<<<< HEAD
+void autoraiseBob() {
+windowSense();
+	if (distance < 70) {
+		sendValueToLatch(1);
+=======
+int raiseBOB(String Command){
+autoraiseBob();return 1;}
+int lowerBOB(String Command){
+  autolowerBob();return 1;}
+
+void raiseBoth(){
+		sendValueToLatch(33);
+		while (distance < 70 && distance2 < 15) {
+windowSense(); windowSense2();		
+	}
+	sendValueToLatch(0);
+	bobPos = 1;
+	winPos = 1;
+	}
+
+void lowerBoth(){
+		sendValueToLatch(6);
+		while (distance < 70 && distance2 < 15) {
+windowSense(); windowSense2();		
+	}
+	sendValueToLatch(0);
+	}
+
+void autoraiseBob(){
+		sendValueToLatch(1);
+		if (distance < 70) {
+		windowSense();
+		Serial.print("dist @"); Serial.println(distance);
+>>>>>>> b9a19a7aace5f282f7418d1172a4f38ae3270fef
+		while (distance < 70) {
+			windowSense();
+			Serial.print("dist @"); Serial.println(distance);
+		}
+		sendValueToLatch(0);
+		delay(1000);
+	}
+}
+void autolowerBob(){
+<<<<<<< HEAD
+	windowSense(); 
+	if (distance >2 ) { 
+	sendValueToLatch(2); 
+  while	(distance >2){
+          windowSense();
+		Serial.print("dist @");Serial.print(distance);
+		}
+	sendValueToLatch(0); 
+	delay(1000);
+=======
+	if (distance >5 ) { 
+	sendValueToLatch(2); 
+	while (distance >5){
+		windowSense();
+		Serial.print("dist @");Serial.print(distance);
+		}
+	sendValueToLatch(0); 
+	delay(500);
+	Serial.println("configuring final height");
+>>>>>>> b9a19a7aace5f282f7418d1172a4f38ae3270fef
+	}
+	windowSense();
+if (distance >2 && distance <= 5) {
+shortBobD();	
+}	
+if (distance ==1 || distance ==2) {
+		shortBobU();
+>>>>>>> e172efcf5ce99788dea2af0383424f51ad5de190
 }
 void miniScroll(int num, int num2) {
   for (int positionCounter = 0; positionCounter < num; positionCounter++) {
@@ -614,6 +1144,7 @@ void updateLcd() {
 }
 
 void closeWin() {
+<<<<<<< HEAD
    windowSense2();
    if (distance2 > 3 ) {
  Serial.println("window CLOSE");
@@ -630,6 +1161,30 @@ void closeWin() {
   if (distance2 >= 1){
   shortWinC();
   }
+=======
+<<<<<<< HEAD
+	  Serial.println("window forward");
+=======
+	  Serial.println("window CLOSE");
+>>>>>>> b9a19a7aace5f282f7418d1172a4f38ae3270fef
+	  sendValueToLatch(4);
+	delay(2000);
+	sendValueToLatch(0);
+	delay(200);
+}
+<<<<<<< HEAD
+
+void openWin() {
+	  Serial.println("window bwd");
+=======
+void openWin() {
+	  Serial.println("window OPEN");
+>>>>>>> b9a19a7aace5f282f7418d1172a4f38ae3270fef
+	  sendValueToLatch(32);
+	delay(2000);
+	sendValueToLatch(0);
+	delay(200);
+>>>>>>> e172efcf5ce99788dea2af0383424f51ad5de190
 }
 }
 void openWin() {

@@ -21,7 +21,11 @@ bool readingtime = 0;
 #include <LiquidTWI.h>
 #include <FTRGBLED.h>
 #include <Adafruit_NeoPixel.h>
+<<<<<<< HEAD
+#include <EEPROM.h>
+=======
 
+>>>>>>> b9a19a7aace5f282f7418d1172a4f38ae3270fef
 #include <DFBLE.h>
 // VARIABLES 	
 // Sensors
@@ -45,6 +49,9 @@ int port = 80;
 String repository = "/energy_project/";
 unsigned long interval = 300000;           // every minute interval at which to send sensor data to server
 unsigned long time;long nextup; long lastup;
+
+#define NEOPIN A15
+Adafruit_NeoPixel strip = Adafruit_NeoPixel(8, NEOPIN, NEO_GRB + NEO_KHZ800);
 
 #define MY_PROTOCOL 	SONY
 #define MY_PRO2COL 	NEC
@@ -98,10 +105,17 @@ int wintimerS = (wintimer / 1000);
   Servo leftGear; Servo rightGear;  
   int pos; int invertpos;int move;   
 
+<<<<<<< HEAD
+AF_DCMotor kitchTilt(3, MOTOR12_64KHZ); 
+AF_DCMotor winTilt(4, MOTOR12_64KHZ);
+AF_DCMotor loungeTilt(1, MOTOR34_64KHZ);   
+AF_DCMotor doorwTilt(2, MOTOR34_64KHZ);
+=======
 AF_DCMotor kitchTilt(3, MOTOR34_64KHZ); 
 AF_DCMotor winTilt(4, MOTOR34_64KHZ);
 AF_DCMotor loungeTilt(1, MOTOR12_64KHZ);   
 AF_DCMotor doorwTilt(2, MOTOR12_64KHZ);
+>>>>>>> b9a19a7aace5f282f7418d1172a4f38ae3270fef
 
 const int piezoPin = A15;
 int kw=31;
@@ -148,6 +162,7 @@ Serial2.write(0xFE);  Serial2.write(0x50);  Serial2.write(200);
   //backlight to Red
   Serial2.write(0xFE);Serial2.write(0xD0);Serial2.write(0x255);Serial2.write(0x0); Serial2.write(0x0);	
   delay(10);
+<<<<<<< HEAD
   	
   Serial2.print("TrendySMARTPad -- Connecting");
   GotOne = false; GotNew = false;   codeType = UNKNOWN;  codeValue = 0;readingtime=false;
@@ -156,6 +171,38 @@ Serial2.write(0xFE);  Serial2.write(0x50);  Serial2.write(200);
 doorwTilt.run(RELEASE);
  	pinMode(kw, OUTPUT); 	pinMode(kww, OUTPUT);
 
+=======
+  
+<<<<<<< HEAD
+strip.begin();  strip.setBrightness(255);colorWipe(strip.Color(255, 0, 0), 50);   	 strip.show(); 	
+ // red?
+=======
+  strip.begin();  strip.setBrightness(255);	 strip.show(); 	
+  colorWipe(strip.Color(255, 0, 0), 50);    // red?
+>>>>>>> b9a19a7aace5f282f7418d1172a4f38ae3270fef
+  		
+  Serial2.print("TrendySMARTPad -- Connecting");
+  GotOne = false; GotNew = false;   codeType = UNKNOWN;  codeValue = 0;
+
+<<<<<<< HEAD
+  kitchTilt.setSpeed(255);  kitchTilt.run(RELEASE); doorwTilt.setSpeed(255);doorwTilt.run(RELEASE);
+  loungeTilt.setSpeed(255);loungeTilt.run(RELEASE);  winTilt.setSpeed(255);  winTilt.run(RELEASE);
+  
+ 	/*pinMode(potPin, INPUT);
+=======
+  kitchTilt.setSpeed(255);   doorwTilt.setSpeed(255);
+  loungeTilt.setSpeed(255);  winTilt.setSpeed(255);  
+  kitchTilt.run(RELEASE);doorwTilt.run(RELEASE);loungeTilt.run(RELEASE);winTilt.run(RELEASE);
+ 	pinMode(kw, OUTPUT); 	pinMode(kww, OUTPUT);
+>>>>>>> b9a19a7aace5f282f7418d1172a4f38ae3270fef
+ leftGear.attach(10);  // attaches the servo on pin 9 to the servo object 
+ rightGear.attach(9);  // attaches the servo on pin 9 to the servo object 
+ pos = 0;            // start at Zeropoint allowing 180 deg movement 1 way...
+ invertpos = 180;
+ move = 1;           // servo moves this number of degrees each time left/right is pushed
+ leftGear.write(pos); // Set initial position
+ rightGear.write(invertpos); // Set initial position
+>>>>>>> e172efcf5ce99788dea2af0383424f51ad5de190
  
 	Serial1.begin(115200);	
 	Serial1.println("hello on BT?");
@@ -167,7 +214,7 @@ doorwTilt.run(RELEASE);
   //lightMeter.begin();
   //lux = lightMeter.readLightLevel();
   //lg_light = lux;
-/*
+
   Serial.println("initiALISING WiFi");
   rest.variable("lg_light", &lg_light);
   rest.variable("lg_temp", &lg_temp);
@@ -204,9 +251,88 @@ Serial2.write("CONNECTED!");
   My_Receiver.enableIRIn(); // Start the receiver
 }
 
+<<<<<<< HEAD
 void loop(){
 	while 		(GotOne==true){theaterChaseRainbow (20);}
+=======
+void tiltAllF(){
+  Serial.println(" Direction: FORWARD - Tilting ALL... ");
+  winTilt.run(FORWARD);
+	  doorwTilt.run(FORWARD);
+	  kitchTilt.run(FORWARD);
+	  loungeTilt.run(FORWARD);
+	  delay(1000);
+	  winTilt.run(RELEASE);
+      doorwTilt.run(RELEASE);
+	  kitchTilt.run(RELEASE);
+	  loungeTilt.run(RELEASE);
+	  delay(50);
+  }
+
+<<<<<<< HEAD
+void tiltAllB(){  Serial2.println(" Direction: BACKWARD - Tilting ALL... ");
+=======
+void tiltAllB(){  
+Serial2.println(" Direction: BACKWARD - Tilting ALL... ");
+>>>>>>> b9a19a7aace5f282f7418d1172a4f38ae3270fef
+  Serial.println(" Direction: BACKWARD - Tilting ALL... ");
+  winTilt.run(BACKWARD);
+	  doorwTilt.run(BACKWARD);
+	  kitchTilt.run(BACKWARD);
+	  loungeTilt.run(BACKWARD);
+	  delay(1000);
+	  winTilt.run(RELEASE);
+      doorwTilt.run(RELEASE);
+	  kitchTilt.run(RELEASE);
+	  loungeTilt.run(RELEASE);
+	  delay(50);
+  delay(50);
+   }
+   
+void clearTTL(){
+Serial2.write(0xFE); Serial2.write(0x58);delay(10);
+}
+    /*   
+void windowSense(){
+	digitalWrite(trigPin, LOW);  // Added this line
+	delayMicroseconds(2); // Added this line
+	digitalWrite(trigPin, HIGH);
+	delayMicroseconds(10); // Added this line
+	digitalWrite(trigPin, LOW);
+	duration = pulseIn(echoPin, HIGH);
+	distance = (duration / 2) / 29.1;
+
+	if (distance >= 3) {  // This is where the LED On/Off happens
+		loungeWinstate = 1;
+	}
+	else {
+		loungeWinstate = 0;
+	}
+
+	Serial.print(distance);
+	Serial.println("cm");
+
+	
+	delay(200);
+}
+*/
+
+
+void settiltTime(){
+  sevSegtime = time;
+  sevSegtimeS = (sevSegtime/1000);
+  tilttimerS = (tilttimer/1000);
+  wintimer = (tilttimer*5);
+  wintimerS = (wintimer/1000);
+}
+
+
+void loop(){
+<<<<<<< HEAD
+=======
+>>>>>>> e172efcf5ce99788dea2af0383424f51ad5de190
   clearTTL();
+>>>>>>> b9a19a7aace5f282f7418d1172a4f38ae3270fef
  time = millis();
   nextup = ((interval + lastup) - time);
   Serial2.print("time is ");
@@ -225,7 +351,11 @@ void loop(){
         }		My_Receiver.resume();
       }
 serialcomms();
+<<<<<<< HEAD
+Serial.println(".");
+=======
 Serial.println(".");delay(500);
+>>>>>>> b9a19a7aace5f282f7418d1172a4f38ae3270fef
 }
 
 void clearTTL(){
@@ -258,23 +388,25 @@ void dwTiltR(){
 }
 void wTilt(){
 	   Serial.println(" Direction: FORWARD - Tilting win... ");
-  winTilt.run(FORWARD);winTilt.run(FORWARD);	  delay(1000);	  winTilt.run(RELEASE);      delay(50);
+  winTilt.run(FORWARD);  delay(1000);	  winTilt.run(RELEASE);      delay(50);
 }
 void wTiltR(){
 	  Serial.println(" Direction: BACKWARD - Tilting win... ");
-  winTilt.run(FORWARD); winTilt.run(BACKWARD);	  delay(1000);	  winTilt.run(RELEASE);      delay(50);
+  winTilt.run(BACKWARD); 	  delay(1000);	  winTilt.run(RELEASE);      delay(50);
 }
 void IRrec(){
    switch(My_Decoder.value) {
       //      case LEFT_ARROW:   tiltAllF();break;
   //          case RIGHT_ARROW:   tiltAllB(); break;
 			case SELECT_BUTTON: pos=90; break;
-            case UP_ARROW:       tilttimer = max(tilttimer - 1000, tiltmin);       Serial.print("Tilt duration has been changed to ");       Serial.print(tilttimerS);       Serial.println("Seconds");       Serial.print("...whilst WindowAction Duration now @");       Serial.print(wintimerS);       Serial.println("Seconds");       beep(tilttimerS);      break;
-     case DOWN_ARROW:  
-      tilttimer = min(tilttimer + 1000, tiltmax);       Serial.println("");       Serial.print("Tilt duration has been changed to "); 
+            case DOWN_ARROW: tilttimer = min(tilttimer + 1000, tiltmax);       Serial.println("");       Serial.print("Tilt duration has been changed to "); 
       Serial.print(tilttimer / 1000);       Serial.println("Seconds");       Serial.print("...whilst WindowAction Duration now @");       Serial.print(wintimerS);       Serial.println("Seconds");       beep(tilttimerS);break;
+<<<<<<< HEAD
+           			case BUTTON_1:		kTilt();break;
+=======
             move=max(1, move-1); break;
 			case BUTTON_1:		kTilt();break;
+>>>>>>> b9a19a7aace5f282f7418d1172a4f38ae3270fef
 			case BUTTON_2:		kTiltR();break;
 			case BUTTON_3:		wTilt();break;
 			case BUTTON_4:		wTiltR();break;
@@ -287,15 +419,24 @@ void IRrec(){
 	//	case BLUE:   pos=min(180,pos+move);  break;
       //  case YELLOW: pos=max(0,pos-move); break; 
 		}
+<<<<<<< HEAD
+	//	invertpos = (pos -180);
+//leftGear.write(pos); rightGear.write(invertpos);
+=======
 
+>>>>>>> b9a19a7aace5f282f7418d1172a4f38ae3270fef
    }  
  
 void senseMoveWin(){
 }
 void serialcomms(){
+<<<<<<< HEAD
+	if (Serial.available()){
+=======
 	Serial2.write(0xFE); Serial2.write(0xD0); Serial2.write(0x255); Serial2.write(0x255); Serial2.write(0x255);	// White
 delay(20);
 if (Serial.available()){
+>>>>>>> b9a19a7aace5f282f7418d1172a4f38ae3270fef
 		int command = Serial.read();
 		switch (command){
 			case '0':
@@ -452,6 +593,10 @@ void storeCode(void) {
      }
       }
 }
+<<<<<<< HEAD
+=======
+
+>>>>>>> e172efcf5ce99788dea2af0383424f51ad5de190
 void readAndPrint(){
   readingtime = TRUE;
   while (readingtime == TRUE){
@@ -478,6 +623,10 @@ void beep(int num){
     delay(500);
   }
 }
+<<<<<<< HEAD
+
+=======
+>>>>>>> b9a19a7aace5f282f7418d1172a4f38ae3270fef
 void colorWipe(uint32_t c, uint8_t wait) {		// Fill the dots one after the other
   for(uint16_t i=0; i<strip.numPixels(); i++) {
     strip.setPixelColor(i, c);    
@@ -506,6 +655,12 @@ void rainbowCycle(uint8_t wait) {
     strip.show();delay(wait);
   }
 }
+<<<<<<< HEAD
+=======
+
+<<<<<<< HEAD
+=======
+>>>>>>> e172efcf5ce99788dea2af0383424f51ad5de190
 // The colours are a transition r - g - b - back to r. Input a value 0 to 255 to get a color value.
 uint32_t Wheel(byte WheelPos) {
   WheelPos = 255 - WheelPos;
@@ -520,6 +675,7 @@ uint32_t Wheel(byte WheelPos) {
   return strip.Color(WheelPos * 3, 255 - WheelPos * 3, 0);
 }
 
+>>>>>>> b9a19a7aace5f282f7418d1172a4f38ae3270fef
 void theaterChase(uint32_t c, uint8_t wait) {		//Theatre-style crawling lights.
   for (int j=0; j<10; j++) {  //do 10 cycles of chasing
     for (int q=0; q < 3; q++) {
@@ -549,3 +705,21 @@ void theaterChaseRainbow(uint8_t wait) {		//Theatre-style crawling lights with r
     }
   }
 }
+<<<<<<< HEAD
+
+// The colours are a transition r - g - b - back to r. Input a value 0 to 255 to get a color value.
+uint32_t Wheel(byte WheelPos) {
+  WheelPos = 255 - WheelPos;
+  if(WheelPos < 85) {    
+    return strip.Color(255 - WheelPos * 3, 0, WheelPos * 3);
+  }
+  if(WheelPos < 170) {    
+    WheelPos -= 85;    
+    return strip.Color(0, WheelPos * 3, 255 - WheelPos * 3);
+  }
+  WheelPos -= 170;  
+  return strip.Color(WheelPos * 3, 255 - WheelPos * 3, 0);
+}
+
+=======
+>>>>>>> b9a19a7aace5f282f7418d1172a4f38ae3270fef
