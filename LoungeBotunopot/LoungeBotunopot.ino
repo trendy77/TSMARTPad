@@ -5,8 +5,6 @@
  * # EVENS ARE LED BAR GRAPH PINS
  * # FOR Kitch WINDOWSENSE
  * 
- ***/
-
 #include <Adafruit_CC3000.h>
 #include <SPI.h>
 #include <stdlib.h>
@@ -52,18 +50,23 @@ const int piezoPin = A8;
 #define NEOPIN A15
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(8, NEOPIN, NEO_GRB + NEO_KHZ800);
 
-const int potDialPin = A13;
  const int potPin = A14;
  const int loungeWinF = 0;// NOW DONE BY V1 SHIELD IN LOUNGE
  const int loungeWinR = 0;  // NOW DONE BY V1 SHIELD IN LOUNGE
  int potVal = 0;
+ ***/
+
+
+const int potDialPin = A3;
  int potDialVal;
-/*  #define REDPIN 6
+
+/*
+#define REDPIN 6
  #define GREENPIN 7
  #define BLUEPIN 2
  #define FADESPEED 5   
  int r, g, b;
- */
+
 const int num_leds = 1;const int PIN_CKI = 12;const int PIN_SDI = 13;RGBLEDChain leds(num_leds, PIN_CKI, PIN_SDI);
 const byte rleds[] = {  0};//22,23,24,25};
 const byte gleds[] = {  0};//26,27,28,29};
@@ -71,18 +74,18 @@ const byte bleds[] = {  0};//30,31,32,33};
 const byte aleds[] = {  0};// 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33 };
 
 // lux bar pin
-int barpins[] = { 48, 47,46,45,44,43,42,41,40,38}
+int barpins[] = { 48, 47,46,45,44,43,42,41,40,38};
 const int ledCount = 10; 
 int barlevel;
 int ledmin = 100;        // sets the max speed (0 = fast) the lower the number the faster it
 int ledmax = 200;      // sets the min speed (100 = slow) the higher the number the slower it can go
 
-Adafruit_CC3000 cc3000 = Adafruit_CC3000(ADAFRUIT_CC3000_CS, ADAFRUIT_CC3000_IRQ, ADAFRUIT_CC3000_VBAT,SPI_CLOCK_DIV2);
+//Adafruit_CC3000 cc3000 = Adafruit_CC3000(ADAFRUIT_CC3000_CS, ADAFRUIT_CC3000_IRQ, ADAFRUIT_CC3000_VBAT,SPI_CLOCK_DIV2);
 
 uint32_t ip;
 int port = 80;
 String repository = "/energy_project/";
-/*
+
 Adafruit_MotorShield AFMSi = Adafruit_MotorShield(0x61);
 Adafruit_DCMotor *KitchenTilt = AFMSi.getMotor(4);
 Adafruit_DCMotor *LoungeTilt = AFMSi.getMotor(1);
@@ -93,7 +96,7 @@ Adafruit_DCMotor *KitchenTilt1 = AFMSi.getMotor(4);
 Adafruit_DCMotor *LoungeTilt1 = AFMSi.getMotor(1);
 Adafruit_DCMotor *WindowTilt1 = AFMSi.getMotor(3);
 Adafruit_DCMotor *DoorWindowTilt1 = AFMSi.getMotor(2);
-*/
+
 //Servo Servo1;
 
 unsigned long interval = 300000;           // every minute interval at which to send sensor data to server
@@ -161,11 +164,12 @@ IRdecode My_Decoder;
 //int num;		// for BEEP function
 
 #define I2C_ADDR  0x20
+*/
 
 void setup(){
   Serial.begin(115200);
   Serial.println("TLOUNGE INITIALISING...");
-  Serial2.begin(9600);
+/*  Serial2.begin(9600);
   // set the contrast-- 200 is a good middle place to try out
 Serial2.write(0xFE);  Serial2.write(0x50);  Serial2.write(200);
   delay(10);       
@@ -180,16 +184,16 @@ Serial2.write(0xFE);  Serial2.write(0x50);  Serial2.write(200);
   colorWipe(strip.Color(255, 0, 0), 50);    // red?
   		
   Serial2.print("TrendySMARTPad -- Connecting");
- /* pinMode(dataPin, OUTPUT);  
+  pinMode(dataPin, OUTPUT);  
  pinMode(clockPin, OUTPUT);
  pinMode(latchPin, OUTPUT);
   pinMode(KWtrigPin, OUTPUT);
   pinMode(KWechoPin, INPUT);
-  */
+ 
   for (int thisLed = 0; thisLed < ledCount; thisLed++) {
     pinMode(barpins[thisLed], OUTPUT); digitalWrite(barpins[thisLed], LOW);delay(200);
   }
-  /*
+ 
   clearsevSeg();
      for (byte count = 0; count < 4; count++) {
    	pinMode(rleds[count], OUTPUT);   		pinMode(gleds[count], OUTPUT);   		digitalWrite(gleds[count], HIGH);   		digitalWrite(rleds[count], HIGH);
@@ -197,10 +201,9 @@ Serial2.write(0xFE);  Serial2.write(0x50);  Serial2.write(200);
    	for (byte count1 = 0; count1 < 4; count1++) {
    	pinMode(bleds[count1], OUTPUT);	digitalWrite(bleds[count1], HIGH);   delay(300);
          }
-   	pinMode(potPin, INPUT); pinMode(potDialPin, INPUT); 	   
-	*/
+	*/ pinMode(potDialPin, INPUT); 	   
   
-  GotOne = false; GotNew = false;   codeType = UNKNOWN;  codeValue = 0;
+/*  GotOne = false; GotNew = false;   codeType = UNKNOWN;  codeValue = 0;
     Serial1.begin(9600);	
 	Serial1.println("hello on BT?");
 	if (Serial1.available()){
@@ -224,7 +227,7 @@ Serial2.write(0xFE);  Serial2.write(0x50);  Serial2.write(200);
  // lightMeter.begin();
  // lux = lightMeter.readLightLevel();
   lg_light = lux;
-  /*Serial.println("initiALISING WiFi");
+  Serial.println("initiALISING WiFi");
 
   rest.variable("lg_light", &lg_light);
   rest.variable("lg_temp", &lg_temp);
@@ -262,30 +265,34 @@ Serial2.write("CONNECTED!");
    rainbowCycle(20);
    
    */
-  My_Receiver.enableIRIn(); 
+  //My_Receiver.enableIRIn(); 
 }
 
 void loop(void){
       //colorWipe(strip.Color(0, 0, 255), 50);   
-	  Serial.print(".");  
-  if (Serial.available()) Serial1.print(Serial.read());
+//	  Serial.print(".");  
+ 
+ /* if (Serial.available()) Serial1.print(Serial.read());
    if (Serial1.available()) Serial.print(Serial1.read());
     readSensors();
-   time = millis();
-  nextup = ((interval + lastup) - time);
   
-  settiltTime();
-  setluxBar();
- leds.setLEDs(LED_BLUE);   leds.update();
+   //time = millis();
+  //nextup = ((interval + lastup) - time);
+  
+  //settiltTime();
+  //setluxBar();
+ //leds.setLEDs(LED_BLUE);   leds.update();
 
   //mdns.update();
   //Adafruit_CC3000_ClientRef client = restServer.available();
   //rest.handle(client);
+  */
+  
 potDialVal = analogRead(potDialPin);
 Serial.print("pot is now @ ");
 Serial.print(potDialVal);
-delay(50);
-
+delay(500);
+/*
 
   if (time > (lastup + interval)){
  leds.setLEDs(LED_GREEN);     leds.update();
@@ -334,14 +341,14 @@ void tiltfwd(){
   blink(rleds[0], tilttimerS);
   blink(gleds[0], tilttimerS);
   Serial.println("ALL BWD"); 
-  WindowTilt->run(BACKWARD); 
-  KitchenTilt->run(BACKWARD); 
-  DoorWindowTilt->run(BACKWARD);
+//  WindowTilt->run(BACKWARD); 
+ // KitchenTilt->run(BACKWARD); 
+  //DoorWindowTilt->run(BACKWARD);
   delay(tilttimer);	
-  WindowTilt->run(RELEASE);  			
-  DoorWindowTilt->run(RELEASE);	
-  LoungeTilt->run(RELEASE); 			
-  KitchenTilt->run(RELEASE);
+//  WindowTilt->run(RELEASE);  			
+  //DoorWindowTilt->run(RELEASE);	
+  //LoungeTilt->run(RELEASE); 			
+//  KitchenTilt->run(RELEASE);
 }
 void tiltbwd(){
   blink(rleds[3],tilttimerS);
@@ -356,7 +363,7 @@ void tiltbwd(){
   WindowTilt->run(RELEASE);  			
   DoorWindowTilt->run(RELEASE);			
   LoungeTilt->run(RELEASE);	
-  KitchenTilt->run(RELEASE);			
+  KitchenTilt->run(RELEASE);
 }
 
 void IRDetected(){
@@ -388,10 +395,10 @@ void IRDetected(){
     Serial.println(My_Decoder.value, HEX);
 
     if (My_Decoder.decode_type == MY_PROTOCOL) {
-      //	leds.setLEDs(LED_YELLOW); leds.update();
+      /*	leds.setLEDs(LED_YELLOW); leds.update();
       Serial.println("Code is IR command for TSMARTPad");
       //beep(1);
-      switch (My_Decoder.value) {
+/*      switch (My_Decoder.value) {
       case DOWN_ARROW:
         tilttimer = max(tilttimer - 1000, tiltmin); 
         Serial.println(""); 
@@ -528,10 +535,11 @@ void IRDetected(){
         gedoff(); 
         Serial.println("RED  ");
         break;
+
       }
     }
   }
-}
+
 
 void blink(int globe, byte many){
   for (int i = 0; i < many; i++){
@@ -555,11 +563,11 @@ void serialcomms() {
       //Serial.print("potVal2     ");
       Serial.println("LOUGEDUINO TSMARTPad MOTOR CONTROLLER");
       Serial.print("       Time is   "); 
-      Serial.println(time);
+//      Serial.println(time);
       Serial.print("Last  @   "); 
-      Serial.println(lastup);
+  //    Serial.println(lastup);
       Serial.print("Next in   "); 
-      Serial.println(nextup);
+    //  Serial.println(nextup);
       Serial.print("***Tilt timer @   "); 
       Serial.println(tilttimer); 
       Serial.print(" ****Win timer @   "); 
@@ -585,9 +593,9 @@ void serialcomms() {
 
     case '1':
       Serial.println(" Direction: FORWARD - KitchenTilt ... ");
-      KitchenTilt->run(FORWARD);
+     KitchenTilt->run(FORWARD);
       delay(tilttimer);
-      KitchenTilt->run(RELEASE);
+  //    KitchenTilt->run(RELEASE);
       delay(30); // 'coast' for 1/10 second
       readAndPrint();
       break;
@@ -598,35 +606,35 @@ void serialcomms() {
 	case 'm':      sendValueToLatch(0);      break;
     case 'q':
       Serial.println(" Direction: BACKWARD - KitchenTilt ... ");
-      KitchenTilt->run(BACKWARD);
+    //  KitchenTilt->run(BACKWARD);
       delay(tilttimer);
-      KitchenTilt->run(RELEASE); 
+     // KitchenTilt->run(RELEASE); 
       readAndPrint();
       break;
     case '2':
       Serial.println(" WindowTILT ...");
-      WindowTilt->run(FORWARD);
+      //WindowTilt->run(FORWARD);
       delay(tilttimer); // 'coast' for 1/10 second
-      WindowTilt->run(RELEASE);    
+    //  WindowTilt->run(RELEASE);    
       readAndPrint();
       break;
     case 'w':
       Serial.println(" WindowTILT ...");
-      WindowTilt->run(BACKWARD);
+      //WindowTilt->run(BACKWARD);
       delay(tilttimer); // 'coast' for 1/10 second
-      WindowTilt->run(RELEASE);     
+    //  WindowTilt->run(RELEASE);     
       readAndPrint();
       break;
 
     case '3':
       Serial.println(" DoorWindowTILT ...");
-      DoorWindowTilt->run(FORWARD);
+     // DoorWindowTilt->run(FORWARD);
       delay(tilttimer); // 'coast' for 1/10 second
-      DoorWindowTilt->run(RELEASE);     
+     // DoorWindowTilt->run(RELEASE);     
       readAndPrint();
       break;
     case 'p':
-      /*		Serial.println("ENTERING MANUAL CONTROL MODE, PRESS ANY KEY TO ESC");
+ 	Serial.println("ENTERING MANUAL CONTROL MODE, PRESS ANY KEY TO ESC");
        			while (command == 0){
        			int speed = map(potDialVal, 0, 1023, 0, 255);
        				if (potDialVal > 500) {
@@ -636,12 +644,12 @@ void serialcomms() {
        					Serial.println(speed);
        				}
        				else {
-       					WindowTilt->setSpeed(speed);
-       					WindowTilt->run(FORWARD);
+//       					WindowTilt->setSpeed(speed);
+  //     					WindowTilt->run(FORWARD);
        					Serial.print("speed @ ");
        					Serial.println(speed);
        				}
-       		*/      Serial.print("done");
+       		    Serial.print("done");
       break;
 
     case 'e':
@@ -961,7 +969,7 @@ void kitchWinBwd(){
 void send2server(){
   Serial.println("Time to send server");
   readAndPrint(); 
-  //	aveLL.push(lg_light); aveLT.push(lg_temp); 
+  /*	aveLL.push(lg_light); aveLT.push(lg_temp); 
 
 	  String request = "GET " + "/api/groups/weather/send.json?x-aio-key="	
 	+ aiokey + "&lg_temp=" + aveLT.mean() +"&stddev="+ aveLT.stddev() + "&samplesize=" + logged + " HTTP/1.0";
@@ -971,7 +979,7 @@ void send2server(){
 Serial.println("Temp Data SENT:");
 Serial.println(request);
 delay(200);
-	  String request2 = "GET " + "/api/groups/weather/send.json?x-aio-key="	
+//	  String request2 = "GET " + "/api/groups/weather/send.json?x-aio-key="	
 	+ aiokey + "&lg_light=" + aveLL.mean() + "&stddev=" + aveLL.stddev() + "&samplesize=" + logged + " HTTP/1.0";
 	    delay(200);	
 	  send_request(request2);	
@@ -1004,8 +1012,11 @@ wdt_enable(WDTO_8S); wdt_reset();
   client.close();
 wdt_reset();
 wdt_disable();
-}
 
+
+*/
+}
+/*
 void storeCode(void) {
   GotNew = true;
   codeType = My_Decoder.decode_type;
@@ -1199,4 +1210,4 @@ uint32_t Wheel(byte WheelPos) {
   WheelPos -= 170;  
   return strip.Color(WheelPos * 3, 255 - WheelPos * 3, 0);
 }
-
+*/

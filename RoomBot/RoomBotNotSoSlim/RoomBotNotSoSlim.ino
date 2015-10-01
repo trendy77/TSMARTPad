@@ -156,7 +156,7 @@ BLYNK_READ(5){
 void setup(){
 	Serial.begin(115200);
 	Serial.println("ROOMBOT INITIALISING...");
-	lcd.begin(20, 4);	lcd.setBacklight(HIGH);lcd.setCursor(0, 2);
+/*	lcd.begin(20, 4);	lcd.setBacklight(HIGH);lcd.setCursor(0, 2);
 	lcd.print("** INITIALISING.. **");
 
 	Serial.println("LOADING SENSORS");
@@ -177,7 +177,7 @@ void setup(){
  */
  Blynk.begin(auth, "LANoftheTriBand", "tttttttt", WLAN_SEC_WPA2);
 bool result = Blynk.connect();
-//	Serial.println("LOADING WIFI CONNECTION");
+	Serial.println("LOADING WIFI CONNECTION");
 /*	wdt_reset();
   if (!cc3000.begin())  {    while(1);  }  if (!cc3000.connectToAP(WLAN_SSID, WLAN_PASS, WLAN_SECURITY)) {    while(1);  }  while (!cc3000.checkDHCP())  {    delay(100);  }  
   if (!mdns.begin("arduino", cc3000)) {   while(1);   }  restServer.begin();//wdt_reset();wdt_disable();
@@ -781,7 +781,7 @@ void readSensors() {
 		//   Serial.print(data[i], HEX);
 	}
 	int16_t raw = (data[1] << 8) | data[0];
-	if (type_s) {
+		if (type_s) {
 		raw = raw << 3; // 9 bit resolution default
 		if (data[7] == 0x10) {
 			raw = (raw & 0xFFF0) + 12 - data[6];

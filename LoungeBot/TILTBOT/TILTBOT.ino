@@ -3,7 +3,7 @@
 
 TiltBot - Lounge
 */
-
+bool readingtime = 0;
 #include <IRLib.h>
 #include <AFMotor.h>
 #include <Wire.h>
@@ -104,8 +104,8 @@ AF_DCMotor loungeTilt(1, MOTOR12_64KHZ);
 AF_DCMotor doorwTilt(2, MOTOR12_64KHZ);
 
 const int piezoPin = A15;
-int kw=48;
-int kww=49;
+int kw=31;
+int kww=29;
 
 int potVal =0;
 IRTYPES codeType;      unsigned long codeValue;int codeBits; unsigned int rawCodes[RAWBUF];int rawCount; bool GotOne, GotNew;
@@ -127,23 +127,18 @@ const int latchPin = A12;      //Pin connected to latch pin7SEG
 const int clockPin = A13;
 const int dataPin = A14;
 
+#define PIN            24
+#define NUMPIXELS      24
 
-// Which pin on the Arduino is connected to the NeoPixels?
-// On a Trinket or Gemma we suggest changing this to 1
-#define PIN            9
-
-// How many NeoPixels are attached to the Arduino?
-#define NUMPIXELS      8
-
-// When we setup the NeoPixel library, we tell it how many pixels, and which pin to use to send signals.
-// Note that for older NeoPixel strips you might need to change the third parameter--see the strandtest
-// example for more information on possible values.
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 
 void setup(){
   Serial.begin(115200);
   Serial.println("TLOUNGE INITIALISING...");
-   Serial2.begin(9600);
+
+  strip.begin();  strip.setBrightness(255);	 strip.show(); 	
+  colorWipe(strip.Color(255, 0, 0), 50);    // red?
+  	   Serial2.begin(9600);
   // set the contrast-- 200 is a good middle place to try out
 Serial2.write(0xFE);  Serial2.write(0x50);  Serial2.write(200);
   delay(10);       
@@ -153,24 +148,14 @@ Serial2.write(0xFE);  Serial2.write(0x50);  Serial2.write(200);
   //backlight to Red
   Serial2.write(0xFE);Serial2.write(0xD0);Serial2.write(0x255);Serial2.write(0x0); Serial2.write(0x0);	
   delay(10);
-  
-  strip.begin();  strip.setBrightness(255);	 strip.show(); 	
-  colorWipe(strip.Color(255, 0, 0), 50);    // red?
-  		
+  	
   Serial2.print("TrendySMARTPad -- Connecting");
-  GotOne = false; GotNew = false;   codeType = UNKNOWN;  codeValue = 0;
-
-  kitchTilt.setSpeed(255);   doorwTilt.setSpeed(255);
-  loungeTilt.setSpeed(255);  winTilt.setSpeed(255);  
-  kitchTilt.run(RELEASE);doorwTilt.run(RELEASE);loungeTilt.run(RELEASE);winTilt.run(RELEASE);
+  GotOne = false; GotNew = false;   codeType = UNKNOWN;  codeValue = 0;readingtime=false;
+  kitchTilt.setSpeed(255);   kitchTilt.run(RELEASE);  doorwTilt.setSpeed(255);
+  loungeTilt.setSpeed(255);  loungeTilt.run(RELEASE);winTilt.setSpeed(255);  winTilt.run(RELEASE);
+doorwTilt.run(RELEASE);
  	pinMode(kw, OUTPUT); 	pinMode(kww, OUTPUT);
- leftGear.attach(10);  // attaches the servo on pin 9 to the servo object 
- rightGear.attach(9);  // attaches the servo on pin 9 to the servo object 
- pos = 0;            // start at Zeropoint allowing 180 deg movement 1 way...
- invertpos = 180;
- move = 1;           // servo moves this number of degrees each time left/right is pushed
- leftGear.write(pos); // Set initial position
- rightGear.write(invertpos); // Set initial position
+
  
 	Serial1.begin(115200);	
 	Serial1.println("hello on BT?");
@@ -202,7 +187,7 @@ Serial2.write(0xFE);  Serial2.write(0x50);  Serial2.write(200);
   while (!cc3000.checkDHCP())  {    
     delay(100);  
   }  
-  //wdt_reset();
+  wdt_reset();
   if (!mdns.begin("arduino", cc3000)) {   
     while(1);   
   }  
@@ -219,81 +204,13 @@ Serial2.write("CONNECTED!");
   My_Receiver.enableIRIn(); // Start the receiver
 }
 
-void tiltAllF(){
-  Serial.println(" Direction: FORWARD - Tilting ALL... ");
-  winTilt.run(FORWARD);
-	  doorwTilt.run(FORWARD);
-	  kitchTilt.run(FORWARD);
-	  loungeTilt.run(FORWARD);
-	  delay(1000);
-	  winTilt.run(RELEASE);
-      doorwTilt.run(RELEASE);
-	  kitchTilt.run(RELEASE);
-	  loungeTilt.run(RELEASE);
-	  delay(50);
-  }
-
-void tiltAllB(){  
-Serial2.println(" Direction: BACKWARD - Tilting ALL... ");
-  Serial.println(" Direction: BACKWARD - Tilting ALL... ");
-  winTilt.run(BACKWARD);
-	  doorwTilt.run(BACKWARD);
-	  kitchTilt.run(BACKWARD);
-	  loungeTilt.run(BACKWARD);
-	  delay(1000);
-	  winTilt.run(RELEASE);
-      doorwTilt.run(RELEASE);
-	  kitchTilt.run(RELEASE);
-	  loungeTilt.run(RELEASE);
-	  delay(50);
-  delay(50);
-   }
-   
-void clearTTL(){
-Serial2.write(0xFE); Serial2.write(0x58);delay(10);
-}
-    /*   
-void windowSense(){
-	digitalWrite(trigPin, LOW);  // Added this line
-	delayMicroseconds(2); // Added this line
-	digitalWrite(trigPin, HIGH);
-	delayMicroseconds(10); // Added this line
-	digitalWrite(trigPin, LOW);
-	duration = pulseIn(echoPin, HIGH);
-	distance = (duration / 2) / 29.1;
-
-	if (distance >= 3) {  // This is where the LED On/Off happens
-		loungeWinstate = 1;
-	}
-	else {
-		loungeWinstate = 0;
-	}
-
-	Serial.print(distance);
-	Serial.println("cm");
-
-	
-	delay(200);
-}
-*/
-
-
-void settiltTime(){
-  sevSegtime = time;
-  sevSegtimeS = (sevSegtime/1000);
-  tilttimerS = (tilttimer/1000);
-  wintimer = (tilttimer*5);
-  wintimerS = (wintimer/1000);
-}
-
-
 void loop(){
+	while 		(GotOne==true){theaterChaseRainbow (20);}
   clearTTL();
  time = millis();
   nextup = ((interval + lastup) - time);
   Serial2.print("time is ");
-   Serial2.print(time); settiltTime();
-  
+   Serial2.print(time); 
 	//leftGear.write(invertpos); rightGear.write(pos);
 
 	if (My_Receiver.GetResults(&My_Decoder)) {
@@ -311,6 +228,9 @@ serialcomms();
 Serial.println(".");delay(500);
 }
 
+void clearTTL(){
+Serial2.write(0xFE); Serial2.write(0x58);delay(10);
+}
 
 void lTilt(){
 	  Serial.println(" Direction: FORWARD - Tilting l... ");
@@ -336,7 +256,6 @@ void dwTiltR(){
 	  Serial.println(" Direction: BACKWARD - Tilting dw... ");
   doorwTilt.run(BACKWARD);	  delay(1000);	  doorwTilt.run(RELEASE);      delay(50);
 }
-
 void wTilt(){
 	   Serial.println(" Direction: FORWARD - Tilting win... ");
   winTilt.run(FORWARD);winTilt.run(FORWARD);	  delay(1000);	  winTilt.run(RELEASE);      delay(50);
@@ -345,11 +264,10 @@ void wTiltR(){
 	  Serial.println(" Direction: BACKWARD - Tilting win... ");
   winTilt.run(FORWARD); winTilt.run(BACKWARD);	  delay(1000);	  winTilt.run(RELEASE);      delay(50);
 }
-
 void IRrec(){
    switch(My_Decoder.value) {
-            case LEFT_ARROW:   tiltAllF();break;
-            case RIGHT_ARROW:   tiltAllB(); break;
+      //      case LEFT_ARROW:   tiltAllF();break;
+  //          case RIGHT_ARROW:   tiltAllB(); break;
 			case SELECT_BUTTON: pos=90; break;
             case UP_ARROW:       tilttimer = max(tilttimer - 1000, tiltmin);       Serial.print("Tilt duration has been changed to ");       Serial.print(tilttimerS);       Serial.println("Seconds");       Serial.print("...whilst WindowAction Duration now @");       Serial.print(wintimerS);       Serial.println("Seconds");       beep(tilttimerS);      break;
      case DOWN_ARROW:  
@@ -364,8 +282,8 @@ void IRrec(){
 			case BUTTON_6:		dwTiltR();break;
 			case BUTTON_7:		lTilt();break;
 			case BUTTON_8:		lTiltR();break;
-//        case PRESET_PREV: senseMoveWin();break;
-  //      case PRESET_NEXT: senseMoveWin(); break;
+ //  case PRESET_PREV: OpensenseMoveWin();break;
+    case PRESET_NEXT: senseMoveWin(); break;
 	//	case BLUE:   pos=min(180,pos+move);  break;
       //  case YELLOW: pos=max(0,pos-move); break; 
 		}
@@ -373,7 +291,6 @@ void IRrec(){
    }  
  
 void senseMoveWin(){
-
 }
 void serialcomms(){
 	Serial2.write(0xFE); Serial2.write(0xD0); Serial2.write(0x255); Serial2.write(0x255); Serial2.write(0x255);	// White
@@ -415,8 +332,8 @@ if (Serial.available()){
 			case 'e':		dwTiltR();break;
 			case '4':		lTilt();break;
 			case 'r':		lTiltR();break;
-	  case '5':	  tiltAllF(); break;
-	  case 't':  tiltAllB();break;
+	 // case '5':	  tiltAllF(); break;
+	//  case 't':  tiltAllB();break;
 	   case '9':  
       tilttimer = max(tilttimer - 1000, tiltmin); 
         Serial.print("Tilt duration has been changed to "); Serial.print(tilttimerS); Serial.println("Seconds"); 
@@ -474,7 +391,53 @@ digitalWrite(kww, HIGH);       digitalWrite(kw, LOW); delay(2000);  digitalWrite
 		}
 	}
 }
+/*
+void closeWin() {
+ //  windowSense2();
+//   if (distance2 > 3 ) {
+ Serial.println("window CLOSE");
+digitalWrite(kww, HIGH);      
+ // while (distance2 > 3) {
+   //   windowSense2();
+    //  Serial.print("dist @"); Serial.print(distance2);
+    }
+digitalWrite(kw, LOW);      
+    delay(500);
+    Serial.println("configuring final height");
+  //  windowSense2();
+//  shortWinC();
+ // if (distance2 >= 1){
+  shortWinC();
+  }
+//}
+}
+void openWin() {
+  Serial.println("window OPEN");
+   if (distance2 <15 ) {
+ Serial.println("window CLOSE");
+  sendValueToLatch(32);
+  while (distance2 < 20) {
+      windowSense2();
+      Serial.print("dist @"); Serial.print(distance2);
+    }
+    sendValueToLatch(0);
+    delay(500);
+  }
+}	
 
+void shortWinO() {
+  sendValueToLatch(32);
+  Serial.println("miniOpening ");
+  delay(1500);
+  sendValueToLatch(0);
+}
+void shortWinC() {
+  sendValueToLatch(4);
+  Serial.println("miniOpening ");
+  delay(1500);
+  sendValueToLatch(0);
+}
+*/
 void storeCode(void) {
   GotNew=true;
   codeType = My_Decoder.decode_type;
@@ -489,13 +452,14 @@ void storeCode(void) {
      }
       }
 }
-
-
-
 void readAndPrint(){
-  readSensors();
+  readingtime = TRUE;
+  while (readingtime == TRUE){
+	  rainbow (10);
+ readSensors();
   printSensors();
   //setluxBar();
+  }
 }
 void readSensors() {
   
@@ -521,7 +485,6 @@ void colorWipe(uint32_t c, uint8_t wait) {		// Fill the dots one after the other
     delay(wait);  
   }
 }
-
 void rainbow(uint8_t wait) {
   uint16_t i, j;
 
@@ -543,7 +506,6 @@ void rainbowCycle(uint8_t wait) {
     strip.show();delay(wait);
   }
 }
-
 // The colours are a transition r - g - b - back to r. Input a value 0 to 255 to get a color value.
 uint32_t Wheel(byte WheelPos) {
   WheelPos = 255 - WheelPos;
