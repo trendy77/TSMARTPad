@@ -21,7 +21,7 @@ const char * myWriteAPIKey = "W124WS7UN76VCASZ";
 // diff units
 // COMMENT OUT DEPENDING ON WHICH ONE....
 // inside
-// ESP8266WebServer server(9188);  IPAddress ip(192, 168, 78, 188);    int Tfield = 1;   int Hfield = 2;   int dhPin = 2;
+// ESP8266WebServer server(9188);  IPAddress ip(192, 168, 78, 188);    int Tfield = 1;   int Hfield = 2;   int dhPin = 2;gp
 
 // Outside
  int dhPin = 9;  IPAddress ip(192, 168, 78, 189); ESP8266WebServer server(9189); int Tfield = 3;  int Hfield = 4;
