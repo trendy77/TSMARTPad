@@ -1,5 +1,5 @@
+<?php
 
-Saturday, August 15th at 2:48 am
 foreach($_GET as $key => $value){
   if(str_replace(',','',$value)!=$value){
    list($value,$stdev) = explode(',',$value);
