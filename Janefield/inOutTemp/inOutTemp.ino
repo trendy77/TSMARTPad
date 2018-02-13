@@ -13,10 +13,6 @@
 #include <ArduinoOTA.h>
 #include <RestClient.h>
 #include <WiFiClient.h>
-#include <ESP8266WebServer.h>
-#include <ThingSpeak.h>
-#include <IRremoteESP8266.h>
-#include <IRsend.h>
 #include <IRrecv.h>
 #include <IRutils.h>
 
@@ -26,40 +22,30 @@
  //IPAddress ip(192, 168, 78, 188); ESP8266WebServer server(9188);  int Tfield = 1;   int Hfield = 2;const char* host = "nodeinside";
 // Outside
 IPAddress ip(192, 168, 78, 189); ESP8266WebServer server(9189); int Tfield = 3;  int Hfield = 4;const char* host = "nodeoutside";
-
-
 float prevTemp;
 long t = 0;
-
 int rgb_pins[] = {14, 13, 15};
 #define Red 14     // d5...gp 14
 #define Green 13    // D7.. gp 13
 #define Blue 15     // .D8 .. gp 15
-#define RECV_PIN 5  /// d1 ... 
+//////////////////////////
+#define RECV_PIN 5  /// d1 ...
 #define SEND_PIN 12  /// d6?
+//////////////////////////
 #define DHTPIN     4   // d2
 //////////////////////
 
-bool held = false;
-IRsend irsend(SEND_PIN);
-unsigned long lightdone = 0;
+
 #define LED     16        // Led in NodeMCU at pin GPIO16 (D0).
 #define BRIGHT    350     //max led intensity (1-500)
 #define INHALE    1250    //Inhalation time in milliseconds.
 #define PULSE     INHALE*1000/BRIGHT
 #define REST      1000    //Rest Between Inhalations.
 
-// TEMPC AND HUMIDITY
-#define DHTTYPE           DHT11
-DHT_Unified dht(DHTPIN, DHTTYPE);
-unsigned long myChannelNumber = 404585;
-const char * myWriteAPIKey = "W124WS7UN76VCASZ";
-int value = 0;
-char temperatureString[6]; char humidString[6]; float temp, humid;
 
 // IR
 IRrecv irrecv(RECV_PIN); decode_results results;
-
+IRsend irsend(SEND_PIN);
 // HUE LIGHTING
 const char LIGHTS_ON[] = "{\"on\":true}";
 const char LIGHTS_OFF[] = "{\"on\":false}";
@@ -75,6 +61,7 @@ IPAddress subnet(255, 255, 255, 0);
 RestClient hue = RestClient(bridge_ip);
 WiFiClient client;
 unsigned long mLastTime1, mLastTime, holdup = 0;
+bool held = false;
 
 void setColor(long red, long green, long blue, int wai) {
   held = true;
@@ -100,39 +87,7 @@ void lightLoop() {
     i--;
     delay(0);                        //to prevent watchdog firing.
   }
-  lightdone = millis();
-}
 
-void getTemperature() {
-  sensors_event_t event;
-  dht.temperature().getEvent(&event);
-  if (isnan(event.temperature)) {
-    Serial.println("Error reading temperature!");
-  }
-  else {
-    Serial.print("Temperature: ");
-    Serial.print(event.temperature);
-    temp = event.temperature;
-    Serial.println(" *C");
-  }
-  // Get humidity event and print its value.
-  dht.humidity().getEvent(&event);
-  if (isnan(event.relative_humidity)) {
-    Serial.println("Error reading humidity!");
-  }
-  else {
-    Serial.print("Humidity: ");
-    Serial.print(event.relative_humidity);
-    humid = event.relative_humidity;
-    Serial.println("%");
-  }
-  dtostrf(temp, 2, 2 , temperatureString);
-  dtostrf(humid, 2, 2 , humidString);
-  ThingSpeak.setField(Tfield, temp);
-  ThingSpeak.setField(Hfield, humid);
-  ThingSpeak.writeFields(myChannelNumber, myWriteAPIKey);
-  lightLoop();
-  
 }
 
 // web comms
@@ -293,14 +248,14 @@ for (int i=0; i<3; i++)
   }
   setup_wifi();
     ArduinoOTA.setHostname(host);
-    // turn of leds 
+    // turn of leds
     digitalWrite(Red,HIGH);
     digitalWrite(Green,HIGH);
    digitalWrite(Blue,HIGH);
   /* configure dimmers, and OTA server events */
   analogWriteRange(1000);
   analogWrite(Blue,990);
-  
+
   dht.begin();
   sensor_t sensor; dht.temperature().getSensor(&sensor); Serial.println("------------------------------------"); Serial.println("Temperature");  Serial.print  ("Sensor:       "); Serial.println(sensor.name);  Serial.print  ("Driver Ver:   "); Serial.println(sensor.version); Serial.print  ("Unique ID:    "); Serial.println(sensor.sensor_id);  Serial.print  ("Max Value:    "); Serial.print(sensor.max_value); Serial.println(" *C"); Serial.print  ("Min Value:    "); Serial.print(sensor.min_value); Serial.println(" *C"); Serial.print  ("Resolution:   "); Serial.print(sensor.resolution); Serial.println(" *C"); Serial.println("------------------------------------");
   dht.humidity().getSensor(&sensor); Serial.println("------------------------------------");  Serial.println("Humidity");  Serial.print  ("Sensor:       "); Serial.println(sensor.name);  Serial.print  ("Driver Ver:   "); Serial.println(sensor.version);  Serial.print  ("Unique ID:    "); Serial.println(sensor.sensor_id); Serial.print  ("Max Value:    "); Serial.print(sensor.max_value); Serial.println("%");  Serial.print  ("Min Value:    "); Serial.print(sensor.min_value); Serial.println("%");  Serial.print  ("Resolution:   "); Serial.print(sensor.resolution); Serial.println("%");  Serial.println("------------------------------------");
@@ -312,31 +267,6 @@ for (int i=0; i<3; i++)
   delay(100);
   irrecv.enableIRIn();
   Serial.println("setup complete.");
-  
-  ArduinoOTA.onStart([]() { // switch off all the PWMs during upgrade
-                        for(int i=0; i<3;i++)
-                          analogWrite(rgb_pins[i], 0);
-                                      });
-  ArduinoOTA.onEnd([]() { // do a fancy thing with our board led at end
-                          for (int i=0;i<30;i++)
-                          {
-                            analogWrite(Blue,(i*100) % 1001);
-                            delay(50);
-                             analogWrite(Green,(1-(i*100) % 1001));
-                          }
-                        });
-  ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
-    Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
-  });
-  ArduinoOTA.onError([](ota_error_t error) {
-    Serial.printf("Error[%u]: ", error);
-    if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
-    else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
-    else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
-    else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
-    else if (error == OTA_END_ERROR) Serial.println("End Failed");
-  });
-  ArduinoOTA.begin();
   Serial.println("Ready");
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());

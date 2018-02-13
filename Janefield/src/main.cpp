@@ -1,131 +1,133 @@
+
+/*
+ * Example command - Samsung TV power toggle: 38000,1,1,170,170,20,63,20,63,20,63,20,20,20,20,20,20,20,20,20,20,20,63,20,63,20,63,20,20,20,20,20,20,20,20,20,20,20,20,20,63,20,20,20,20,20,20,20,20,20,20,20,20,20,63,20,20,20,63,20,63,20,63,20,63,20,63,20,63,20,1798\r\n
+ * For more codes, visit: https://irdb.globalcache.com/
+ * *       telnet <esp8266deviceIPaddress> 4998
+ *   Enter a Global Cache-formatted code, starting at the frequency, *      and then a return/enter at the end. No spaces. e.g.:
+  *   38000,1,1,170,170,20,63,20,63,20,63,20,20,20,20,20,20,20,20,20,20,20,63,20,63,20,63,20,20,20,20,20,20,20,20,20,20,20,20,20,63,20,20,20,20,20,20,20,20,20,20,20,20,20,63,20,20,20,63,20,63,20,63,20,63,20,63,20,63,20,1798
+ *   To exit the 'telnet' command: *     press <control> + <]> at the same time, then press 'q', and then <return>.
+ *     <control> + <d> might work
+ */
+
 #ifndef UNIT_TEST
 #include <Arduino.h>
 #endif
+//
+#include <Adafruit_Sensor.h>
+#include <DHT.h>
+#include <DHT_U.h>
+#include <ThingSpeak.h>
+// web n wifi
 #include <ESP8266WiFi.h>
+#include <ESP8266mDNS.h>
+#include <WiFiClient.h>
+#include <WiFiServer.h>
+#include <ESP8266WebServer.h>
+#include <WiFiUdp.h>
+#include <ArduinoOTA.h>
 //#include <RestClient.h>
+// infrared
 #include <IRremoteESP8266.h>
 #include <IRsend.h>
 #include <IRrecv.h>
 #include <IRutils.h>
-#include <WiFiClient.h>
-#include <ESP8266WebServer.h>
 
-#include <dht11.h>
-#include <ThingSpeak.h>
+// -----     VARS
+uint16_t RECV_PIN = 4;
+    //IRsend irsend(4);
+byte ledPin = 2;
+const char ssid[] = "Northern Frontier Intertubes";
+const char pass[] = "num4jkha8nnk";
+IPAddress ip(192, 168, 0, 187);      // fix IP of this node
+IPAddress gateway(192,168,0,1);     // WiFi router's IP
+IPAddress subnet(255,255,255,0);
+WiFiServer server(80);
+#define HOST_NAME "ir3"
 
-//D0 = GPIO16, D1=GP5,D2=GP4,D4=GP2,D5=GP14,D6=GP12,D7=GP13,D8=GP15,SD3=GP10,SD2 =GP9
-// THINGSPEAK
+
+// COMMENT OUT DEPENDING ON WHICH ONE....
+//////////////////////
+// inside
+ //IPAddress ip(192, 168, 78, 188); ESP8266WebServer server(9188);  int Tfield = 1;   int Hfield = 2;const char* host = "nodeinside";
+// Outside
+//IPAddress ip(192, 168, 78, 189); ESP8266WebServer server(9189); int Tfield = 3;  int Hfield = 4;const char* host = "nodeoutside";
+
+// TEMPC AND HUMIDITY
+#define DHTTYPE           DHT11
+DHT_Unified dht(DHTPIN, DHTTYPE);
 unsigned long myChannelNumber = 404585;
 const char * myWriteAPIKey = "W124WS7UN76VCASZ";
+int value = 0;
+char temperatureString[6]; char humidString[6]; float temp, humid;
 
-// diff units
-// COMMENT OUT DEPENDING ON WHICH ONE....
-// inside
-// ESP8266WebServer server(9188);  IPAddress ip(192, 168, 78, 188);    int Tfield = 1;   int Hfield = 2;   int dhPin = 2;gp
 
-// Outside
- int dhPin = 9;  IPAddress ip(192, 168, 78, 189); ESP8266WebServer server(9189); int Tfield = 3;  int Hfield = 4;
+int rgb_pins[] = {14, 13, 15};
+#define Red 14     // d5...gp 14
+#define Green 13    // D7.. gp 13
+#define Blue 15     // .D8 .. gp 15
+
+//////////////////////////
+#define RECV_PIN 5  /// d1 ...
+#define SEND_PIN 12  /// d6?
+//////////////////////////
+#define DHTPIN     4   // d2
 //////////////////////
 
-dht11 DHT11;
-#define DHT11PIN dhPin
 
-//byte ledPin = 2;
-// TEMPC AND HUMIDITY
-int value = 0;
-
-char temperatureString[6];
-char humidString[6];
-float temp, humid;
-
-// IR
-uint16_t RECV_PIN = 0;   // IR detector @ GPIO pin 5 (d1)
-IRsend irsend(4);  // d6  ......  gpio 5=pin d1
+// --- setvars
+float prevTemp;
+long t = 0;
+WiFiClient wiFi;
+int incomingByte = 0;
+MDNSResponder mdns;
+uint16_t *code_array;
 IRrecv irrecv(RECV_PIN);
-decode_results results;
+decode_results results;  // Somewhere to store the results
+irparams_t save;         // A place to copy the interrupt state while decoding.
 
-//  comands
+
+/*
+IR SENDING STUFF....
+
+
 #define TV_OFF        0xa90
 #define HiFi_OFF        0x540a
 #define HiFi_TV        0x540a
 #define HiFi_BT        0x540a
 #define HiFi_Vup        0x240a
 #define HiFi_Vdn        0x640a
-#define L1_ON        0x640a
-#define L1_OFF    	0x640a
-#define L2_ON        0x640a
-#define L2_OFF        0x640a
-// HUE LIGHTING
-const char LIGHTS_ON[] = "{\"on\":true}";
-const char LIGHTS_OFF[] = "{\"on\":false}";
-const char *bridge_ip = "192.168.0.101"; // Hue Bridge IP
-bool looping;
-
-// Wi-Fi / IoT
-const char ssid[] = "TPG 15EA";
-const char password[] = "abcd1989";
-const int port = 80;   // fix IP of this node
-IPAddress gateway(192,168,78,78);     // WiFi router's IP
-IPAddress subnet(255,255,255,0);
-//  RestClient hue = RestClient(bridge_ip);
-WiFiClient client;
-unsigned long mLastTime1, mLastTime=0;
-
-
-void doLoop(int on, int lightNo){
-  if (on == 1){
-	const char EFFECT_COLORLOOP[] = "{\"effect\":\"colorloop\"}";
-		String cmd = "/api/fRgcNsvxh3ytQKVUZlCso0KbAn7zOlMhtkVmwzQG/lights/";
-		cmd += lightNo;		cmd += "/state/";
-	//	hue.put(cmd, EFFECT_COLORLOOP);
-		looping = true;
-	}
-	if (on == 0){
-	const char NO_COLORLOOP[] = "{\"effect\":\"none\"}";
-		String cmd = "/api/fRgcNsvxh3ytQKVUZlCso0KbAn7zOlMhtkVmwzQG/lights/";
-		cmd += lightNo;		cmd += "/state/";
-		//hue.put(cmd, NO_COLORLOOP);
-		looping = false;
-	}
-}
-
-void sendStats(){
-  ThingSpeak.setField(Tfield,temp);ThingSpeak.setField(Hfield,humid);
-  ThingSpeak.writeFields(myChannelNumber, myWriteAPIKey);
-  delay(500);
-  //digitalWrite(ledPin, LOW);
-}
-
-void getTemperature(){
-  //  digitalWrite(ledPin, HIGH);
-int chk = DHT11.read(DHT11PIN);
-    Serial.print("Read sensor: ");
-    switch (chk)
-    {
-      case DHTLIB_OK:
-  		Serial.println("OK");
-  		break;
-      case DHTLIB_ERROR_CHECKSUM:
-  		Serial.println("Checksum error");
-  		break;
-      case DHTLIB_ERROR_TIMEOUT:
-  		Serial.println("Time out error");
-  		break;
-      default:
-  		Serial.println("Unknown error");
-  		break;
-    }
-  humid = (float)DHT11.humidity;
-  temp =  (float)DHT11.temperature;
-    Serial.print("Humidity (%): ");
-    Serial.println(humid);
-    Serial.print("Temperature (°C): ");
-    Serial.println(temp);
-
-  dtostrf(temp,2,2 , temperatureString);
-  dtostrf(humid,2,2 , humidString);
-  sendStats();
-}
+#define L1_ON        0xA010C	// RED
+#define L1_OFF    	 0x6010C	// GREEN
+#define L2_ON        0xE010C	// YELLOW
+#define L2_OFF       0x2010C 	// BLUE
+  #define candleON 0x1FE48B7
+  #define candleOFF 0x1FE58A7
+  #define candle4H 0x1FE807F
+  #define candle8H 0x1F2A0F6B
+  #define candleMODE 0x1FE7887
+  #define candleMULTI 0x1FEC03F
+  #define candleB1 0x1FE609F
+  #define candleB2 0x1FE906F
+  #define candleB3 0x1FEF807
+  #define candleB4 0x1FE708F
+  #define candleG1 0x1FEA05F
+  #define candleG2 0x1FE10EF
+  #define candleG3 0x1FED827
+  #define candleG4 0x1FEB04F
+  #define candleR1 0x1FE20DF
+  #define candleR2 0x1FEE01F
+  #define candleR3 0x1FE50AF
+  #define candleR4 0x1FE30CF
+//int candleArray[]={candleON,candleOFF,candle4H,candle8H,candleMODE,candleMULTI,candleB1,candleB2,candleB3,candleB4,candleG1,candleG2,candleG3,candleG4,candleG3,candleR1,candleR2,candleR3,candleR4};
+//int candleNames[]={'candleON','candleOFF','candle4H','candle8H','candleMODE','candleMULTI','candleB1','candleB2','candleB3','candleB4','candleG1','candleG2','candleG3','candleG4','candleG3','candleR1','candleR2','candleR3','candleR4'};
+// VARS
+  IRsend irsend(4);
+            void sendNECIr(uint8_t cmd){
+                irsend.begin();
+                Serial.println("sending "+ cmd);
+                irsend.sendNEC(cmd, 32);
+                delay(100);
+              }
 
 void sendIr(uint64_t cmd){
   irsend.begin();
@@ -134,149 +136,226 @@ void sendIr(uint64_t cmd){
   delay(100);
 }
 
-void handleRoot() {
-  String message = "<html><head><title>NodeIR TPad</title></head><body><h1>Temp Outside</h1>";
-  message += "<h2>Temp =";
-  message += temperatureString;
-  message += "</h2>";
-  message += "<h2>Humid =";
-  message += humidString;
-  message +=  "</h2>";
-  message += "</h2><br><h2>LoungeCommands</h2><p><a href=\"tvoff\">Send TV On/Off</a></p><p><a href=\"volup\">Send VolUP</a></p><p><a href=\"voldn\">Send VolDN</a></p><p><a href=\"tvaux\">HiFi TV AUX</a></p><p><a href=\"btaux\">HiFi BT AUX</a></p></body></html>";
-  server.send(200, "text/html", message);
+*/
+
+
+
+
+/*
+
+HUE AND PIR STUFF
+
+RestClient hue = RestClient(bridge_ip);
+const char LIGHTS_ON[] = "{\"on\":true}";
+const char LIGHTS_OFF[] = "{\"on\":false}";
+const char *bridge_ip = "192.168.0.101"; // Hue Bridge IP
+const int port = 80;
+
+bool looping;
+#define pirPin D1   //d1
+int pirState = 0;
+int pirVal = LOW;
+bool watch = false;
+
+void hueturnOff1(){
+  hue.put("/api/fRgcNsvxh3ytQKVUZlCso0KbAn7zOlMhtkVmwzQG/lights/1/state/", LIGHTS_OFF);
+}
+void hueturnOn1(){
+  hue.put("/api/fRgcNsvxh3ytQKVUZlCso0KbAn7zOlMhtkVmwzQG/lights/1/state/", LIGHTS_ON);
+}
+  void hue_turnOff(int lightNo){
+    String cmd = "/api/fRgcNsvxh3ytQKVUZlCso0KbAn7zOlMhtkVmwzQG/lights/";
+    cmd += lightNo;
+    cmd += "/state/";  int buf = cmd.length();
+    char buffer[buf];
+    cmd.toCharArray(buffer, buf);
+    hue.put(buffer, LIGHTS_OFF);
 }
 
-void volup() {
-  sendIr(HiFi_Vup);
-}
-void voldn() {
-  sendIr(HiFi_Vdn);
-}
-void tvaux() {
-  sendIr(HiFi_TV);
-}
-void tvoff(){
-  sendIr(TV_OFF);
-}
-void btaux(){
-  sendIr(HiFi_BT);
-}
 
-void handleNotFound() {
-  String message = "File Not Found\n\n";
-  message += "URI: ";
-  message += server.uri();
-  message += "\nMethod: ";
-  message += (server.method() == HTTP_GET)?"GET":"POST";
-  message += "\nArguments: ";
-  message += server.args();
-  message += "\n";
-  for (uint8_t i = 0; i < server.args(); i++)
-  message += " " + server.argName(i) + ": " + server.arg(i) + "\n";
-  server.send(404, "text/plain", message);
-  Serial.print(message);
+void motionCheck(){
+//  pirVal = digitalRead(pirPin); // read input value
+    if (pirVal == HIGH) {
+      if (pirState == LOW) {         // we have just turned on
+      hueturnOn1();
+  //      Serial.println("*NEW 1"); stars=0; stars++;down=0;
+         pirState = HIGH;
+         } else if (pirState == HIGH){
+  //      Serial.print("*"); stars++;
+         }
+    } else if (pirVal == LOW){
+      if (pirState == HIGH)
+            {
+        Serial.println("_END - 1");
+        delay(1000);
+  //      pirState = LOW; stars = 0; down =0; down++;
+        hueturnOff1();
+      } else if (pirState == LOW){
+      //  Serial.print("_");
+      }
+      }
+    delay(100);
 }
+*/
 
-void setup_wifi() {
-  delay(10);
-  Serial.println();
-  Serial.print("Connecting to ");
-  Serial.println(ssid);
-  WiFi.config(ip, gateway, subnet);
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
+
+
+String msg, request = "";
+
+
+void getTemperature() {
+  sensors_event_t event;
+  dht.temperature().getEvent(&event);
+  if (isnan(event.temperature)) {
+    Serial.println("Error reading temperature!");
   }
-  Serial.println("");
-  Serial.println("WiFi connected");
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
+  else {
+    Serial.print("Temperature: ");
+    Serial.print(event.temperature);
+    temp = event.temperature;
+    Serial.println(" *C");
+  }
+  // Get humidity event and print its value.
+  dht.humidity().getEvent(&event);
+  if (isnan(event.relative_humidity)) {
+    Serial.println("Error reading humidity!");
+  }
+  else {
+    Serial.print("Humidity: ");
+    Serial.print(event.relative_humidity);
+    humid = event.relative_humidity;
+    Serial.println("%");
+  }
+  dtostrf(temp, 2, 2 , temperatureString);
+  dtostrf(humid, 2, 2 , humidString);
+  ThingSpeak.setField(Tfield, temp);
+  ThingSpeak.setField(Hfield, humid);
+  ThingSpeak.writeFields(myChannelNumber, myWriteAPIKey);
 }
 
-void dump(decode_results *results) {
-   uint16_t count = results->rawlen;
-   if (results->decode_type == UNKNOWN) {
-     Serial.print("Unknown encoding: ");
-   } else if (results->decode_type == NEC) {
-     Serial.print("Decoded NEC: ");
-   } else if (results->decode_type == SONY) {
-     Serial.print("Decoded SONY: ");
-   } else if (results->decode_type == RC5) {
-     Serial.print("Decoded RC5: ");
-   } else if (results->decode_type == RC5X) {
-     Serial.print("Decoded RC5X: ");
-   } else if (results->decode_type == RC6) {
-     Serial.print("Decoded RC6: ");
-   } else if (results->decode_type == PANASONIC) {
-     Serial.print("Decoded PANASONIC - Address: ");
-     Serial.print(results->address, HEX);
-     Serial.print(" Value: ");
-   } else if (results->decode_type == LG) {
-     Serial.print("Decoded LG: ");
-   } else if (results->decode_type == JVC) {
-     Serial.print("Decoded JVC: ");
-   } else if (results->decode_type == AIWA_RC_T501) {
-     Serial.print("Decoded AIWA RC T501: ");
-   } else if (results->decode_type == WHYNTER) {
-     Serial.print("Decoded Whynter: ");
-   }
-   serialPrintUint64(results->value, 16);
-   Serial.print(" (");
-  Serial.print(results->bits, DEC);
-  Serial.println(" bits)");
-  Serial.print("Raw (");
-  Serial.print(count, DEC);
-  Serial.print("): ");
-  for (uint16_t i = 1; i < count; i++) {
-   if (i % 100 == 0)
-     yield();  // Preemptive yield every 100th entry to feed the WDT.
-   if (i & 1) {
-  //         Serial.print(results.rawbuf[i] * USECPERTICK, DEC);
-   } else {
-     Serial.write('-');
-  //      Serial.print((uint32_t) results.rawbuf[i] * USECPERTICK, DEC);
-   }
-   Serial.print(" ");
-  }
-  Serial.println();
-}
+
+
+
+
+
+
+
+
+
+
+
+
 
 void setup() {
   Serial.begin(115200);
-  setup_wifi();
-//  pinMode(ledPin, OUTPUT);
-  ThingSpeak.begin(client);
-  server.on("/", handleRoot);
-  server.on("/volup", volup);
-  server.on("/btaux", btaux);
-  server.on("/tvaux", tvaux);
-  server.on("/voldn", voldn);
-  server.on("/tvoff", [](){
-  sendIr(TV_OFF);
-  server.send(200, "text/plain", "tv OFF");
-  });
-  server.onNotFound(handleNotFound);
-  server.begin();
-  delay(100);
-  irrecv.enableIRIn();  // Start the receiver
-}
+   Serial.println("node begin");
+  WiFi.config(ip, gateway, subnet);
+     WiFi.begin(ssid, pass);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(900);  Serial.print(".");
+  }
+    server.begin();
+    IPAddress myAddress = WiFi.localIP(); Serial.println(myAddress);
+   if (mdns.begin(HOST_NAME, WiFi.localIP())) {
+    Serial.println("MDNS responder started");
+  }
+    MDNS.addService("telnet", "tcp", 23);
+  //irsend.begin();
+  //pinMode(pirPin, INPUT);
+
+    dht.begin();
+    sensor_t sensor; dht.temperature().getSensor(&sensor); Serial.println("------------------------------------"); Serial.println("Temperature");  Serial.print  ("Sensor:       "); Serial.println(sensor.name);  Serial.print  ("Driver Ver:   "); Serial.println(sensor.version); Serial.print  ("Unique ID:    "); Serial.println(sensor.sensor_id);  Serial.print  ("Max Value:    "); Serial.print(sensor.max_value); Serial.println(" *C"); Serial.print  ("Min Value:    "); Serial.print(sensor.min_value); Serial.println(" *C"); Serial.print  ("Resolution:   "); Serial.print(sensor.resolution); Serial.println(" *C"); Serial.println("------------------------------------");
+    dht.humidity().getSensor(&sensor); Serial.println("------------------------------------");  Serial.println("Humidity");  Serial.print  ("Sensor:       "); Serial.println(sensor.name);  Serial.print  ("Driver Ver:   "); Serial.println(sensor.version);  Serial.print  ("Unique ID:    "); Serial.println(sensor.sensor_id); Serial.print  ("Max Value:    "); Serial.print(sensor.max_value); Serial.println("%");  Serial.print  ("Min Value:    "); Serial.print(sensor.min_value); Serial.println("%");  Serial.print  ("Resolution:   "); Serial.print(sensor.resolution); Serial.println("%");  Serial.println("------------------------------------");
+    delayMS = sensor.min_delay / 1000;
+    ThingSpeak.begin(client);
+
+    pinMode(ledPin, OUTPUT);
+    digitalWrite(ledPin, HIGH);
+
+
+      ArduinoOTA.onStart([]() { // switch off all the PWMs during upgrade
+                            for(int i=0; i<3;i++)
+                              analogWrite(rgb_pins[i], 0);
+                                          });
+      ArduinoOTA.onEnd([]() { // do a fancy thing with our board led at end
+                              for (int i=0;i<30;i++)
+                              {
+                                analogWrite(Blue,(i*100) % 1001);
+                                delay(50);
+                                 analogWrite(Green,(1-(i*100) % 1001));
+                              }
+                            });
+      ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
+        Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+      });
+      ArduinoOTA.onError([](ota_error_t error) {
+        Serial.printf("Error[%u]: ", error);
+        if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
+        else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
+        else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
+        else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
+        else if (error == OTA_END_ERROR) Serial.println("End Failed");
+      });
+
+      ArduinoOTA.begin();
+
+    irrecv.enableIRIn();
+    delay(500);
+  }
+
 
 void loop() {
-server.handleClient();
+  ArduinoOTA.handle();
+  unsigned long time = millis();
+
+  WiFiClient client = server.available();
+
+
   if (irrecv.decode(&results)) {
-    dump(&results);
-    irrecv.resume();
-    delay(100);
+   dump(&results);
+   irrecv.resume();
   }
-  if ((millis() - mLastTime) >= 1000) {
-    mLastTime = millis();
-  //   digitalWrite(ledPin, LOW);
-     // sendIr(HiFi_Vup);
+
+  	if (Serial.available() > 0) {
+  		incomingByte = Serial.read();
+  		msg += incomingByte;
+      if (incomingByte == '*'){
+
+      }
+
+    /*  switch(incomingByte){
+      case '1':
+      hueturnOn1();
+      break;
+      case '2':
+      hueturnOff1();
+      break;
+      case '3':
+      hueturnOn1();
+      break;
+      case '4':
+      hueturnOff1();
+      break;
+    }
   }
-  if ((millis() - mLastTime1) >= 30000) {
-  //   digitalWrite(ledPin, HIGH);
+    */
+  	if (client) {
+  		if (client.connected()) {
+  		  digitalWrite(ledPin, LOW);  // to show the communication only (inverted logic)
+  			request = client.readStringUntil('\r');    // receives the message from the client
+        Serial.println(request);
+  		  client.flush();
+    		 client.println(msg);
+    		  digitalWrite(ledPin, HIGH);
+    		  }
+       client.stop();
+   }
+
+
+   if ((time - mLastTime1) >= 30000) {
      mLastTime1 = millis();
      getTemperature();
-    }
+   }
+
+
 }

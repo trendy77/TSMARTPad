@@ -7,7 +7,8 @@ const char ssid[] = "TPG 15EA";
 const char password[] = "abcd1989";
 const int port = 80;   // fix IP of this node
 IPAddress gateway(192,168,78,78);     // WiFi router's IP
-IPAddress subnet(255,255,255,0);IPAddress ip(192, 68,78,188);
+IPAddress subnet(255,255,255,0);
+IPAddress ip(192, 68,78,188);
 
 #include <IRremoteESP8266.h>
 #include <IRrecv.h>
@@ -21,6 +22,8 @@ IPAddress subnet(255,255,255,0);IPAddress ip(192, 68,78,188);
 #endif  // DECODE_AC
 
 int led_pin[]=[13,12,15];
+
+
 void setup_wifi() {
   delay(10);
   Serial.println();
@@ -33,7 +36,7 @@ void setup_wifi() {
     delay(5000);
     ESP.restart();
   }
- 
+
 }
 
 
@@ -41,7 +44,6 @@ void setup_wifi() {
 // An IR detector/demodulator is connected to GPIO pin 14
 // e.g. D5 on a NodeMCU board.
 #define RECV_PIN 14
-
 // The Serial connection baud rate.
 // i.e. Status message will be sent to the PC at this baud rate.
 // Try to avoid slow speeds like 9600, as you will miss messages and
@@ -163,7 +165,7 @@ void setup() {
    /* switch on led */
    Serial.println("Booting");
 
-  
+
   setup_wifi();
   ArduinoOTA.setHostname("nodeinside");
   ArduinoOTA.onStart([]() { // switch off all the PWMs during upgrade
@@ -199,7 +201,7 @@ void setup() {
   delay(500);  // Wait a bit for the serial connection to be establised.
 
    setup_wifi();
-  
+
 
   // Port defaults to 8266
      ArduinoOTA.setHostname("nodeOutside"); ArduinoOTA.setPort(8189);
@@ -245,7 +247,7 @@ void loop() {
   ArduinoOTA.handle();
 
 
-   
+
     // Display a crude timestamp.
     uint32_t now = millis();
     Serial.printf("Timestamp : %06u.%03u\n", now / 1000, now % 1000);
@@ -274,4 +276,3 @@ void loop() {
     yield();  // Feed the WDT (again)
   }
 }
-
