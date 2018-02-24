@@ -1,361 +1,213 @@
-
 /*
- * Example command - Samsung TV power toggle: 38000,1,1,170,170,20,63,20,63,20,63,20,20,20,20,20,20,20,20,20,20,20,63,20,63,20,63,20,20,20,20,20,20,20,20,20,20,20,20,20,63,20,20,20,20,20,20,20,20,20,20,20,20,20,63,20,20,20,63,20,63,20,63,20,63,20,63,20,63,20,1798\r\n
- * For more codes, visit: https://irdb.globalcache.com/
- * *       telnet <esp8266deviceIPaddress> 4998
- *   Enter a Global Cache-formatted code, starting at the frequency, *      and then a return/enter at the end. No spaces. e.g.:
-  *   38000,1,1,170,170,20,63,20,63,20,63,20,20,20,20,20,20,20,20,20,20,20,63,20,63,20,63,20,20,20,20,20,20,20,20,20,20,20,20,20,63,20,20,20,20,20,20,20,20,20,20,20,20,20,63,20,20,20,63,20,63,20,63,20,63,20,63,20,63,20,1798
- *   To exit the 'telnet' command: *     press <control> + <]> at the same time, then press 'q', and then <return>.
- *     <control> + <d> might work
- */
+wemos MEGA ESP
+FIRST RUN
+*/
 
-#ifndef UNIT_TEST
-#include <Arduino.h>
-#endif
-//
-#include <Adafruit_Sensor.h>
-#include <DHT.h>
-#include <DHT_U.h>
-#include <ThingSpeak.h>
-// web n wifi
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
-#include <WiFiClient.h>
-#include <WiFiServer.h>
-#include <ESP8266WebServer.h>
-#include <WiFiUdp.h>
+// #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
-//#include <RestClient.h>
-// infrared
-#include <IRremoteESP8266.h>
-#include <IRsend.h>
-#include <IRrecv.h>
-#include <IRutils.h>
+#include <TimeLib.h>
 
-// -----     VARS
-uint16_t RECV_PIN = 4;
-    //IRsend irsend(4);
-byte ledPin = 2;
-const char ssid[] = "Northern Frontier Intertubes";
-const char pass[] = "num4jkha8nnk";
-IPAddress ip(192, 168, 0, 187);      // fix IP of this node
-IPAddress gateway(192,168,0,1);     // WiFi router's IP
-IPAddress subnet(255,255,255,0);
-WiFiServer server(80);
-#define HOST_NAME "ir3"
+// Include the correct display library   // For a connection via I2C using Wire include
+#include <Wire.h>    // Only needed for Arduino 1.6.5 and earlier
+#include "SSD1306.h" // alias for `#include "SSD1306Wire.h"`
 
+#include "OLEDDisplayUi.h"
+#include "images.h"
 
-// COMMENT OUT DEPENDING ON WHICH ONE....
-//////////////////////
-// inside
- //IPAddress ip(192, 168, 78, 188); ESP8266WebServer server(9188);  int Tfield = 1;   int Hfield = 2;const char* host = "nodeinside";
-// Outside
-//IPAddress ip(192, 168, 78, 189); ESP8266WebServer server(9189); int Tfield = 3;  int Hfield = 4;const char* host = "nodeoutside";
+SSD1306 display(0x3c, D3, D5);
 
-// TEMPC AND HUMIDITY
-#define DHTTYPE           DHT11
-DHT_Unified dht(DHTPIN, DHTTYPE);
-unsigned long myChannelNumber = 404585;
-const char * myWriteAPIKey = "W124WS7UN76VCASZ";
-int value = 0;
-char temperatureString[6]; char humidString[6]; float temp, humid;
+  // Wi-Fi / IoT
+  const char ssid[] = "Northern Frontier Intertubes";
+  const char pass[] = "num4jkha8nnk";
+  const int port = 80;                // fix IP of this node
+  IPAddress gateway(10, 0, 77, 100);  // WiFi router's IP
+  IPAddress subnet(255, 255, 255, 0); //IPAddress ip(192, 68,78,188);
 
+  OLEDDisplayUi ui(&display);
 
-int rgb_pins[] = {14, 13, 15};
-#define Red 14     // d5...gp 14
-#define Green 13    // D7.. gp 13
-#define Blue 15     // .D8 .. gp 15
+  int screenW = 128;
+  int screenH = 64;
+  int clockCenterX = screenW / 2;
+  int clockCenterY = ((screenH - 16) / 2) + 16; // top yellow part is 16 px height
+  int clockRadius = 23;
 
-//////////////////////////
-#define RECV_PIN 5  /// d1 ...
-#define SEND_PIN 12  /// d6?
-//////////////////////////
-#define DHTPIN     4   // d2
-//////////////////////
-
-
-// --- setvars
-float prevTemp;
-long t = 0;
-WiFiClient wiFi;
-int incomingByte = 0;
-MDNSResponder mdns;
-uint16_t *code_array;
-IRrecv irrecv(RECV_PIN);
-decode_results results;  // Somewhere to store the results
-irparams_t save;         // A place to copy the interrupt state while decoding.
-
-
-/*
-IR SENDING STUFF....
-
-
-#define TV_OFF        0xa90
-#define HiFi_OFF        0x540a
-#define HiFi_TV        0x540a
-#define HiFi_BT        0x540a
-#define HiFi_Vup        0x240a
-#define HiFi_Vdn        0x640a
-#define L1_ON        0xA010C	// RED
-#define L1_OFF    	 0x6010C	// GREEN
-#define L2_ON        0xE010C	// YELLOW
-#define L2_OFF       0x2010C 	// BLUE
-  #define candleON 0x1FE48B7
-  #define candleOFF 0x1FE58A7
-  #define candle4H 0x1FE807F
-  #define candle8H 0x1F2A0F6B
-  #define candleMODE 0x1FE7887
-  #define candleMULTI 0x1FEC03F
-  #define candleB1 0x1FE609F
-  #define candleB2 0x1FE906F
-  #define candleB3 0x1FEF807
-  #define candleB4 0x1FE708F
-  #define candleG1 0x1FEA05F
-  #define candleG2 0x1FE10EF
-  #define candleG3 0x1FED827
-  #define candleG4 0x1FEB04F
-  #define candleR1 0x1FE20DF
-  #define candleR2 0x1FEE01F
-  #define candleR3 0x1FE50AF
-  #define candleR4 0x1FE30CF
-//int candleArray[]={candleON,candleOFF,candle4H,candle8H,candleMODE,candleMULTI,candleB1,candleB2,candleB3,candleB4,candleG1,candleG2,candleG3,candleG4,candleG3,candleR1,candleR2,candleR3,candleR4};
-//int candleNames[]={'candleON','candleOFF','candle4H','candle8H','candleMODE','candleMULTI','candleB1','candleB2','candleB3','candleB4','candleG1','candleG2','candleG3','candleG4','candleG3','candleR1','candleR2','candleR3','candleR4'};
-// VARS
-  IRsend irsend(4);
-            void sendNECIr(uint8_t cmd){
-                irsend.begin();
-                Serial.println("sending "+ cmd);
-                irsend.sendNEC(cmd, 32);
-                delay(100);
-              }
-
-void sendIr(uint64_t cmd){
-  irsend.begin();
-  Serial.println("sending Sony");
-  irsend.sendSony(cmd, 12, 2);
-  delay(100);
-}
-
-*/
-
-
-
-
-/*
-
-HUE AND PIR STUFF
-
-RestClient hue = RestClient(bridge_ip);
-const char LIGHTS_ON[] = "{\"on\":true}";
-const char LIGHTS_OFF[] = "{\"on\":false}";
-const char *bridge_ip = "192.168.0.101"; // Hue Bridge IP
-const int port = 80;
-
-bool looping;
-#define pirPin D1   //d1
-int pirState = 0;
-int pirVal = LOW;
-bool watch = false;
-
-void hueturnOff1(){
-  hue.put("/api/fRgcNsvxh3ytQKVUZlCso0KbAn7zOlMhtkVmwzQG/lights/1/state/", LIGHTS_OFF);
-}
-void hueturnOn1(){
-  hue.put("/api/fRgcNsvxh3ytQKVUZlCso0KbAn7zOlMhtkVmwzQG/lights/1/state/", LIGHTS_ON);
-}
-  void hue_turnOff(int lightNo){
-    String cmd = "/api/fRgcNsvxh3ytQKVUZlCso0KbAn7zOlMhtkVmwzQG/lights/";
-    cmd += lightNo;
-    cmd += "/state/";  int buf = cmd.length();
-    char buffer[buf];
-    cmd.toCharArray(buffer, buf);
-    hue.put(buffer, LIGHTS_OFF);
-}
-
-
-void motionCheck(){
-//  pirVal = digitalRead(pirPin); // read input value
-    if (pirVal == HIGH) {
-      if (pirState == LOW) {         // we have just turned on
-      hueturnOn1();
-  //      Serial.println("*NEW 1"); stars=0; stars++;down=0;
-         pirState = HIGH;
-         } else if (pirState == HIGH){
-  //      Serial.print("*"); stars++;
-         }
-    } else if (pirVal == LOW){
-      if (pirState == HIGH)
-            {
-        Serial.println("_END - 1");
-        delay(1000);
-  //      pirState = LOW; stars = 0; down =0; down++;
-        hueturnOff1();
-      } else if (pirState == LOW){
-      //  Serial.print("_");
-      }
-      }
-    delay(100);
-}
-*/
-
-
-
-String msg, request = "";
-
-
-void getTemperature() {
-  sensors_event_t event;
-  dht.temperature().getEvent(&event);
-  if (isnan(event.temperature)) {
-    Serial.println("Error reading temperature!");
-  }
-  else {
-    Serial.print("Temperature: ");
-    Serial.print(event.temperature);
-    temp = event.temperature;
-    Serial.println(" *C");
-  }
-  // Get humidity event and print its value.
-  dht.humidity().getEvent(&event);
-  if (isnan(event.relative_humidity)) {
-    Serial.println("Error reading humidity!");
-  }
-  else {
-    Serial.print("Humidity: ");
-    Serial.print(event.relative_humidity);
-    humid = event.relative_humidity;
-    Serial.println("%");
-  }
-  dtostrf(temp, 2, 2 , temperatureString);
-  dtostrf(humid, 2, 2 , humidString);
-  ThingSpeak.setField(Tfield, temp);
-  ThingSpeak.setField(Hfield, humid);
-  ThingSpeak.writeFields(myChannelNumber, myWriteAPIKey);
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-void setup() {
-  Serial.begin(115200);
-   Serial.println("node begin");
-  WiFi.config(ip, gateway, subnet);
-     WiFi.begin(ssid, pass);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(900);  Serial.print(".");
-  }
-    server.begin();
-    IPAddress myAddress = WiFi.localIP(); Serial.println(myAddress);
-   if (mdns.begin(HOST_NAME, WiFi.localIP())) {
-    Serial.println("MDNS responder started");
-  }
-    MDNS.addService("telnet", "tcp", 23);
-  //irsend.begin();
-  //pinMode(pirPin, INPUT);
-
-    dht.begin();
-    sensor_t sensor; dht.temperature().getSensor(&sensor); Serial.println("------------------------------------"); Serial.println("Temperature");  Serial.print  ("Sensor:       "); Serial.println(sensor.name);  Serial.print  ("Driver Ver:   "); Serial.println(sensor.version); Serial.print  ("Unique ID:    "); Serial.println(sensor.sensor_id);  Serial.print  ("Max Value:    "); Serial.print(sensor.max_value); Serial.println(" *C"); Serial.print  ("Min Value:    "); Serial.print(sensor.min_value); Serial.println(" *C"); Serial.print  ("Resolution:   "); Serial.print(sensor.resolution); Serial.println(" *C"); Serial.println("------------------------------------");
-    dht.humidity().getSensor(&sensor); Serial.println("------------------------------------");  Serial.println("Humidity");  Serial.print  ("Sensor:       "); Serial.println(sensor.name);  Serial.print  ("Driver Ver:   "); Serial.println(sensor.version);  Serial.print  ("Unique ID:    "); Serial.println(sensor.sensor_id); Serial.print  ("Max Value:    "); Serial.print(sensor.max_value); Serial.println("%");  Serial.print  ("Min Value:    "); Serial.print(sensor.min_value); Serial.println("%");  Serial.print  ("Resolution:   "); Serial.print(sensor.resolution); Serial.println("%");  Serial.println("------------------------------------");
-    delayMS = sensor.min_delay / 1000;
-    ThingSpeak.begin(client);
-
-    pinMode(ledPin, OUTPUT);
-    digitalWrite(ledPin, HIGH);
-
-
-      ArduinoOTA.onStart([]() { // switch off all the PWMs during upgrade
-                            for(int i=0; i<3;i++)
-                              analogWrite(rgb_pins[i], 0);
-                                          });
-      ArduinoOTA.onEnd([]() { // do a fancy thing with our board led at end
-                              for (int i=0;i<30;i++)
-                              {
-                                analogWrite(Blue,(i*100) % 1001);
-                                delay(50);
-                                 analogWrite(Green,(1-(i*100) % 1001));
-                              }
-                            });
-      ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
-        Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
-      });
-      ArduinoOTA.onError([](ota_error_t error) {
-        Serial.printf("Error[%u]: ", error);
-        if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
-        else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
-        else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
-        else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
-        else if (error == OTA_END_ERROR) Serial.println("End Failed");
-      });
-
-      ArduinoOTA.begin();
-
-    irrecv.enableIRIn();
-    delay(500);
-  }
-
-
-void loop() {
-  ArduinoOTA.handle();
-  unsigned long time = millis();
-
-  WiFiClient client = server.available();
-
-
-  if (irrecv.decode(&results)) {
-   dump(&results);
-   irrecv.resume();
-  }
-
-  	if (Serial.available() > 0) {
-  		incomingByte = Serial.read();
-  		msg += incomingByte;
-      if (incomingByte == '*'){
-
-      }
-
-    /*  switch(incomingByte){
-      case '1':
-      hueturnOn1();
-      break;
-      case '2':
-      hueturnOff1();
-      break;
-      case '3':
-      hueturnOn1();
-      break;
-      case '4':
-      hueturnOff1();
-      break;
+  // utility function for digital clock display: prints leading 0
+  String twoDigits(int digits)
+  {
+    if (digits < 10)
+    {
+      String i = '0' + String(digits);
+      return i;
+    }
+    else
+    {
+      return String(digits);
     }
   }
-    */
-  	if (client) {
-  		if (client.connected()) {
-  		  digitalWrite(ledPin, LOW);  // to show the communication only (inverted logic)
-  			request = client.readStringUntil('\r');    // receives the message from the client
-        Serial.println(request);
-  		  client.flush();
-    		 client.println(msg);
-    		  digitalWrite(ledPin, HIGH);
-    		  }
-       client.stop();
-   }
 
+  void clockOverlay(OLEDDisplay *display, OLEDDisplayUiState *state)
+  {
+  }
 
-   if ((time - mLastTime1) >= 30000) {
-     mLastTime1 = millis();
-     getTemperature();
-   }
+  void analogClockFrame(OLEDDisplay *display, OLEDDisplayUiState *state, int16_t x, int16_t y)
+  {
+    //  ui.disableIndicator();
 
+    // Draw the clock face
+    //  display->drawCircle(clockCenterX + x, clockCenterY + y, clockRadius);
+    display->drawCircle(clockCenterX + x, clockCenterY + y, 2);
+    //
+    //hour ticks
+    for (int z = 0; z < 360; z = z + 30)
+    {
+      //Begin at 0° and stop at 360°
+      float angle = z;
+      angle = (angle / 57.29577951); //Convert degrees to radians
+      int x2 = (clockCenterX + (sin(angle) * clockRadius));
+      int y2 = (clockCenterY - (cos(angle) * clockRadius));
+      int x3 = (clockCenterX + (sin(angle) * (clockRadius - (clockRadius / 8))));
+      int y3 = (clockCenterY - (cos(angle) * (clockRadius - (clockRadius / 8))));
+      display->drawLine(x2 + x, y2 + y, x3 + x, y3 + y);
+    }
 
-}
+    // display second hand
+    float angle = second() * 6;
+    angle = (angle / 57.29577951); //Convert degrees to radians
+    int x3 = (clockCenterX + (sin(angle) * (clockRadius - (clockRadius / 5))));
+    int y3 = (clockCenterY - (cos(angle) * (clockRadius - (clockRadius / 5))));
+    display->drawLine(clockCenterX + x, clockCenterY + y, x3 + x, y3 + y);
+    //
+    // display minute hand
+    angle = minute() * 6;
+    angle = (angle / 57.29577951); //Convert degrees to radians
+    x3 = (clockCenterX + (sin(angle) * (clockRadius - (clockRadius / 4))));
+    y3 = (clockCenterY - (cos(angle) * (clockRadius - (clockRadius / 4))));
+    display->drawLine(clockCenterX + x, clockCenterY + y, x3 + x, y3 + y);
+    //
+    // display hour hand
+    angle = hour() * 30 + int((minute() / 12) * 6);
+    angle = (angle / 57.29577951); //Convert degrees to radians
+    x3 = (clockCenterX + (sin(angle) * (clockRadius - (clockRadius / 2))));
+    y3 = (clockCenterY - (cos(angle) * (clockRadius - (clockRadius / 2))));
+    display->drawLine(clockCenterX + x, clockCenterY + y, x3 + x, y3 + y);
+  }
+
+  void digitalClockFrame(OLEDDisplay *display, OLEDDisplayUiState *state, int16_t x, int16_t y)
+  {
+    String timenow = String(hour()) + ":" + twoDigits(minute()) + ":" + twoDigits(second());
+    display->setTextAlignment(TEXT_ALIGN_CENTER);
+    display->setFont(ArialMT_Plain_24);
+    display->drawString(clockCenterX + x, clockCenterY + y, timenow);
+  }
+
+  void setup_wifi()
+  {
+    delay(10);
+    Serial.println();
+    Serial.print("Connecting to ");
+    Serial.println(ssid);
+    WiFi.config(ip, gateway, subnet);
+    WiFi.begin(ssid, pass);
+    while (WiFi.waitForConnectResult() != WL_CONNECTED)
+    {
+      Serial.println("Connection Failed! Rebooting...");
+      delay(5000);
+      ESP.restart();
+    }
+  }
+
+  void setup()
+  {
+    Serial.begin(115200);
+    delay(500); // Wait a bit for the serial connection to be established.
+
+    display.init();
+    display.flipScreenVertically();
+    display.setContrast(255);
+
+    setup_wifi();
+
+    // Port defaults to 8266
+    ArduinoOTA.setHostname("mgaaesp");
+    //ArduinoOTA.setPort(8189);
+
+    /*
+  #if DECODE_HASH
+  // Ignore messages with less than minimum on or off pulses.
+  irrecv.setUnknownThreshold(MIN_UNKNOWN_SIZE);
+
+  #endif  // DECODE_HASH
+  irrecv.enableIRIn();  // Start the receiver
+   /* switch on led */
+    * /
+        Serial.println("Booting");
+
+    ArduinoOTA.onStart([]() { // switch off all the PWMs during upgrade
+      display.clear();
+      display.setFont(ArialMT_Plain_10);
+      display.setTextAlignment(TEXT_ALIGN_CENTER_BOTH);
+      display.drawString(DISPLAY_WIDTH / 2, DISPLAY_HEIGHT / 2 - 10, "OTA Update");
+      display.display();
+    });
+
+    ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
+      display.drawProgressBar(4, 32, 120, 8, progress / (total / 100));
+      display.display();
+    });
+
+    ArduinoOTA.onEnd([]() {
+      display.clear();
+      display.setFont(ArialMT_Plain_10);
+      display.setTextAlignment(TEXT_ALIGN_CENTER_BOTH);
+      display.drawString(DISPLAY_WIDTH / 2, DISPLAY_HEIGHT / 2, "Restart");
+      display.display();
+    });
+
+    // Align text vertical/horizontal center
+    display.setTextAlignment(TEXT_ALIGN_CENTER_BOTH);
+    display.setFont(ArialMT_Plain_10);
+    display.drawString(DISPLAY_WIDTH / 2, DISPLAY_HEIGHT / 2, "Ready for OTA:\n" + WiFi.localIP().toString());
+    display.display();
+
+    ArduinoOTA.onError([](ota_error_t error) { ESP.restart(); });
+
+    /* setup the OTA server */
+    ArduinoOTA.begin();
+    Serial.println("Ready");
+  }
+
+  void loop()
+  {
+    ArduinoOTA.handle();
+
+    /*
+  if (irrecv.decode(&results)) {
+        // Display a crude timestamp.
+    uint32_t now = millis();
+    Serial.printf("Timestamp : %06u.%03u\n", now / 1000, now % 1000);
+    if (results.overflow)
+      Serial.printf("WARNING: IR code is too big for buffer (>= %d). "
+                    "This result shouldn't be trusted until this is resolved. "
+                    "Edit & increase CAPTURE_BUFFER_SIZE.\n",
+                    CAPTURE_BUFFER_SIZE);
+    // Display the basic output of what we found.
+    Serial.print(resultToHumanReadableBasic(&results));
+    dumpACInfo(&results);  // Display any extra A/C info if we have it.
+    yield();  // Feed the WDT as the text output can take a while to print.
+  // Display the library version the message was captured with.
+    Serial.print("Library   : v");
+    Serial.println(_IRREMOTEESP8266_VERSION_);
+    Serial.println();
+    // Output RAW timing info of the result.
+    Serial.println(resultToTimingInfo(&results));
+    yield();  // Feed the WDT (again)
+    // Output the results as source code
+    Serial.println(resultToSourceCode(&results));
+    Serial.println("");  // Blank line between entries
+    yield();  // Feed the WDT (again)
+  }
+*/
+    Serial.println("."); // Blank line between entries
+  }

@@ -1,32 +1,9 @@
-// 18 / 01 /18
-// nodeMCU thingspeak client with IR send/receive support and webserver for Temp /Humidity checking live on the fly. from anywhere.
-// digital 2 / gpio 4 --- temp DHT11
-// dig 1 / gp 5 -- ir rec @ (d1)---gpio 5 ?
-// d6 / gp12  -- ir sender
+// 22 /02 /18
+// the mega version...
 
 #include <Adafruit_Sensor.h>
 #include <DHT.h>
 #include <DHT_U.h>
-#include <ESP8266WiFi.h>
-#include <ESP8266mDNS.h>
-#include <WiFiUdp.h>
-#include <ArduinoOTA.h>
-//#include <RestClient.h>
-#include <WiFiClient.h>
-#include <ESP8266WebServer.h>
-#include <ThingSpeak.h>
-#include <IRremoteESP8266.h>
-#include <IRsend.h>
-#include <IRrecv.h>
-#include <IRutils.h>
-
-// COMMENT OUT DEPENDING ON WHICH ONE....
-//////////////////////
-// inside
-IPAddress ip(192, 168, 78, 188); ESP8266WebServer server(9188);  int Tfield = 1;   int Hfield = 2;const char* host = "nodeinside";
-// Outside
-//IPAddress ip(192, 168, 78, 189); ESP8266WebServer server(9189); int Tfield = 3;  int Hfield = 4;const char* host = "nodeoutside";
-
 
 float prevTemp;
 long t = 0;
@@ -36,10 +13,12 @@ int rgb_pins[] = {14, 13, 15};
 #define Green 13    // D7.. gp 13
 #define Blue 15     // .D8 .. gp 15
 //////////////////////////
-#define RECV_PIN 5  /// d1 ...
-#define SEND_PIN 12  /// d6?
+
+#define RECV_PIN 5 
+#define SEND_PIN 12 
+#define DHTPIN     4  
 //////////////////////////
-#define DHTPIN     4   // d2
+
 //////////////////////
 
 
@@ -103,37 +82,6 @@ void lightLoop() {
   }
 }
 
-void getTemperature() {
-  sensors_event_t event;
-  dht.temperature().getEvent(&event);
-  if (isnan(event.temperature)) {
-    Serial.println("Error reading temperature!");
-  }
-  else {
-    Serial.print("Temperature: ");
-    Serial.print(event.temperature);
-    temp = event.temperature;
-    Serial.println(" *C");
-  }
-  // Get humidity event and print its value.
-  dht.humidity().getEvent(&event);
-  if (isnan(event.relative_humidity)) {
-    Serial.println("Error reading humidity!");
-  }
-  else {
-    Serial.print("Humidity: ");
-    Serial.print(event.relative_humidity);
-    humid = event.relative_humidity;
-    Serial.println("%");
-  }
-  dtostrf(temp, 2, 2 , temperatureString);
-  dtostrf(humid, 2, 2 , humidString);
-  ThingSpeak.setField(Tfield, temp);
-  ThingSpeak.setField(Hfield, humid);
-  ThingSpeak.writeFields(myChannelNumber, myWriteAPIKey);
-  lightLoop();
-
-}
 
 // web comms
 void handleRoot() {

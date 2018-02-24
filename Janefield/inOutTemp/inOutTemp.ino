@@ -7,8 +7,8 @@
 #include <Adafruit_Sensor.h>
 #include <DHT.h>
 #include <DHT_U.h>
-#include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
+#include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
 #include <RestClient.h>
