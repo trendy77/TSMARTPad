@@ -164,8 +164,7 @@ void kitt(){
       knightRider(1, 46, 4, 0xFF1000); // Cycles, Speed, Width, RGB Color (original orange-red)
     knightRider(1, 46, 2, 0x0000FF); // Cycles, Speed, Width, RGB Color (blue)
       knightRider(1, 46, 4, 0xFF1000); // Cycles, Speed, Width, RGB Color (original orange-red)
-    knightRider(1, 46, 5, 0xFF0000); // Cycles, Speed, Width, RGB Color (red)
-      knightRider(1, 46, 6, 0x00FF00); // Cycles, Speed, Width, RGB Color (green)
+    knightRider(1, 46, 5, 0xFF0000); // Cycles, Speed, Width, RGB Color (red)     knightRider(1, 46, 6, 0x00FF00); // Cycles, Speed, Width, RGB Color (green)
     knightRider(1, 46, 7, 0xFFFF00); // Cycles, Speed, Width, RGB Color (yellow)
       knightRider(1, 46, 4, 0xFF1000); // Cycles, Speed, Width, RGB Color (original orange-red)
       knightRider(1, 46, 8, 0x00FFFF); // Cycles, Speed, Width, RGB Color (cyan)
@@ -175,17 +174,66 @@ void kitt(){
     delay(1000);
 }
 
+void copMode()
+{
+  byte width = 2;
+  for (byte jj = 0; jj < 10; jj++){
+    for (byte j = 0; j < 150; j += 7)
+    {
+      knightRider(1, j, width, 0xFF0000); // Cycles, Speed, Width, RGB Color red
+        }
+    for (byte j = 0; j < 150; j += 7)
+    {
+      knightRider(1, j, width, 0x0000FF); // Cycles, Speed, Width, RGB Color blue
+    }
+  }
+  delay(delayval);
+  for (int i = 0; i < NUMPIXELS; i + 2)
+  {
+    // strip.Color takes RGB values, from 0,0,0 up to 255,255,255
+    strip.setPixelColor(i, strip.Color(200, 0, 0)); // Moderately bright green color.
+  }
+    for (int i = 1; i < NUMPIXELS; i + 2)
+    {
+      // strip.Color takes RGB values, from 0,0,0 up to 255,255,255
+      strip.setPixelColor(i, strip.Color(0, 0, 200)); // Moderately bright green color.
+    }
+      strip.show();    // This sends the updated pixel color to the hardware.
 
-  void kittLoop(){
-    byte width = 2;
-    for(byte j=0; j<150; j+=7) {            // Iterate through a whole rainbow of colors
+      delay(delayval); // Delay for a period of time (in milliseconds).
+      for (byte j = 0; j < 150; j += 7)
+      {
+        knightRider(2, j,width, ); // Cycles, Speed, Width, RGB Color
+        width++;
+      }
+      for (int i = 0; i < NUMPIXELS; i + 2)
+      {
+        // strip.Color takes RGB values, from 0,0,0 up to 255,255,255
+        strip.setPixelColor(i, strip.Color(200, 0, 0)); // Moderately bright green color.
+      }
+      for (int i = 1; i < NUMPIXELS; i + 2)
+      {
+        // strip.Color takes RGB values, from 0,0,0 up to 255,255,255
+        strip.setPixelColor(i, strip.Color(0, 0, 200)); // Moderately bright green color.
+      }
+      strip.show(); // This sends the updated pixel color to the hardware.
+      delay(delayval);
+
+      clearStrip();
+}
+// Cycles - one
+
+
+void rainBow()
+{
+  byte width = 2;
+  for (byte j = 0; j < 150; j += 7)
+  {                                          // Iterate through a whole rainbow of colors
     knightRider(1, j, width, colorWheel(j)); // Cycles, Speed, Width, RGB Color
     width++;
     }
     clearStrip();
   }
-
-
   // Cycles - one cycle is scanning through all strip left then right (or right then left)
   // Speed - how fast one cycle is (46 with 16 strip is default KnightRider speed)
   // Width - how wide the trail effect is on the fading out LEDs.  The original display used   light bulbs, so they have a persistance when turning off.  This creates a trail. Effective range is 2 - 8, 4 is default for 16 strip.  Play with this.
@@ -195,24 +243,65 @@ void kitt(){
 void setup() {
  // pinMode(A0, OUTPUT);      // This is for Trinket 5V 16MHz, you can remove these three lines if you are not using a Trinket
   Serial.begin(115200);
+  Serial.print("booting");
+  Serial3.begin(9600);
+  Serial3.println("1");
   strip.begin(); // This initializes the NeoPixel library.
 }
 
 void loop() {
   time = millis();
-  Serial.print(".");
-  kitt();
-
-  if (time >= (lastTime2 + 600000)){   // every 60 secs
-    goSolid(2);
-    delay(3000);
-    goSolid(3);
-    delay(3000);
-    lastTime2 = time;
-  }
-  if (time >= (lastTime1 + 60000)){   // every 10 secs
-    kitt();
-    lastTime1 = time;
-  }
+   if (Serial.available())
+    {
+      char dato = Serial.read();
+    switch (dato){
+      case '1':  
+      goSolid(1); brea1k;
+      case '2':
+        goSolid(2);
+        break;
+      case '3':
+        goSolid(3);
+        break;
+      case '4':
+        knightRider(4, 46, 3, 0x0000FF); // Cycles, Speed, Width, RGB Color (blue)
+        break;
+      case '5':
+        knightRider(4, 46, 5, 0xFF0000);  // red
+        break;
+      case '6':
+        knightRider(4, 46, 3, 0xFFFF00); // Cycles, Speed, Width, RGB Color (yellow)
+        break;
+      case '7':
+        knightRider(4, 46, 4, 0xFF1000); // Cycles, Speed, Width, RGB Color (original orange-red) 
+         break;
+      case '8':
+        knightRider(4, 46, 2, 0xFFFFFF); // Cycles, Speed, Width, RGB Color (white)
+         break;
+      case '9':
+        clearStrip();
+        break;
+      case 'c':
+        copMode();
+        break;
+      }  
+    } else if (Serial3.available())
+      {
+      char dato2 = Serial3.read();
+      String lah = ""; 
+      lah += dato2;
+      if (dato2 == '/n'){
+      Serial.write(lah);
+      }
+     } 
+      if (time >= (lastTime2 + 300000))
+      { // every 60 secs
+        rainBow();
+      }
+      if (time >= (lastTime1 + 600000))
+      { // every 100 secs
+        kitt();
+        lastTime1 = time;
+   }
 
 }

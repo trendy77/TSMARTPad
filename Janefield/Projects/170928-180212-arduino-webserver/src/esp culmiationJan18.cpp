@@ -17,6 +17,7 @@ C:\Users\trend\Documents\PlatformIO\Projects\171111-175952-nodemcuv2\src
 // web n wifi
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
+#include <ESP8266SSDNS.h>
 #include <WiFiClient.h>
 #include <WiFiServer.h>
 #include <ESP8266WebServer.h>
@@ -32,29 +33,19 @@ C:\Users\trend\Documents\PlatformIO\Projects\171111-175952-nodemcuv2\src
 // COMMENT OUT DEPENDING ON WHICH ONE....
 //////////////////////
 
-
-// inside
  //IPAddress ip(192, 168, 78, 188); ESP8266WebServer server(9188);  int Tfield = 1;   int Hfield = 2;const char* host = "nodeinside";
-
-
 // Outside
-//IPAddress ip(192, 168, 78, 189); ESP8266WebServer server(9189); int Tfield = 3;  int Hfield = 4;const char* host = "nodeoutside";
-
-
-
+IPAddress ip(10, 77, 0, 34); ESP8266WebServer server(3434); int Tfield = 3;  int Hfield = 4; const char* host = "nodeoutside";IPAddress gateway(10,77,0,100);
 
 
 // -----     VARS
+
 uint16_t RECV_PIN = 4;
-    //IRsend irsend(4);
-byte ledPin = 2;
+Rsend irsend(5);
+
+byte ledPin = 0;
 const char ssid[] = "Northern Frontier Intertubes";
 const char pass[] = "num4jkha8nnk";
-IPAddress ip(192, 168, 0, 187);      // fix IP of this node
-IPAddress gateway(192,168,0,1);     // WiFi router's IP
-IPAddress subnet(255,255,255,0);
-WiFiServer server(80);
-#define HOST_NAME "ir3"
 
 // TEMPC AND HUMIDITY
 #define DHTTYPE           DHT11
@@ -65,20 +56,6 @@ int value = 0;
 char temperatureString[6]; char humidString[6]; float temp, humid;
 
 
-int rgb_pins[] = {14, 13, 15};
-#define Red 14     // d5...gp 14
-#define Green 13    // D7.. gp 13
-#define Blue 15     // .D8 .. gp 15
-
-//////////////////////////
-#define RECV_PIN 5  /// d1 ...
-#define SEND_PIN 12  /// d6?
-//////////////////////////
-#define DHTPIN     4   // d2
-//////////////////////
-
-
-// --- setvars
 float prevTemp;
 long t = 0;
 WiFiClient wiFi;
