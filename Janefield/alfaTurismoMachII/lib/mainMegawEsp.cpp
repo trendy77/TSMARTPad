@@ -16,6 +16,9 @@ MEGA w ESP NODE
 #include <avr/power.h>
 #endif
 
+#include <ELClient.h>
+#include <ELClientRest.h>
+
 bool shownMenu = false;
 
 #define ledPin 13
@@ -27,8 +30,8 @@ long unsigned int lowIn;
 int pause = 5000;
 bool lockLow = true;
 bool takeLowTime;
-
 int calibrationTime = 30;
+
 int watsdoin = 11;
 #define PIN A15
 #define NUMPIXELS 8
@@ -36,6 +39,47 @@ Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800
 int delayval = 500;
 long lastTime1, lastTime2, time = 0;
 
+//###########################################################
+// For boards using the hardware serial port!
+//###########################################################
+// Initialize a connection to esp-link using the normal hardware serial port both for
+// SLIP and for debug messages.
+ELClient esp(&Serial3, &Serial3);
+// Initialize a REST client on the connection to esp-link
+ELClientRest rest(&esp);
+
+boolean wifiConnected = false;
+
+// Callback made from esp-link to notify of wifi status changes   - Here we print something out and set a global flag
+void wifiCb(void *response)
+{
+    ELClientResponse *res = (ELClientResponse *)response;
+    if (res->argc() == 1)
+    {
+        uint8_t status;
+        res->popArg(&status, 1);
+        if (status == STATION_GOT_IP)
+        {
+            Serial.println("WIFI CONNECTED");
+            wifiConnected = true;
+        }
+        else
+        {
+            Serial.print("WIFI NOT READY: ");
+            Serial.println(status);
+            wifiConnected = false;
+        }
+    }
+}
+
+unsigned long myChannelNumber = 404585;
+char *api_key = "W124WS7UN76VCASZ";
+char temperatureString[6];
+char humidString[6];
+float temp, humid;
+
+#define BUFLEN 266
+#define BUFLENN 266
 /**  TEMPC AND HUMIDITY
 #include <Adafruit_Sensor.h>
 #include <DHT.h>
@@ -43,8 +87,6 @@ long lastTime1, lastTime2, time = 0;
 float prevTemp;
 long t = 0;
 uint32_t delayMS;
-#define DHTPIN     22   // 
-d2
 #define DHTTYPE           DHT11
 DHT_Unified dht(DHTPIN, DHTTYPE);
 unsigned long myChannelNumber = 404585;
@@ -82,6 +124,7 @@ const char * myWriteAPIKey = "W124WS7UNs
   sensor_t sensor; dht.temperature().getSensor(&sensor); Serial.println("------------------------------------"); Serial.println("Temperature");  Serial.print  ("Sensor:       "); Serial.println(sensor.name);  Serial.print  ("Driver Ver:   "); Serial.println(sensor.version); Serial.print  ("Unique ID:    "); Serial.println(sensor.sensor_id);  Serial.print  ("Max Value:    "); Serial.print(sensor.max_value); Serial.println(" *C"); Serial.print  ("Min Value:    "); Serial.print(sensor.min_value); Serial.println(" *C"); Serial.print  ("Resolution:   "); Serial.print(sensor.resolution); Serial.println(" *C"); Serial.println("------------------------------------");
   dht.humidity().getSensor(&sensor); Serial.println("------------------------------------");  Serial.println("Humidity");  Serial.print  ("Sensor:       "); Serial.println(sensor.name);  Serial.print  ("Driver Ver:   "); Serial.println(sensor.version);  Serial.print  ("Unique ID:    "); Serial.println(sensor.sensor_id); Serial.print  ("Max Value:    "); Serial.print(sensor.max_value); Serial.println("%");  Serial.print  ("Min Value:    "); Serial.print(sensor.min_value); Serial.println("%");  Serial.print  ("Resolution:   "); Serial.print(sensor.resolution); Serial.println("%");  Serial.println("------------------------------------");
   delayMS = sensor.min_delay / 1000;
+  
   myReceiver.enableIRIn(); // Start the receiver
 */
 
@@ -407,6 +450,43 @@ void setup()
     strip.begin(); // This initializes the NeoPixel library.
     watsdoin = 11;
 
+    // Sync-up with esp-link, this is required at the start of any sketch and initializes the callbacks to the wifi status change callback. The callback gets called with the initial status right after Sync() below completes.
+    esp.wifiCb.attach(wifiCb); // wifi status change callback, optional (delete if not desired)
+    bool ok;
+    do
+    {
+        ok = esp.Sync(); // sync up with esp-link, blocks for up to 2 seconds
+        if (!ok)
+        {
+            Serial.print("\nEL-Client sync failed! err: ");
+            Serial.println(ok);
+        }
+    } while (!ok);
+    Serial.println("EL-Client synced!");
+    // Wait for WiFi to be connected.
+    Serial.println("esp.GetWifiStatus()");
+    esp.GetWifiStatus();
+    ELClientPacket *packet;
+    Serial.println("Waiting for WiFi ");
+    if ((packet = esp.WaitReturn()) != NULL)
+    {
+        Serial.print(".");
+        Serial.println(packet->value);
+    }
+    Serial.println("");
+
+    // Set up the REST client to talk to api.thingspeak.com, this doesn't connect to that server, it just sets-up stuff on the esp-link side
+    // int err = rest.begin("api.thingspeak.com");
+    int err = rest.begin("184.106.153.149");
+    if (err != 0)
+    {
+        Serial.print("REST begin failed: ");
+        Serial.println(err);
+        while (1)
+            ;
+    }
+    Serial.println("EL-REST ready");
+
     Serial.print("calibrating sensor ");
     for (int i = 0; i < calibrationTime; i++)
     {
@@ -420,36 +500,43 @@ void setup()
 
 void loop()
 {
-    time = millis();
+    // process any callbacks coming from esp_link
+    esp.Process();
+        time = millis();
 
-    checkMotion();
-
-    if (motion)
+    // if we're connected make an REST request
+    if (wifiConnected)
     {
-        Serial.print("motion");
     }
+    
+        checkMotion();
 
-    //setLights();
+        if (motion)
+        {
+            Serial.print("motion");
+        }
 
-    //serialSet();
+        //setLights();
 
-    if (Serial3.available())
-    {
-        char dato2 = Serial3.read();
-        String lah = "";
-        lah += dato2;
-        // if (dato2 == "\n")
-        //{
-        //   Serial.println(lah);
+        //serialSet();
+
+        if (Serial3.available())
+        {
+            char dato2 = Serial3.read();
+            String lah = "";
+            lah += dato2;
+            // if (dato2 == "\n")
+            //{
+            //   Serial.println(lah);
+            //}
+        }
+        // if (time >= (lastTime2 + 300000))
+        // { // every 60 secs
+        //     rainBow();
+        // }
+        //   if (time >= (lastTime1 + 600000))
+        // { // every 100 secs
+        //   kitt();
+        //  lastTime1 = time;
         //}
-    }
-    // if (time >= (lastTime2 + 300000))
-    // { // every 60 secs
-    //     rainBow();
-    // }
-    //   if (time >= (lastTime1 + 600000))
-    // { // every 100 secs
-    //   kitt();
-    //  lastTime1 = time;
-    //}
 }

@@ -31,15 +31,10 @@ C:\Users\trend\Documents\PlatformIO\Projects\171111-175952-nodemcuv2\src
 #include <IRutils.h>
 
 // COMMENT OUT DEPENDING ON WHICH ONE....
-//////////////////////
-
- //IPAddress ip(192, 168, 78, 188); ESP8266WebServer server(9188);  int Tfield = 1;   int Hfield = 2;const char* host = "nodeinside";
-// Outside
-IPAddress ip(10, 77, 0, 34); ESP8266WebServer server(3434); int Tfield = 3;  int Hfield = 4; const char* host = "nodeoutside";IPAddress gateway(10,77,0,100);
-
-
-// -----     VARS
-
+IPAddress ip(10, 77, 0, 34); 
+ESP8266WebServer server(3434); 
+int Tfield = 3;  int Hfield = 4; 
+const char* host = "nodeoutside";IPAddress gateway(10,77,0,100);
 uint16_t RECV_PIN = 4;
 Rsend irsend(5);
 
@@ -54,8 +49,6 @@ unsigned long myChannelNumber = 404585;
 const char * myWriteAPIKey = "W124WS7UN76VCASZ";
 int value = 0;
 char temperatureString[6]; char humidString[6]; float temp, humid;
-
-
 float prevTemp;
 long t = 0;
 WiFiClient wiFi;
@@ -68,9 +61,7 @@ irparams_t save;         // A place to copy the interrupt state while decoding.
 
 
 /*
-IR SENDING STUFF....
-
-
+IR STUFF....
 #define TV_OFF        0xa90
 #define HiFi_OFF        0x540a
 #define HiFi_TV        0x540a
@@ -101,8 +92,8 @@ IR SENDING STUFF....
   #define candleR4 0x1FE30CF
 //int candleArray[]={candleON,candleOFF,candle4H,candle8H,candleMODE,candleMULTI,candleB1,candleB2,candleB3,candleB4,candleG1,candleG2,candleG3,candleG4,candleG3,candleR1,candleR2,candleR3,candleR4};
 //int candleNames[]={'candleON','candleOFF','candle4H','candle8H','candleMODE','candleMULTI','candleB1','candleB2','candleB3','candleB4','candleG1','candleG2','candleG3','candleG4','candleG3','candleR1','candleR2','candleR3','candleR4'};
-// VARS
   IRsend irsend(4);
+
             void sendNECIr(uint8_t cmd){
                 irsend.begin();
                 Serial.println("sending "+ cmd);
@@ -117,26 +108,11 @@ void sendIr(uint64_t cmd){
   delay(100);
 }
 
-*/
-
-
-
-
-/*
-
-HUE AND PIR STUFF
-
 RestClient hue = RestClient(bridge_ip);
 const char LIGHTS_ON[] = "{\"on\":true}";
 const char LIGHTS_OFF[] = "{\"on\":false}";
 const char *bridge_ip = "192.168.0.101"; // Hue Bridge IP
 const int port = 80;
-
-bool looping;
-#define pirPin D1   //d1
-int pirState = 0;
-int pirVal = LOW;
-bool watch = false;
 
 void hueturnOff1(){
   hue.put("/api/fRgcNsvxh3ytQKVUZlCso0KbAn7zOlMhtkVmwzQG/lights/1/state/", LIGHTS_OFF);
@@ -152,38 +128,7 @@ void hueturnOn1(){
     cmd.toCharArray(buffer, buf);
     hue.put(buffer, LIGHTS_OFF);
 }
-
-
-void motionCheck(){
-//  pirVal = digitalRead(pirPin); // read input value
-    if (pirVal == HIGH) {
-      if (pirState == LOW) {         // we have just turned on
-      hueturnOn1();
-  //      Serial.println("*NEW 1"); stars=0; stars++;down=0;
-         pirState = HIGH;
-         } else if (pirState == HIGH){
-  //      Serial.print("*"); stars++;
-         }
-    } else if (pirVal == LOW){
-      if (pirState == HIGH)
-            {
-        Serial.println("_END - 1");
-        delay(1000);
-  //      pirState = LOW; stars = 0; down =0; down++;
-        hueturnOff1();
-      } else if (pirState == LOW){
-      //  Serial.print("_");
-      }
-      }
-    delay(100);
-}
 */
-
-
-
-String msg, request = "";
-
-
 void getTemperature() {
   sensors_event_t event;
   dht.temperature().getEvent(&event);
@@ -213,14 +158,6 @@ void getTemperature() {
   ThingSpeak.setField(Hfield, humid);
   ThingSpeak.writeFields(myChannelNumber, myWriteAPIKey);
 }
-
-
-
-
-
-
-
-
 
 
 
@@ -286,8 +223,8 @@ void setup() {
 
 
 void loop() {
-  ArduinoOTA.handle();
   unsigned long time = millis();
+  ArduinoOTA.handle();
 
   WiFiClient client = server.available();
 

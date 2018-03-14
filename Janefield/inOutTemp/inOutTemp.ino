@@ -4,94 +4,78 @@
 // dig 1 / gp 5 -- ir rec @ (d1)---gpio 5 ?
 // d6 / gp12  -- ir sender
 
-#include <Adafruit_Sensor.h>
-#include <DHT.h>
-#include <DHT_U.h>
 #include <ESP8266mDNS.h>
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
+
 #include <RestClient.h>
+#include <Adafruit_Sensor.h>
+#include <DHT.h>
+#include <DHT_U.h>
+
 #include <WiFiClient.h>
-#include <IRrecv.h>
-#include <IRutils.h>
 
 // COMMENT OUT DEPENDING ON WHICH ONE....
 //////////////////////
 // inside
- //IPAddress ip(192, 168, 78, 188); ESP8266WebServer server(9188);  int Tfield = 1;   int Hfield = 2;const char* host = "nodeinside";
+//IPAddress ip(192, 168, 78, 188); ESP8266WebServer server(9188);  int Tfield = 1;   int Hfield = 2;const char* host = "nodeinside";
 // Outside
-IPAddress ip(192, 168, 78, 189); ESP8266WebServer server(9189); int Tfield = 3;  int Hfield = 4;const char* host = "nodeoutside";
+IPAddress ip(192, 168, 78, 189);
+ESP8266WebServer server(9189);
+int Tfield = 3;
+int Hfield = 4;
+const char *host = "nodeoutside";
 float prevTemp;
 long t = 0;
 int rgb_pins[] = {14, 13, 15};
-#define Red 14     // d5...gp 14
-#define Green 13    // D7.. gp 13
-#define Blue 15     // .D8 .. gp 15
-//////////////////////////
-#define RECV_PIN 5  /// d1 ...
-#define SEND_PIN 12  /// d6?
-//////////////////////////
-#define DHTPIN     4   // d2
-//////////////////////
-
-
-#define LED     16        // Led in NodeMCU at pin GPIO16 (D0).
-#define BRIGHT    350     //max led intensity (1-500)
-#define INHALE    1250    //Inhalation time in milliseconds.
-#define PULSE     INHALE*1000/BRIGHT
-#define REST      1000    //Rest Between Inhalations.
-
-
-// IR
-IRrecv irrecv(RECV_PIN); decode_results results;
-IRsend irsend(SEND_PIN);
-// HUE LIGHTING
-const char LIGHTS_ON[] = "{\"on\":true}";
-const char LIGHTS_OFF[] = "{\"on\":false}";
-const char *bridge_ip = "192.168.0.101"; // Hue Bridge IP
-bool looping;
+#define Red 14   // d5...gp 14
+#define Green 13 // D7.. gp 13
+#define Blue 15  // .D8 .. gp 15
 
 // Wi-Fi / IoT
 const char ssid[] = "TPG 15EA";
 const char password[] = "abcd1989";
-const int port = 80;   // fix IP of this node
-IPAddress gateway(192, 168, 78, 78);  // WiFi router's IP
+const int port = 80;                 // fix IP of this node
+IPAddress gateway(192, 168, 78, 78); // WiFi router's IP
 IPAddress subnet(255, 255, 255, 0);
-RestClient hue = RestClient(bridge_ip);
 WiFiClient client;
 unsigned long mLastTime1, mLastTime, holdup = 0;
 bool held = false;
 
-void setColor(long red, long green, long blue, int wai) {
+void setColor(long red, long green, long blue, int wai)
+{
   held = true;
   holdup = ((wai * 1000) + millis());
   analogWrite(Red, red);
   analogWrite(Green, green);
   analogWrite(Blue, blue);
 }
-void lightLoop() {
-  for (int i = 1; i < BRIGHT; i++) {
-    digitalWrite(LED, LOW);          // turn the LED on.
-    delayMicroseconds(i * 10);       // wait
-    digitalWrite(LED, HIGH);         // turn the LED off.
+void lightLoop()
+{
+  for (int i = 1; i < BRIGHT; i++)
+  {
+    digitalWrite(LED, LOW);            // turn the LED on.
+    delayMicroseconds(i * 10);         // wait
+    digitalWrite(LED, HIGH);           // turn the LED off.
     delayMicroseconds(PULSE - i * 10); // wait
-    delay(0);                        //to prevent watchdog firing.
+    delay(0);                          //to prevent watchdog firing.
   }
   //ramp decreasing intensity, Exhalation (half time):
-  for (int i = BRIGHT - 1; i > 0; i--) {
-    digitalWrite(LED, LOW);          // turn the LED on.
-    delayMicroseconds(i * 10);        // wait
-    digitalWrite(LED, HIGH);         // turn the LED off.
+  for (int i = BRIGHT - 1; i > 0; i--)
+  {
+    digitalWrite(LED, LOW);            // turn the LED on.
+    delayMicroseconds(i * 10);         // wait
+    digitalWrite(LED, HIGH);           // turn the LED off.
     delayMicroseconds(PULSE - i * 10); // wait
     i--;
-    delay(0);                        //to prevent watchdog firing.
+    delay(0); //to prevent watchdog firing.
   }
-
 }
 
 // web comms
-void handleRoot() {
+void handleRoot()
+{
   String message = "<html><head><title>NodeIR TPad</title></head><body><h1>Temp Outside</h1>";
   message += "<h2>Temp =";
   message += temperatureString;
@@ -101,7 +85,8 @@ void handleRoot() {
   message += "</h2><br><h2>LoungeCommands</h2><p><a href=\"tvoff\">Send TV On/Off</a></p><p><a href=\"volup\">Send VolUP</a></p><p><a href=\"voldn\">Send VolDN</a></p><p><a href=\"tvaux\">HiFi TV AUX</a></p><p><a href=\"btaux\">HiFi BT AUX</a></p></body></html>";
   server.send(200, "text/html", message);
 }
-void handleNotFound() {
+void handleNotFound()
+{
   String message = "File Not Found\n\n";
   message += "URI: ";
   message += server.uri();
@@ -116,14 +101,16 @@ void handleNotFound() {
   Serial.print(message);
 }
 
-void setup_wifi() {
+void setup_wifi()
+{
   Serial.println();
   Serial.print("Connecting to ");
   Serial.println(ssid);
   WiFi.config(ip, gateway, subnet);
-   WiFi.mode(WIFI_STA);
-   WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) {
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED)
+  {
     delay(500);
     Serial.print(".");
   }
@@ -134,132 +121,64 @@ void setup_wifi() {
   delay(500);
 }
 
-
-/// IR COMMANDS
-
-/**
-  void volup() {
-  sendIr('HiFi_Vup');
-  }
-  void voldn() {
-  sendIr(HiFi_Vdn);
-  }
-  void tvaux() {
-  sendIr(HiFi_TV);
-  }
-  void tvoff(){
-  sendIr(TV_OFF);
-  }
-  void btaux(){
-  sendIr(HiFi_BT);
-  }
-**/
-
-void sendIr(uint64_t cmd) {
-  if (cmd == 'TV_OFF') {
-#define cmdw 0xa90
-  }
-  else {
-#define cmdw 0xa90
-  }
-  irsend.begin();
-  Serial.println("sending Sony");
-  irsend.sendSony(cmdw, 12, 2);
-  delay(200);
-  irrecv.resume();
-}
-void dump(decode_results *results) {
-  uint16_t count = results->rawlen;
-  if (results->decode_type == UNKNOWN) {
-    Serial.print("Unknown encoding: ");
-  } else if (results->decode_type == NEC) {
-    Serial.print("Decoded NEC: ");
-  } else if (results->decode_type == SONY) {
-    Serial.print("Decoded SONY: ");
-  } else if (results->decode_type == RC5) {
-    Serial.print("Decoded RC5: ");
-  } else if (results->decode_type == RC5X) {
-    Serial.print("Decoded RC5X: ");
-  } else if (results->decode_type == RC6) {
-    Serial.print("Decoded RC6: ");
-  } else if (results->decode_type == PANASONIC) {
-    Serial.print("Decoded PANASONIC - Address: ");
-    Serial.print(results->address, HEX);
-    Serial.print(" Value: ");
-  } else if (results->decode_type == LG) {
-    Serial.print("Decoded LG: ");
-  } else if (results->decode_type == JVC) {
-    Serial.print("Decoded JVC: ");
-  } else if (results->decode_type == AIWA_RC_T501) {
-    Serial.print("Decoded AIWA RC T501: ");
-  } else if (results->decode_type == WHYNTER) {
-    Serial.print("Decoded Whynter: ");
-  }
-  serialPrintUint64(results->value, 16);
-  Serial.print(" (");
-  Serial.print(results->bits, DEC);
-  Serial.println(" bits)");
-  Serial.print("Raw (");
-  Serial.print(count, DEC);
-  Serial.print("): ");
-  for (uint16_t i = 1; i < count; i++) {
-    if (i % 100 == 0)
-      yield();  // Preemptive yield every 100th entry to feed the WDT.
-    if (i & 1) {
-      //         Serial.print(results.rawbuf[i] * USECPERTICK, DEC);
-    } else {
-      Serial.write('-');
-      //      Serial.print((uint32_t) results.rawbuf[i] * USECPERTICK, DEC);
-    }
-    Serial.print(" ");
-  }
-  Serial.println();
-}
-
-uint32_t delayMS;
-
-/// HUE COMMANDS
-//
-void doLoop(int on, int lightNo) {
-  if (on == 1) {
-    const char EFFECT_COLORLOOP[] = "{\"effect\":\"colorloop\"}";
-    String cmd = "/api/fRgcNsvxh3ytQKVUZlCso0KbAn7zOlMhtkVmwzQG/lights/";
-    cmd += lightNo;   cmd += "/state/";
-    //  hue.put(cmd, EFFECT_COLORLOOP);
-    looping = true;
-  }
-  if (on == 0) {
-    const char NO_COLORLOOP[] = "{\"effect\":\"none\"}";
-    String cmd = "/api/fRgcNsvxh3ytQKVUZlCso0KbAn7zOlMhtkVmwzQG/lights/";
-    cmd += lightNo;   cmd += "/state/";
-    //hue.put(cmd, NO_COLORLOOP);
-    looping = false;
-  }
-}
-
-
-void setup() {
+void setup()
+{
   Serial.begin(115200);
   pinMode(LED, OUTPUT);
-for (int i=0; i<3; i++)
+  for (int i = 0; i < 3; i++)
   {
     pinMode(rgb_pins[i], OUTPUT);
-   digitalWrite(rgb_pins[i],LOW);
+    digitalWrite(rgb_pins[i], LOW);
   }
   setup_wifi();
-    ArduinoOTA.setHostname(host);
-    // turn of leds
-    digitalWrite(Red,HIGH);
-    digitalWrite(Green,HIGH);
-   digitalWrite(Blue,HIGH);
+  ArduinoOTA.setHostname(host);
+  // turn of leds
+  digitalWrite(Red, HIGH);
+  digitalWrite(Green, HIGH);
+  digitalWrite(Blue, HIGH);
   /* configure dimmers, and OTA server events */
   analogWriteRange(1000);
-  analogWrite(Blue,990);
+  analogWrite(Blue, 990);
 
-  dht.begin();
-  sensor_t sensor; dht.temperature().getSensor(&sensor); Serial.println("------------------------------------"); Serial.println("Temperature");  Serial.print  ("Sensor:       "); Serial.println(sensor.name);  Serial.print  ("Driver Ver:   "); Serial.println(sensor.version); Serial.print  ("Unique ID:    "); Serial.println(sensor.sensor_id);  Serial.print  ("Max Value:    "); Serial.print(sensor.max_value); Serial.println(" *C"); Serial.print  ("Min Value:    "); Serial.print(sensor.min_value); Serial.println(" *C"); Serial.print  ("Resolution:   "); Serial.print(sensor.resolution); Serial.println(" *C"); Serial.println("------------------------------------");
-  dht.humidity().getSensor(&sensor); Serial.println("------------------------------------");  Serial.println("Humidity");  Serial.print  ("Sensor:       "); Serial.println(sensor.name);  Serial.print  ("Driver Ver:   "); Serial.println(sensor.version);  Serial.print  ("Unique ID:    "); Serial.println(sensor.sensor_id); Serial.print  ("Max Value:    "); Serial.print(sensor.max_value); Serial.println("%");  Serial.print  ("Min Value:    "); Serial.print(sensor.min_value); Serial.println("%");  Serial.print  ("Resolution:   "); Serial.print(sensor.resolution); Serial.println("%");  Serial.println("------------------------------------");
+  Serial.println("------------------------------------");
+  Serial.println("Temperature");
+  Serial.print("Sensor:       ");
+  Serial.println(sensor.name);
+  Serial.print("Driver Ver:   ");
+  Serial.println(sensor.version);
+  Serial.print("Unique ID:    ");
+  Serial.println(sensor.sensor_id);
+  Serial.print("Max Value:    ");
+  Serial.print(sensor.max_value);
+  Serial.println(" *C");
+  Serial.print("Min Value:    ");
+  Serial.print(sensor.min_value);
+  Serial.println(" *C");
+  Serial.print("Resolution:   ");
+  Serial.print(sensor.resolution);
+  Serial.println(" *C");
+  Serial.println("------------------------------------");
+
+  Serial.println("------------------------------------");
+  Serial.println("Humidity");
+  Serial.print("Sensor:       ");
+  Serial.println(sensor.name);
+  Serial.print("Driver Ver:   ");
+  Serial.println(sensor.version);
+  Serial.print("Unique ID:    ");
+  Serial.println(sensor.sensor_id);
+  Serial.print("Max Value:    ");
+  Serial.print(sensor.max_value);
+  Serial.println("%");
+  Serial.print("Min Value:    ");
+  Serial.print(sensor.min_value);
+  Serial.println("%");
+  Serial.print("Resolution:   ");
+  Serial.print(sensor.resolution);
+  Serial.println("%");
+  Serial.println("------------------------------------");
   delayMS = sensor.min_delay / 1000;
+
   ThingSpeak.begin(client);
 
   //server.on("/", handleRoot); //server.on("/volup", volup); server.on("/btaux", btaux); server.on("/tvaux", tvaux); server.on("/voldn", voldn); server.on("/tvoff", [](){ sendIr(TV_OFF); server.send(200, "text/plain", "tv OFF"); });
@@ -272,33 +191,39 @@ for (int i=0; i<3; i++)
   Serial.println(WiFi.localIP());
 }
 
-
-void loop() {
+void loop()
+{
   ArduinoOTA.handle();
   unsigned long time = millis();
   //if (held == true) {
-   // if (holdup > 0) {
-//holdup=holdup-time;
+  // if (holdup > 0) {
+  //holdup=holdup-time;
   //  } else {
-    //setColor(0,0,1000,2);
-   // }
- // }
-if (irrecv.decode(&results)) {
-  dump(&results);
-  irrecv.resume();
-}
-//server.handleClient();
-if ((time - mLastTime1) >= 30000) {
-  mLastTime1 = millis();
-  getTemperature();
-if (temp != prevTemp){
-  if (temp > prevTemp){
-analogWrite(Red, 1000);
-  } else if (temp < prevTemp){
-analogWrite(Green, 1000);
-}
-  prevTemp = temp;
-}
-}
-delay(10);
+  //setColor(0,0,1000,2);
+  // }
+  // }
+  if (irrecv.decode(&results))
+  {
+    dump(&results);
+    irrecv.resume();
+  }
+  //server.handleClient();
+  if ((time - mLastTime1) >= 30000)
+  {
+    mLastTime1 = millis();
+    getTemperature();
+    if (temp != prevTemp)
+    {
+      if (temp > prevTemp)
+      {
+        analogWrite(Red, 1000);
+      }
+      else if (temp < prevTemp)
+      {
+        analogWrite(Green, 1000);
+      }
+      prevTemp = temp;
+    }
+  }
+  delay(10);
 }

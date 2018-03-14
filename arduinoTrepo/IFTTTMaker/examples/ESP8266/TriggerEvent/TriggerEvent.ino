@@ -8,20 +8,6 @@
 
 
 #include <ESP8266WiFi.h>
-#include <WiFiClientSecure.h>
-
-//------- Replace the following! ------
-char ssid[] = "xxx";       // your network SSID (name)
-char password[] = "yyyy";  // your network key
-#define KEY "zzzzzzzzzzzzzzzzzzzzzzz"  // Get it from this page https://ifttt.com/services/maker/settings
-#define EVENT_NAME "device_on" // Name of your event name, set when you are creating the applet
-
-
-
-
-WiFiClientSecure client;
-IFTTTMaker ifttt(KEY, client);
-
 void setup() {
 
   Serial.begin(115200);
@@ -48,13 +34,7 @@ void setup() {
 
 
   //triggerEvent takes an Event Name and then you can optional pass in up to 3 extra Strings
-  if(ifttt.triggerEvent(EVENT_NAME, ssid, ip.toString())){
-    Serial.println("Successfully sent");
-  } else
-  {
-    Serial.println("Failed!");
-  }
-
+ 
 }
 
 void loop() {
